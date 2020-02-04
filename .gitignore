@@ -1,0 +1,8 @@
+.idea/
+.vscode/
+*.code-workspace
+node_modules/
+./ExportState*.json
+./ExportStats*.json
+./ExportLog*.txt
+./vendor/
