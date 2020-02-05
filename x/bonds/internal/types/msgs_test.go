@@ -6,13 +6,6 @@ import (
 	"testing"
 )
 
-func setupMsgsTestCase(t *testing.T) func(t *testing.T) {
-	t.Log("setup test case")
-	return func(t *testing.T) {
-		t.Log("teardown test case")
-	}
-}
-
 func TestValidateBasicMsgCreateTokenArgumentMissingGivesError(t *testing.T) {
 	message := NewValidMsgCreateBond()
 	message.Token = ""
@@ -52,16 +45,6 @@ func TestValidateBasicMsgCreateCreatorMissingGivesError(t *testing.T) {
 func TestValidateBasicMsgCreateReserveTokenArgumentMissingGivesError(t *testing.T) {
 	message := NewValidMsgCreateBond()
 	message.ReserveTokens = nil
-
-	err := message.ValidateBasic()
-
-	require.NotNil(t, err)
-	require.Equal(t, CodeArgumentInvalid, err.Code())
-}
-
-func TestValidateBasicMsgReserveAddressArgumentMissingGivesError(t *testing.T) {
-	message := NewValidMsgCreateBond()
-	message.ReserveAddress = sdk.AccAddress{}
 
 	err := message.ValidateBasic()
 
@@ -145,16 +128,6 @@ func TestValidateBasicMsgCreateExitFeeIsZeroGivesNoError(t *testing.T) {
 	err := message.ValidateBasic()
 
 	require.Nil(t, err)
-}
-
-func TestValidateBasicMsgCreateFeeAddressEqualsReserveAddressGivesError(t *testing.T) {
-	message := NewValidMsgCreateBond()
-	message.FeeAddress = initReserveAddress
-
-	err := message.ValidateBasic()
-
-	require.NotNil(t, err)
-	require.Equal(t, CodeInvalidBond, err.Code())
 }
 
 func TestValidateBasicMsgCreateBondCorrectlyGivesNoError(t *testing.T) {

@@ -93,12 +93,6 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		reserveAddress, err := sdk.AccAddressFromBech32(req.ReserveAddress)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		txFeePercentageDec, err := sdk.NewDecFromStr(req.TxFeePercentage)
 		if err != nil {
 			err = types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "tx fee percentage")
@@ -160,9 +154,9 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		msg := types.NewMsgCreateBond(req.Token, req.Name, req.Description,
 			creator, req.FunctionType, functionParams, reserveTokens,
-			reserveAddress, txFeePercentageDec, exitFeePercentageDec,
-			feeAddress, maxSupply, orderQuantityLimits, sanityRate,
-			sanityMarginPercentage, req.AllowSells, signers, batchBlocks)
+			txFeePercentageDec, exitFeePercentageDec, feeAddress, maxSupply,
+			orderQuantityLimits, sanityRate, sanityMarginPercentage,
+			req.AllowSells, signers, batchBlocks)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

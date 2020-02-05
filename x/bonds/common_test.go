@@ -81,8 +81,8 @@ func newValidMsgCreateBond() types.MsgCreateBond {
 	reserveTokens := powerReserves
 	return types.NewMsgCreateBond(token, initName, initDescription,
 		initCreator, functionType, functionParams, reserveTokens,
-		initReserveAddress, initTxFeePercentage, initExitFeePercentage,
-		initFeeAddress, initMaxSupply, initOrderQuantityLimits, initSanityRate,
+		initTxFeePercentage, initExitFeePercentage, initFeeAddress,
+		initMaxSupply, initOrderQuantityLimits, initSanityRate,
 		initSanityMarginPercentage, initAllowSell, initSigners, initBatchBlocks)
 }
 

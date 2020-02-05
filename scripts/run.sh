@@ -7,11 +7,6 @@ bondsd init local --chain-id bondschain-1
 yes $PASSWORD | bondscli keys delete miguel --force
 yes $PASSWORD | bondscli keys delete francesco --force
 yes $PASSWORD | bondscli keys delete shaun --force
-yes $PASSWORD | bondscli keys delete reserve --force
-yes $PASSWORD | bondscli keys delete reserve2 --force
-yes $PASSWORD | bondscli keys delete reserve3 --force
-yes $PASSWORD | bondscli keys delete reserve4 --force
-yes $PASSWORD | bondscli keys delete reserve5 --force
 yes $PASSWORD | bondscli keys delete fee --force
 yes $PASSWORD | bondscli keys delete fee2 --force
 yes $PASSWORD | bondscli keys delete fee3 --force
@@ -21,11 +16,6 @@ yes $PASSWORD | bondscli keys delete fee5 --force
 yes $PASSWORD | bondscli keys add miguel
 yes $PASSWORD | bondscli keys add francesco
 yes $PASSWORD | bondscli keys add shaun
-yes $PASSWORD | bondscli keys add reserve
-yes $PASSWORD | bondscli keys add reserve2
-yes $PASSWORD | bondscli keys add reserve3
-yes $PASSWORD | bondscli keys add reserve4
-yes $PASSWORD | bondscli keys add reserve5
 yes $PASSWORD | bondscli keys add fee
 yes $PASSWORD | bondscli keys add fee2
 yes $PASSWORD | bondscli keys add fee3

@@ -4,7 +4,6 @@ PASSWORD="12345678"
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
 FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
 SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
-RESERVE=$(yes $PASSWORD | bondscli keys show reserve -a)
 FEE=$(yes $PASSWORD | bondscli keys show fee -a)
 
 wait() {
@@ -46,7 +45,6 @@ tx_from_m create-bond \
   --function-type=power_function \
   --function-parameters="m:12,n:2,c:100" \
   --reserve-tokens=res \
-  --reserve-address="$RESERVE" \
   --tx-fee-percentage=0.5 \
   --exit-fee-percentage=0.1 \
   --fee-address="$FEE" \

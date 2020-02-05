@@ -46,7 +46,6 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			_functionType := viper.GetString(FlagFunctionType)
 			_functionParameters := viper.GetString(FlagFunctionParameters)
 			_reserveTokens := viper.GetString(FlagReserveTokens)
-			_reserveAddress := viper.GetString(FlagReserveAddress)
 			_txFeePercentage := viper.GetString(FlagTxFeePercentage)
 			_exitFeePercentage := viper.GetString(FlagExitFeePercentage)
 			_feeAddress := viper.GetString(FlagFeeAddress)
@@ -72,11 +71,6 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			reserveTokens, err := client2.ParseReserveTokens(_reserveTokens, _functionType, _token)
 			if err != nil {
 				return fmt.Errorf(err.Error())
-			}
-
-			reserveAddress, err := sdk.AccAddressFromBech32(_reserveAddress)
-			if err != nil {
-				return err
 			}
 
 			txFeePercentage, err := sdk.NewDecFromStr(_txFeePercentage)
@@ -128,10 +122,9 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 
 			msg := types.NewMsgCreateBond(_token, _name, _description,
 				cliCtx.GetFromAddress(), _functionType, functionParams,
-				reserveTokens, reserveAddress, txFeePercentage,
-				exitFeePercentage, feeAddress, maxSupply, orderQuantityLimits,
-				sanityRate, sanityMarginPercentage, _allowSells, signers,
-				batchBlocks)
+				reserveTokens, txFeePercentage, exitFeePercentage, feeAddress,
+				maxSupply, orderQuantityLimits, sanityRate,
+				sanityMarginPercentage, _allowSells, signers, batchBlocks)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
@@ -146,7 +139,6 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagFunctionType)
 	_ = cmd.MarkFlagRequired(FlagFunctionParameters)
 	_ = cmd.MarkFlagRequired(FlagReserveTokens)
-	_ = cmd.MarkFlagRequired(FlagReserveAddress)
 	_ = cmd.MarkFlagRequired(FlagTxFeePercentage)
 	_ = cmd.MarkFlagRequired(FlagExitFeePercentage)
 	_ = cmd.MarkFlagRequired(FlagFeeAddress)

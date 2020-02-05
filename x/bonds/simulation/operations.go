@@ -142,7 +142,6 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 		exitFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100).Sub(txFeePercentage))
 
 		// Addresses
-		reserveAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		feeAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 		// Max supply, allow sells, batch blocks
@@ -153,7 +152,7 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 			simulation.RandIntBetween(r, 1, 10)))
 
 		msg := types.NewMsgCreateBond(token, name, desc, creator, functionType,
-			functionParameters, reserveTokens, reserveAddress, txFeePercentage,
+			functionParameters, reserveTokens, txFeePercentage,
 			exitFeePercentage, feeAddress, maxSupply, blankOrderQuantityLimits,
 			blankSanityRate, blankSanityMarginPercentage, allowSells, signers, batchBlocks)
 		if msg.ValidateBasic() != nil {
