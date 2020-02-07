@@ -46,7 +46,6 @@ type createBondReq struct {
 	FunctionType           string       `json:"function_type" yaml:"function_type"`
 	FunctionParameters     string       `json:"function_parameters" yaml:"function_parameters"`
 	ReserveTokens          string       `json:"reserve_tokens" yaml:"reserve_tokens"`
-	ReserveAddress         string       `json:"reserve_address" yaml:"reserve_address"`
 	TxFeePercentage        string       `json:"tx_fee_percentage" yaml:"tx_fee_percentage"`
 	ExitFeePercentage      string       `json:"exit_fee_percentage" yaml:"exit_fee_percentage"`
 	FeeAddress             string       `json:"fee_address" yaml:"fee_address"`
