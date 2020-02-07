@@ -4,7 +4,6 @@ PASSWORD="12345678"
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
 FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
 SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
-RESERVE=$(yes $PASSWORD | bondscli keys show reserve -a)
 FEE=$(yes $PASSWORD | bondscli keys show fee -a)
 
 wait() {
@@ -59,7 +58,6 @@ rest_from_m bonds/create_bond '{
                                 "function_type":"power_function",
                                 "function_parameters":"m:12,n:2,c:100",
                                 "reserve_tokens":"res",
-                                "reserve_address":"'$RESERVE'",
                                 "tx_fee_percentage":"0.5",
                                 "exit_fee_percentage":"0.1",
                                 "fee_address":"'$FEE'",

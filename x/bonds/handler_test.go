@@ -406,7 +406,7 @@ func TestBuyingABondCorrectlyPasses(t *testing.T) {
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
 	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
-	reserveBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initReserveAddress)
+	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
 	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, res.IsOK())
@@ -591,7 +591,7 @@ func TestSellingABondCorrectlyPasses(t *testing.T) {
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
 	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
-	reserveBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initReserveAddress)
+	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
 	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, res.IsOK())
@@ -699,7 +699,7 @@ func TestSwapValidAmount(t *testing.T) {
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
 	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
-	reserveBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initReserveAddress)
+	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
 	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
 	require.True(t, res.IsOK())
 	require.Equal(t, sdk.NewInt(89990), userBalance.AmountOf(reserveToken))

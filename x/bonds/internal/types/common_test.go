@@ -95,10 +95,9 @@ func NewValidMsgCreateBond() MsgCreateBond {
 	reserveTokens := powerReserves
 	return NewMsgCreateBond(initToken, initName, initDescription,
 		initCreator, functionType, functionParams,
-		reserveTokens, initReserveAddress, initTxFeePercentage,
-		initExitFeePercentage, initFeeAddress, initMaxSupply,
-		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks)
+		reserveTokens, initTxFeePercentage, initExitFeePercentage,
+		initFeeAddress, initMaxSupply, initOrderQuantityLimits, initSanityRate,
+		initSanityMarginPercentage, initAllowSell, initSigners, initBatchBlocks)
 }
 
 func NewEmptyStringsMsgEditBond() MsgEditBond {

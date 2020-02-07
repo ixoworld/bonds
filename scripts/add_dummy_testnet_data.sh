@@ -2,11 +2,6 @@ PASSWORD="12345678"
 
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
 
-RESERVE1=$(yes $PASSWORD | bondscli keys show reserve -a)
-RESERVE2=$(yes $PASSWORD | bondscli keys show reserve2 -a)
-RESERVE3=$(yes $PASSWORD | bondscli keys show reserve3 -a)
-RESERVE4=$(yes $PASSWORD | bondscli keys show reserve4 -a)
-
 FEE1=$(yes $PASSWORD | bondscli keys show fee -a)
 FEE2=$(yes $PASSWORD | bondscli keys show fee2 -a)
 FEE3=$(yes $PASSWORD | bondscli keys show fee3 -a)
@@ -20,7 +15,6 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --function-type=power_function \
   --function-parameters="m:12,n:2,c:100" \
   --reserve-tokens=res \
-  --reserve-address="$RESERVE1" \
   --tx-fee-percentage=0.5 \
   --exit-fee-percentage=0.1 \
   --fee-address="$FEE1" \
@@ -42,7 +36,6 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --function-type=power_function \
   --function-parameters="m:10,n:3,c:1" \
   --reserve-tokens=res \
-  --reserve-address="$RESERVE2" \
   --tx-fee-percentage=0 \
   --exit-fee-percentage=0 \
   --fee-address="$FEE2" \
@@ -64,7 +57,6 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --function-type=swapper_function \
   --function-parameters="" \
   --reserve-tokens="res,rez" \
-  --reserve-address="$RESERVE3" \
   --tx-fee-percentage=0 \
   --exit-fee-percentage=0 \
   --fee-address="$FEE3" \
@@ -86,7 +78,6 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --function-type=swapper_function \
   --function-parameters="" \
   --reserve-tokens="token1,token2" \
-  --reserve-address="$RESERVE4" \
   --tx-fee-percentage=2.5 \
   --exit-fee-percentage=5 \
   --fee-address="$FEE4" \
