@@ -315,25 +315,26 @@ func TestPerformBuyAtPrice(t *testing.T) {
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
 
 	testCases := []struct {
-		amount    sdk.Int
-		maxPrices sdk.Coins
-		txFee     sdk.Dec
+		amount         sdk.Int
+		maxPrices      sdk.Coins
+		txFee          sdk.Dec
+		expectedPrices sdk.Int
 	}{
 		{
-			sdk.NewInt(10), maxPrices, sdk.ZeroDec(),
+			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), sdk.NewInt(1000),
 		}, // (10 * 100) + (10 * FEE) = 1000 <= 1100, where FEE=0
 		{
-			sdk.NewInt(11), maxPrices, sdk.ZeroDec(),
+			sdk.NewInt(11), maxPrices, sdk.ZeroDec(), sdk.NewInt(1100),
 		}, // (11 * 100) + (11 * FEE) = 1100 <= 1100, where FEE=0
 		{
-			sdk.NewInt(12), maxPrices, sdk.ZeroDec(), // not fulfillable
-		}, // (12 * 100) + (12 * FEE) = 1200 > 1100, where FEE=0
+			sdk.NewInt(12), maxPrices, sdk.ZeroDec(), sdk.NewInt(1200),
+		}, // (12 * 100) + (12 * FEE) = 1200 > 1100, where FEE=0 [not fulfillable]
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(10),
+			sdk.NewInt(10), maxPrices, sdk.NewDec(10), sdk.NewInt(1100),
 		}, // (10 * 100) + (10 * FEE) = 1100 <= 1100, where FEE=10
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(20), // not fulfillable
-		}, // (10 * 100) + (10 * FEE) = 1200 > 1100, where FEE=20
+			sdk.NewInt(10), maxPrices, sdk.NewDec(20), sdk.NewInt(1200),
+		}, // (10 * 100) + (10 * FEE) = 1200 > 1100, where FEE=20 [not fulfillable]
 	}
 
 	for _, tc := range testCases {
@@ -351,6 +352,9 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		reservePricesRounded := types.RoundReserveReturns(reservePrices)
 		txFees := bond.GetTxFees(reservePrices)
 		totalPrices := reservePricesRounded.Add(txFees)
+
+		// Check expected prices
+		require.Equal(t, totalPrices.AmountOf(reserveToken), tc.expectedPrices)
 
 		// Add reserve tokens paid by buyer to module account address
 		moduleAcc := app.SupplyKeeper.GetModuleAccount(ctx, types.BatchesIntermediaryAccount)
@@ -408,21 +412,28 @@ func TestPerformSellAtPrice(t *testing.T) {
 	sellPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 
 	testCases := []struct {
-		txFee   sdk.Dec
-		exitFee sdk.Dec
+		txFee           sdk.Dec
+		exitFee         sdk.Dec
+		expectedReturns sdk.Int
 	}{
 		{
-			sdk.ZeroDec(), sdk.ZeroDec(),
-		}, // (10 * 100) + (10 * FEE) = 1000, where FEE=0
+			sdk.ZeroDec(), sdk.ZeroDec(), sdk.NewInt(1000),
+		}, // (10 * 100) - (10 * FEE) = 1000, where FEE=0
 		{
-			sdk.NewDec(10), sdk.ZeroDec(),
-		}, // (10 * 100) + (10 * FEE) = 1100, where FEE=10
+			sdk.NewDec(10), sdk.ZeroDec(), sdk.NewInt(900),
+		}, // (10 * 100) - (10 * FEE) = 900, where FEE=10
 		{
-			sdk.ZeroDec(), sdk.NewDec(10),
-		}, // (10 * 100) + (10 * FEE) = 1100, where FEE=10
+			sdk.ZeroDec(), sdk.NewDec(10), sdk.NewInt(900),
+		}, // (10 * 100) - (10 * FEE) = 900, where FEE=10
 		{
-			sdk.NewDec(10), sdk.NewDec(10),
-		}, // (10 * 100) + (10 * FEE) = 1200, where FEE=20
+			sdk.NewDec(10), sdk.NewDec(10), sdk.NewInt(800),
+		}, // (10 * 100) - (10 * FEE) = 800, where FEE=20
+		{
+			sdk.NewDec(100), sdk.NewDec(0), sdk.ZeroInt(),
+		}, // (10 * 100) - (10 * FEE) = 0, where FEE=100
+		{
+			sdk.NewDec(100), sdk.NewDec(100), sdk.ZeroInt(),
+		}, // (10 * 100) - (10 * FEE) = adjusted(-1000) = 0, where FEE=200
 	}
 
 	for _, tc := range testCases {
@@ -440,7 +451,11 @@ func TestPerformSellAtPrice(t *testing.T) {
 		reserveReturns := sdk.DecCoins{sdk.NewDecCoinFromDec(sellPrices[0].Denom, reserveReturn)}
 		reserveReturnsRounded := types.RoundReserveReturns(reserveReturns)
 		totalFees := bond.GetTxFees(reserveReturns).Add(bond.GetExitFees(reserveReturns))
+		totalFees = types.AdjustFees(totalFees, reserveReturnsRounded)
 		totalReturns := reserveReturnsRounded.Sub(totalFees)
+
+		// Check expected returns
+		require.Equal(t, totalReturns.AmountOf(reserveToken), tc.expectedReturns)
 
 		// Add reserve tokens paid by seller when buying to reserve address
 		err := app.BankKeeper.SetCoins(ctx, bond.ReserveAddress, reserveReturnsRounded)
