@@ -201,7 +201,7 @@ func handleMsgBuy(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgBuy) sdk.R
 
 	// Check max prices
 	if !bond.ReserveDenomsEqualTo(msg.MaxPrices) {
-		return types.ErrReserveDenomsMismatch(types.DefaultCodespace, msg.MaxPrices, bond.ReserveTokens).Result()
+		return types.ErrReserveDenomsMismatch(types.DefaultCodespace, msg.MaxPrices.String(), bond.ReserveTokens).Result()
 	}
 
 	// Check if order quantity limit exceeded
@@ -377,6 +377,13 @@ func handleMsgSwap(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgSwap) sdk
 	bond, found := keeper.GetBond(ctx, msg.BondToken)
 	if !found {
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, msg.BondToken).Result()
+	}
+
+	// Check that from and to use reserve token names
+	fromAndTo := sdk.NewCoins(msg.From, sdk.NewCoin(msg.ToToken, sdk.OneInt()))
+	fromAndToDenoms := msg.From.Denom + "," + msg.ToToken
+	if !bond.ReserveDenomsEqualTo(fromAndTo) {
+		return types.ErrReserveDenomsMismatch(types.DefaultCodespace, fromAndToDenoms, bond.ReserveTokens).Result()
 	}
 
 	// Check if order quantity limit exceeded

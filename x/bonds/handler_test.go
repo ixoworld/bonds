@@ -614,31 +614,83 @@ func TestSwapBondDoesNotExistFails(t *testing.T) {
 	require.False(t, app.BondsKeeper.BondExists(ctx, token))
 }
 
+func TestSwapOrderInvalidReserveDenomsFails(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create bond
+	h(ctx, newValidMsgCreateSwapperBond())
+
+	// Add reserve tokens to user
+	coins := sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, 100000),
+		sdk.NewInt64Coin(reserveToken2, 100000),
+	)
+	err := addCoinsToUser(app, ctx, coins)
+	require.Nil(t, err)
+
+	// Buy 2 tokens
+	buyMsg := newValidMsgBuy(2, 0) // 0 max prices replaced below
+	buyMsg.MaxPrices = sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, 10000),
+		sdk.NewInt64Coin(reserveToken2, 10000),
+	)
+	h(ctx, buyMsg)
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Perform swap (invalid instead of reserveToken)
+	res := h(ctx, newValidMsgSwap("invalid", reserveToken2, 10))
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	userBalance := app.AccountKeeper.GetAccount(ctx, userAddress).GetCoins()
+	require.False(t, res.IsOK())
+	require.Equal(t, res.Code, bonds.CodeReserveDenomsMismatch)
+	require.Equal(t, sdk.NewInt(2), userBalance.AmountOf(token))
+
+	// Perform swap (invalid instead of reserveToken2)
+	res = h(ctx, newValidMsgSwap(reserveToken, "invalid", 10))
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	userBalance = app.AccountKeeper.GetAccount(ctx, userAddress).GetCoins()
+	require.False(t, res.IsOK())
+	require.Equal(t, res.Code, bonds.CodeReserveDenomsMismatch)
+	require.Equal(t, sdk.NewInt(2), userBalance.AmountOf(token))
+}
+
 func TestSwapOrderQuantityLimitExceededFails(t *testing.T) {
 	app, ctx := createTestApp(false)
 	h := bonds.NewHandler(app.BondsKeeper)
 
 	// Create bond with order quantity limit
-	createMsg := newValidMsgCreateBond()
+	createMsg := newValidMsgCreateSwapperBond()
 	createMsg.OrderQuantityLimits = sdk.NewCoins(sdk.NewInt64Coin(reserveToken, 4))
 	h(ctx, createMsg)
 
 	// Add reserve tokens to user
-	err := addCoinsToUser(app, ctx, sdk.Coins{sdk.NewInt64Coin(reserveToken, 10000)})
+	coins := sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, 100000),
+		sdk.NewInt64Coin(reserveToken2, 100000),
+	)
+	err := addCoinsToUser(app, ctx, coins)
 	require.Nil(t, err)
 
-	// Buy 4 tokens
-	h(ctx, newValidMsgBuy(4, 10000))
+	// Buy 2 tokens
+	buyMsg := newValidMsgBuy(2, 0) // 0 max prices replaced below
+	buyMsg.MaxPrices = sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, 10000),
+		sdk.NewInt64Coin(reserveToken2, 10000),
+	)
+	h(ctx, buyMsg)
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
-	// Swap tokens
+	// Perform swap
 	msg := types.NewMsgSwap(userAddress, token, sdk.NewInt64Coin(reserveToken, 5), reserveToken2)
 	res := h(ctx, msg)
 
 	userBalance := app.AccountKeeper.GetAccount(ctx, userAddress).GetCoins()
 	require.False(t, res.IsOK())
 	require.Equal(t, res.Code, bonds.CodeOrderQuantityLimitExceeded)
-	require.Equal(t, sdk.NewInt(4), userBalance.AmountOf(token))
+	require.Equal(t, sdk.NewInt(2), userBalance.AmountOf(token))
 }
 
 func TestSwapInvalidAmount(t *testing.T) {
@@ -708,6 +760,46 @@ func TestSwapValidAmount(t *testing.T) {
 	require.Equal(t, sdk.NewInt(10009), reserveBalance.AmountOf(reserveToken))
 	require.Equal(t, sdk.NewInt(9992), reserveBalance.AmountOf(reserveToken2))
 	require.Equal(t, sdk.OneInt(), feeBalance.AmountOf(reserveToken))
+}
+
+func TestSwapValidAmountReversed(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create bond
+	h(ctx, newValidMsgCreateSwapperBond())
+
+	// Add reserve tokens to user
+	coins := sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, 100000),
+		sdk.NewInt64Coin(reserveToken2, 100000),
+	)
+	err := addCoinsToUser(app, ctx, coins)
+	require.Nil(t, err)
+
+	// Buy 2 tokens
+	buyMsg := newValidMsgBuy(2, 0) // 0 max prices replaced below
+	buyMsg.MaxPrices = sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, 10000),
+		sdk.NewInt64Coin(reserveToken2, 10000),
+	)
+	h(ctx, buyMsg)
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Perform swap
+	res := h(ctx, newValidMsgSwap(reserveToken2, reserveToken, 10))
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
+	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
+	require.True(t, res.IsOK())
+	require.Equal(t, sdk.NewInt(90008), userBalance.AmountOf(reserveToken))
+	require.Equal(t, sdk.NewInt(89990), userBalance.AmountOf(reserveToken2))
+	require.Equal(t, sdk.NewInt(2), userBalance.AmountOf(token))
+	require.Equal(t, sdk.NewInt(9992), reserveBalance.AmountOf(reserveToken))
+	require.Equal(t, sdk.NewInt(10009), reserveBalance.AmountOf(reserveToken2))
+	require.Equal(t, sdk.OneInt(), feeBalance.AmountOf(reserveToken2))
 }
 
 func TestDecrementRemainingBlocksCountAfterEndBlock(t *testing.T) {
