@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-PASSWORD="12345678"
-MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
-FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
-SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
-FEE=$(yes $PASSWORD | bondscli keys show fee -a)
-
 wait() {
   echo "Waiting for chain to start..."
   while :; do
@@ -36,6 +30,11 @@ RET=$(bondscli status 2>&1)
 if [[ ($RET == ERROR*) || ($RET == *'"latest_block_height": "0"'*) ]]; then
   wait
 fi
+
+PASSWORD="12345678"
+MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
+FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
+FEE=$(yes $PASSWORD | bondscli keys show fee -a)
 
 echo "Creating bond..."
 tx_from_m create-bond \
