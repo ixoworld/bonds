@@ -16,7 +16,6 @@ func TestBondExistsSetGet(t *testing.T) {
 	// Bond doesn't exist yet
 	require.False(t, found)
 	require.False(t, app.BondsKeeper.BondExists(ctx, token))
-	require.False(t, app.BondsKeeper.BondExists(ctx, token))
 
 	// Add bond
 	bondAdded := getValidBond()
