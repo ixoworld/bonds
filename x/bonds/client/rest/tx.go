@@ -78,6 +78,13 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Check that bond token is a valid token name
+		err = client.CheckCoinDenom(req.Token)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		// Parse function parameters
 		functionParams, err := client.ParseFunctionParams(req.FunctionParameters, req.FunctionType)
 		if err != nil {
@@ -86,9 +93,9 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// Parse reserve tokens
-		reserveTokens, err := client.ParseReserveTokens(req.ReserveTokens, req.FunctionType, req.Token)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		reserveTokens, err2 := client.ParseReserveTokens(req.ReserveTokens, req.FunctionType, req.Token)
+		if err2 != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
 			return
 		}
 
@@ -244,7 +251,7 @@ func buyHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		bondCoin, err := sdk.ParseCoin(req.BondAmount + req.BondToken)
+		bondCoin, err := client.ParseCoin(req.BondAmount, req.BondToken)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -293,7 +300,7 @@ func sellHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		bondCoin, err := sdk.ParseCoin(req.BondAmount + req.BondToken)
+		bondCoin, err := client.ParseCoin(req.BondAmount, req.BondToken)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -338,25 +345,23 @@ func swapHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// Check that BondToken is a valid token name
-		_, err = sdk.ParseCoin("0" + req.BondToken)
+		// Check that bond token is a valid token name
+		err = client.CheckCoinDenom(req.BondToken)
 		if err != nil {
-			err = types.ErrInvalidCoinDenomination(types.DefaultCodespace, req.BondToken)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// Check that from amount and token can be parsed to a coin
-		fromCoin, err := sdk.ParseCoin(req.FromAmount + req.FromToken)
+		fromCoin, err := client.ParseCoin(req.FromAmount, req.FromToken)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// Check that ToToken is a valid token name
-		_, err = sdk.ParseCoin("0" + req.ToToken)
+		err = client.CheckCoinDenom(req.ToToken)
 		if err != nil {
-			err = types.ErrInvalidCoinDenomination(types.DefaultCodespace, req.ToToken)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
