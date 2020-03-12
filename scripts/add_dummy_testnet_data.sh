@@ -1,3 +1,36 @@
+#!/usr/bin/env bash
+
+wait() {
+  echo "Waiting for chain to start..."
+  while :; do
+    RET=$(bondscli status 2>&1)
+    if [[ ($RET == ERROR*) || ($RET == *'"latest_block_height": "0"'*) ]]; then
+      sleep 1
+    else
+      echo "A few more seconds..."
+      sleep 6
+      break
+    fi
+  done
+}
+
+tx_from_m() {
+  cmd=$1
+  shift
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block "$@"
+}
+
+tx_from_f() {
+  cmd=$1
+  shift
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block "$@"
+}
+
+RET=$(bondscli status 2>&1)
+if [[ ($RET == ERROR*) || ($RET == *'"latest_block_height": "0"'*) ]]; then
+  wait
+fi
+
 PASSWORD="12345678"
 
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
