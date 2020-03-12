@@ -265,10 +265,10 @@ func GetCmdSwap(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			// Check that bond_token is a valid token name
-			_, err := sdk.ParseCoin("0" + args[0])
+			// Check that bond token is a valid token name
+			err := client2.CheckCoinDenom(args[0])
 			if err != nil {
-				return types.ErrInvalidCoinDenomination(types.DefaultCodespace, args[0])
+				return err
 			}
 
 			// Check that from amount and token can be parsed to a coin

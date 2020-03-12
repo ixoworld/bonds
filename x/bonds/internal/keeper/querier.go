@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ixoworld/bonds/x/bonds/client"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"strings"
@@ -163,7 +164,7 @@ func queryCustomPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte
 	bondToken := path[0]
 	bondAmount := path[1]
 
-	bondCoin, err2 := sdk.ParseCoin(bondAmount + bondToken)
+	bondCoin, err2 := client.ParseCoin(bondAmount, bondToken)
 	if err2 != nil {
 		return nil, sdk.ErrInternal(err2.Error())
 	}
@@ -190,7 +191,7 @@ func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, e
 	bondToken := path[0]
 	bondAmount := path[1]
 
-	bondCoin, err2 := sdk.ParseCoin(bondAmount + bondToken)
+	bondCoin, err2 := client.ParseCoin(bondAmount, bondToken)
 	if err2 != nil {
 		return nil, sdk.ErrInternal(err2.Error())
 	}
@@ -233,7 +234,7 @@ func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 	bondToken := path[0]
 	bondAmount := path[1]
 
-	bondCoin, err2 := sdk.ParseCoin(bondAmount + bondToken)
+	bondCoin, err2 := client.ParseCoin(bondAmount, bondToken)
 	if err2 != nil {
 		return nil, sdk.ErrInternal(err2.Error())
 	}
@@ -283,7 +284,7 @@ func querySwapReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 	fromAmount := path[2]
 	toToken := path[3]
 
-	fromCoin, err2 := sdk.ParseCoin(fromAmount + fromToken)
+	fromCoin, err2 := client.ParseCoin(fromAmount, fromToken)
 	if err2 != nil {
 		return nil, sdk.ErrInternal(err2.Error())
 	}
