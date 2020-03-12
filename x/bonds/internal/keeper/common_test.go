@@ -11,6 +11,10 @@ import (
 var (
 	token = "testtoken"
 
+	token1 = "testtoken1"
+	token2 = "testtoken2"
+	token3 = "testtoken3"
+
 	blankSanityRate             = "0"
 	blankSanityMarginPercentage = "0"
 	reserveToken                = "res"
@@ -112,6 +116,13 @@ func getValidSwapperBond() types.Bond {
 
 func getValidBond() types.Bond {
 	return getValidPowerFunctionBond()
+}
+
+func getValidBondWithToken(token string) types.Bond {
+	bond := getValidPowerFunctionBond()
+	bond.Token = token
+	bond.MaxSupply = sdk.NewCoin(token, bond.MaxSupply.Amount)
+	return bond
 }
 
 func getValidBatch() types.Batch {
