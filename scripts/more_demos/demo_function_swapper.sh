@@ -78,12 +78,12 @@ tx_from_f swap abc 500 rez res
 echo "Francesco's account..."
 bondscli query auth account "$FRANCESCO"
 
-echo "Miguel swaps above order limit..."
+echo "Miguel swaps above order limit (tx will fail)..."
 tx_from_m swap abc 5001 res rez
 echo "Miguel's account (no  changes)..."
 bondscli query auth account "$MIGUEL"
 
-echo "Francesco swaps to violate sanity..."
+echo "Francesco swaps to violate sanity (tx will be successful but order will fail)..."
 tx_from_f swap abc 5000 rez res
 echo "Francesco's account (no changes)..."
 bondscli query auth account "$FRANCESCO"
