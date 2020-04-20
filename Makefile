@@ -79,9 +79,6 @@ install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/bondsd
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/bondscli
 
-install-debug: go.sum
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/bondsdebug
-
 ########################################
 ### Tools & dependencies
 
