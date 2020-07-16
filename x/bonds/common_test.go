@@ -103,6 +103,6 @@ func newValidMsgSwap(fromToken, toToken string, amount int64) types.MsgSwap {
 }
 
 func addCoinsToUser(app *simapp.SimApp, ctx sdk.Context, coins sdk.Coins) sdk.Error {
-	_, err := app.BondsKeeper.CoinKeeper.AddCoins(ctx, userAddress, coins)
+	_, err := app.BondsKeeper.BankKeeper.AddCoins(ctx, userAddress, coins)
 	return err
 }

@@ -15,6 +15,8 @@ const (
 	AnyNumberOfReserveTokens = -1
 )
 
+type FunctionParamRestrictions func(paramsMap map[string]sdk.Int) sdk.Error
+
 var (
 	RequiredParamsForFunctionType = map[string][]string{
 		PowerFunction:   {"m", "n", "c"},
@@ -26,6 +28,12 @@ var (
 		PowerFunction:   AnyNumberOfReserveTokens,
 		SigmoidFunction: AnyNumberOfReserveTokens,
 		SwapperFunction: 2,
+	}
+
+	ExtraParameterRestrictions = map[string]FunctionParamRestrictions{
+		PowerFunction:   nil,
+		SigmoidFunction: sigmoidParameterRestrictions,
+		SwapperFunction: nil,
 	}
 )
 
@@ -42,6 +50,44 @@ func NewFunctionParam(param string, value sdk.Int) FunctionParam {
 }
 
 type FunctionParams []FunctionParam
+
+func (fps FunctionParams) Validate(functionType string) sdk.Error {
+	// Come up with list of expected parameters
+	expectedParams, err := GetRequiredParamsForFunctionType(functionType)
+	if err != nil {
+		return err
+	}
+
+	// Check that number of params is as expected
+	if len(fps) != len(expectedParams) {
+		return ErrIncorrectNumberOfFunctionParameters(DefaultCodespace, len(expectedParams))
+	}
+
+	// Check that params match and all values are non-negative
+	paramsMap := fps.AsMap()
+	for _, p := range expectedParams {
+		val, ok := paramsMap[p]
+		if !ok {
+			return ErrFunctionParameterMissingOrNonInteger(DefaultCodespace, p)
+		} else if val.IsNegative() {
+			return ErrArgumentCannotBeNegative(DefaultCodespace, "FunctionParams:"+p)
+		}
+	}
+
+	// Get extra function parameter restrictions
+	extraRestrictions, err := GetExceptionsForFunctionType(functionType)
+	if err != nil {
+		return err
+	}
+	if extraRestrictions != nil {
+		err := extraRestrictions(paramsMap)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (fps FunctionParams) String() (result string) {
 	result = "{"
@@ -61,6 +107,17 @@ func (fps FunctionParams) AsMap() (paramsMap map[string]sdk.Int) {
 		paramsMap[fp.Param] = fp.Value
 	}
 	return paramsMap
+}
+
+func sigmoidParameterRestrictions(paramsMap map[string]sdk.Int) sdk.Error {
+	// Sigmoid exception 1: c != 0, otherwise we run into divisions by zero
+	val, ok := paramsMap["c"]
+	if !ok {
+		panic("did not find parameter c for sigmoid function")
+	} else if !val.IsPositive() {
+		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:c")
+	}
+	return nil
 }
 
 type Bond struct {
@@ -314,18 +371,25 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 	case PowerFunction:
 		fallthrough
 	case SigmoidFunction:
-		var returnForBurn sdk.Dec
 		result := bond.CurveIntegral(bond.CurrentSupply.Amount.Sub(burn))
+
+		var reserveBalance sdk.Dec
 		if reserveBalances.Empty() {
-			panic("no reserve available for burn")
+			reserveBalance = sdk.ZeroDec()
 		} else {
 			// Reserve balances should all be equal given that we are always
-			// applying the same additions/subtractions to all reserve balances
-			commonReserveBalance := sdk.NewDecFromInt(reserveBalances[0].Amount)
-			returnForBurn = commonReserveBalance.Sub(result)
+			// applying the same additions/subtractions to all reserve balances.
+			// Thus we can pick the first reserve balance as the global balance.
+			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
 		}
-		// TODO: investigate possibility of negative returnForBurn
-		return bond.GetNewReserveDecCoins(returnForBurn)
+
+		if result.GT(reserveBalance) {
+			panic("not enough reserve available for burn")
+		} else {
+			returnForBurn := reserveBalance.Sub(result)
+			return bond.GetNewReserveDecCoins(returnForBurn)
+			// TODO: investigate possibility of negative returnForBurn
+		}
 	case SwapperFunction:
 		return bond.GetReserveDeltaForLiquidityDelta(burn, reserveBalances)
 	default:

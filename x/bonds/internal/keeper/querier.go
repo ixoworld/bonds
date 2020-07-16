@@ -53,6 +53,17 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
+func zeroReserveTokensIfEmpty(reserveCoins sdk.Coins, bond types.Bond) sdk.Coins {
+	if reserveCoins.IsZero() {
+		zeroes, _ := bond.GetNewReserveDecCoins(sdk.OneDec()).TruncateDecimal()
+		for i := range zeroes {
+			zeroes[i].Amount = sdk.ZeroInt()
+		}
+		reserveCoins = zeroes
+	}
+	return reserveCoins
+}
+
 func queryBonds(ctx sdk.Context, keeper Keeper) (res []byte, err sdk.Error) {
 	var bondsList types.QueryBonds
 	iterator := keeper.GetBondIterator(ctx)
@@ -134,6 +145,7 @@ func queryCurrentPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byt
 		return nil, err
 	}
 	reservePriceRounded := types.RoundReservePrices(reservePrices)
+	reservePriceRounded = zeroReserveTokensIfEmpty(reservePriceRounded, bond)
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reservePriceRounded)
 	if err2 != nil {
@@ -151,7 +163,8 @@ func queryCurrentReserve(ctx sdk.Context, path []string, keeper Keeper) (res []b
 		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
 	}
 
-	reserveBalances := keeper.CoinKeeper.GetCoins(ctx, bond.ReserveAddress)
+	reserveBalances := keeper.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
+	reserveBalances = zeroReserveTokensIfEmpty(reserveBalances, bond)
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reserveBalances)
 	if err2 != nil {
 		panic("could not marshal result to JSON")
@@ -164,20 +177,22 @@ func queryCustomPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte
 	bondToken := path[0]
 	bondAmount := path[1]
 
-	bondCoin, err2 := client.ParseCoin(bondAmount, bondToken)
-	if err2 != nil {
-		return nil, sdk.ErrInternal(err2.Error())
-	}
-
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
 		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
 	}
+
+	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bond.Token)
+	if err2 != nil {
+		return nil, sdk.ErrInternal(err2.Error())
+	}
+
 	reservePrices, err := bond.GetPricesAtSupply(bondCoin.Amount)
 	if err != nil {
 		return nil, err
 	}
 	reservePricesRounded := types.RoundReservePrices(reservePrices)
+	reservePricesRounded = zeroReserveTokensIfEmpty(reservePricesRounded, bond)
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reservePricesRounded)
 	if err2 != nil {
@@ -191,14 +206,14 @@ func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, e
 	bondToken := path[0]
 	bondAmount := path[1]
 
-	bondCoin, err2 := client.ParseCoin(bondAmount, bondToken)
-	if err2 != nil {
-		return nil, sdk.ErrInternal(err2.Error())
-	}
-
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
 		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+	}
+
+	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bondToken)
+	if err2 != nil {
+		return nil, sdk.ErrInternal(err2.Error())
 	}
 
 	// Max supply cannot be less than supply (max supply >= supply)
@@ -217,10 +232,10 @@ func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, e
 
 	var result types.QueryBuyPrice
 	result.AdjustedSupply = adjustedSupply
-	result.Prices = reservePricesRounded
-	result.TxFees = txFee
-	result.TotalFees = result.TxFees // used in next line
-	result.TotalPrices = result.Prices.Add(result.TotalFees)
+	result.Prices = zeroReserveTokensIfEmpty(reservePricesRounded, bond)
+	result.TxFees = zeroReserveTokensIfEmpty(txFee, bond)
+	result.TotalPrices = zeroReserveTokensIfEmpty(reservePricesRounded.Add(txFee), bond)
+	result.TotalFees = zeroReserveTokensIfEmpty(txFee, bond)
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, result)
 	if err2 != nil {
@@ -234,14 +249,14 @@ func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 	bondToken := path[0]
 	bondAmount := path[1]
 
-	bondCoin, err2 := client.ParseCoin(bondAmount, bondToken)
-	if err2 != nil {
-		return nil, sdk.ErrInternal(err2.Error())
-	}
-
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
 		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+	}
+
+	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bondToken)
+	if err2 != nil {
+		return nil, sdk.ErrInternal(err2.Error())
 	}
 
 	if strings.ToLower(bond.AllowSells) == types.FALSE {
@@ -264,11 +279,11 @@ func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 
 	var result types.QuerySellReturn
 	result.AdjustedSupply = adjustedSupply
-	result.Returns = reserveReturnsRounded
-	result.TxFees = txFees
-	result.ExitFees = exitFees
-	result.TotalReturns = reserveReturnsRounded.Sub(totalFees)
-	result.TotalFees = totalFees
+	result.Returns = zeroReserveTokensIfEmpty(reserveReturnsRounded, bond)
+	result.TxFees = zeroReserveTokensIfEmpty(txFees, bond)
+	result.ExitFees = zeroReserveTokensIfEmpty(exitFees, bond)
+	result.TotalReturns = zeroReserveTokensIfEmpty(reserveReturnsRounded.Sub(totalFees), bond)
+	result.TotalFees = zeroReserveTokensIfEmpty(totalFees, bond)
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, result)
 	if err2 != nil {
@@ -284,7 +299,7 @@ func querySwapReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 	fromAmount := path[2]
 	toToken := path[3]
 
-	fromCoin, err2 := client.ParseCoin(fromAmount, fromToken)
+	fromCoin, err2 := client.ParseTwoPartCoin(fromAmount, fromToken)
 	if err2 != nil {
 		return nil, sdk.ErrInternal(err2.Error())
 	}
@@ -298,6 +313,10 @@ func querySwapReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 	reserveReturns, txFee, err := bond.GetReturnsForSwap(fromCoin, toToken, reserveBalances)
 	if err != nil {
 		return nil, err
+	}
+
+	if reserveReturns.Empty() {
+		reserveReturns = sdk.Coins{sdk.Coin{Denom: toToken, Amount: sdk.ZeroInt()}}
 	}
 
 	var result types.QuerySwapReturn

@@ -248,7 +248,7 @@ func TestQueryCurrentReserve(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
-	require.Nil(t, queryResult)
+	require.Equal(t, "0res", queryResult.String())
 
 	// Send 200res,300rez to reserve
 	newReserve := sdk.NewCoins(

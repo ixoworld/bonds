@@ -17,13 +17,13 @@ wait() {
 tx_from_m() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 tx_from_f() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 RET=$(bondscli status 2>&1)
@@ -32,6 +32,7 @@ if [[ ($RET == ERROR*) || ($RET == *'"latest_block_height": "0"'*) ]]; then
 fi
 
 PASSWORD="12345678"
+GAS_PRICES="0.025stake"
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
 FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
 SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
@@ -50,8 +51,8 @@ tx_from_m create-bond \
   --fee-address="$FEE" \
   --max-supply=1000000abc \
   --order-quantity-limits="" \
-  --sanity-rate="" \
-  --sanity-margin-percentage="" \
+  --sanity-rate="0" \
+  --sanity-margin-percentage="0" \
   --allow-sells=true \
   --signers="$MIGUEL" \
   --batch-blocks=1

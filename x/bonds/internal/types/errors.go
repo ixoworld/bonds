@@ -39,12 +39,12 @@ const (
 	CodeInvalidCoinDenomination CodeType = 318
 
 	// Amounts and fees
-	CodeInvalidResultantSupply CodeType = 319
-	CodeMaxPriceExceeded       CodeType = 320
-	CodeSwapAmountInvalid      CodeType = 321
-	CodeOrderLimitExceeded     CodeType = 322
-	CodeSanityRateViolated     CodeType = 323
-	CodeFeeTooLarge            CodeType = 324
+	CodeInvalidResultantSupply     CodeType = 319
+	CodeMaxPriceExceeded           CodeType = 320
+	CodeSwapAmountInvalid          CodeType = 321
+	CodeOrderQuantityLimitExceeded CodeType = 322
+	CodeSanityRateViolated         CodeType = 323
+	CodeFeeTooLarge                CodeType = 324
 )
 
 func ErrArgumentCannotBeEmpty(codespace sdk.CodespaceType, argument string) sdk.Error {
@@ -204,7 +204,7 @@ func ErrSwapAmountCausesReserveDepletion(codespace sdk.CodespaceType, fromToken,
 
 func ErrOrderQuantityLimitExceeded(codespace sdk.CodespaceType) sdk.Error {
 	errMsg := "Order quantity limits exceeded"
-	return sdk.NewError(codespace, CodeOrderLimitExceeded, errMsg)
+	return sdk.NewError(codespace, CodeOrderQuantityLimitExceeded, errMsg)
 }
 
 func ErrValuesViolateSanityRate(codespace sdk.CodespaceType) sdk.Error {

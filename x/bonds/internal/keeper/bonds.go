@@ -71,9 +71,11 @@ func (k Keeper) MustGetBondByKey(ctx sdk.Context, key []byte) types.Bond {
 	if !store.Has(key) {
 		panic("bond not found")
 	}
+
 	bz := store.Get(key)
 	var bond types.Bond
 	k.cdc.MustUnmarshalBinaryBare(bz, &bond)
+
 	return bond
 }
 
@@ -88,9 +90,8 @@ func (k Keeper) SetBond(ctx sdk.Context, token string, bond types.Bond) {
 }
 
 func (k Keeper) GetReserveBalances(ctx sdk.Context, token string) sdk.Coins {
-	// TODO: investigate ways to prevent reserve address from being reused since this affects calculations
 	bond := k.MustGetBond(ctx, token)
-	return k.CoinKeeper.GetCoins(ctx, bond.ReserveAddress)
+	return k.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
 }
 
 func (k Keeper) GetSupplyAdjustedForBuy(ctx sdk.Context, token string) sdk.Coin {

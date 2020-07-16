@@ -59,16 +59,27 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 }
 
 func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCreateBond) sdk.Result {
+	if keeper.BankKeeper.BlacklistedAddr(msg.FeeAddress) {
+		return sdk.ErrUnauthorized(fmt.Sprintf("%s is not allowed to receive transactions", msg.FeeAddress)).Result()
+	}
 
 	if keeper.BondExists(ctx, msg.Token) {
-		return types.ErrBondAlreadyExists(DefaultCodeSpace, msg.Token).Result()
+		return types.ErrBondAlreadyExists(DefaultCodespace, msg.Token).Result()
 	} else if msg.Token == keeper.StakingKeeper.GetParams(ctx).BondDenom {
-		return types.ErrBondTokenCannotBeStakingToken(DefaultCodeSpace).Result()
+		return types.ErrBondTokenCannotBeStakingToken(DefaultCodespace).Result()
 	}
 
 	reserveAddress := keeper.GetNextUnusedReserveAddress(ctx)
 
-	bond := NewBond(msg.Token, msg.Name, msg.Description, msg.Creator,
+	// TODO: investigate ways to prevent reserve address from receiving transactions
+
+	// Not critical since as is no tokens can be taken out of the reserve, unless
+	// programmatically. However, increases in balance still affect calculations.
+	// Two possible solutions are (i) add new reserve addresses to the bank module
+	// blacklisted addresses (but no guarantee that this will be sufficient), or
+	// (ii) use a global res. address and store (in the bond) the share of the pool.
+
+	bond := types.NewBond(msg.Token, msg.Name, msg.Description, msg.Creator,
 		msg.FunctionType, msg.FunctionParameters, msg.ReserveTokens,
 		reserveAddress, msg.TxFeePercentage, msg.ExitFeePercentage,
 		msg.FeeAddress, msg.MaxSupply, msg.OrderQuantityLimits, msg.SanityRate,
@@ -270,7 +281,7 @@ func performFirstSwapperFunctionBuy(ctx sdk.Context, keeper keeper.Keeper, msg t
 	}
 
 	// Use max prices as the amount to send to the liquidity pool (i.e. price)
-	err := keeper.CoinKeeper.SendCoins(ctx, msg.Buyer, bond.ReserveAddress, msg.MaxPrices)
+	err := keeper.BankKeeper.SendCoins(ctx, msg.Buyer, bond.ReserveAddress, msg.MaxPrices)
 	if err != nil {
 		return err.Result()
 	}
