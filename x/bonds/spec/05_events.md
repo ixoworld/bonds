@@ -30,7 +30,6 @@ The bonds module emits the following events:
 | create_bond | function_type            | {functionType}           |
 | create_bond | function_parameters [0]  | {functionParameters}     |
 | create_bond | reserve_tokens [1]       | {reserveTokens}          |
-| create_bond | reserve_address          | {reserveAddress}         |
 | create_bond | tx_fee_percentage        | {txFeePercentage}        |
 | create_bond | exit_fee_percentage      | {exitFeePercentage}      |
 | create_bond | fee_address              | {feeAddress}             |

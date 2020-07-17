@@ -3,6 +3,7 @@ package bonds
 import (
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/ixoworld/bonds/x/bonds/internal/keeper"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -69,7 +70,8 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		return types.ErrBondTokenCannotBeStakingToken(DefaultCodespace).Result()
 	}
 
-	reserveAddress := keeper.GetNextUnusedReserveAddress(ctx)
+	reserveAddress := supply.NewModuleAddress(
+		fmt.Sprintf("bonds/%s/reserveAddress", msg.Token))
 
 	// TODO: investigate ways to prevent reserve address from receiving transactions
 

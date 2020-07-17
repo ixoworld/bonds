@@ -62,10 +62,8 @@ This message is expected to fail if:
 - reserve tokens list is faulty:
   - For `swapper_function`: two valid comma-separated denominations, e.g. `res,rez`
   - Otherwise: one or more valid comma-separated denominations, e.g. `res,rez,rex`
-- for `power_function` or `sigmoid_function`, reserve address is the fee address
 - tx or exit fee percentage is negative
 - sum of tx and exit fee percentages exceeds 100%
-- for `power_function` or `sigmoid_function`, fee address is the reserve address
 - order quantity limits is not one or more valid comma-separated amount
   - Valid example: `"100res,200rez"`
 - max supply value is not in the bond token denomination
@@ -76,7 +74,7 @@ This message is expected to fail if:
 - signers is not one or more valid comma-separated account addresses
 - any field is empty, except for order quantity limits, sanity rate, sanity margin percentage, and function parameters for `swapper_function`
 
-This message creates and stores the `Bond` object at appropriate indexes. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
+This message creates and stores the `Bond` object at appropriate indexes. A reserve address is generated for the bond by taking the hash of "bond/<TOKEN>/reserveAddress", where "<TOKEN>" is the unique bond token. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
 
 ## MsgEditBond
 
