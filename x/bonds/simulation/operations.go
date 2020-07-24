@@ -141,6 +141,15 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 		txFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100))
 		exitFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100).Sub(txFeePercentage))
 
+		// Since 100 is not allowed, a small number is subtracted from one of the fees
+		if txFeePercentage.Add(exitFeePercentage).Equal(sdk.NewDec(100)) {
+			if txFeePercentage.GT(sdk.ZeroDec()) {
+				txFeePercentage = txFeePercentage.Sub(sdk.MustNewDecFromStr("0.000000000000000001"))
+			} else {
+				exitFeePercentage = exitFeePercentage.Sub(sdk.MustNewDecFromStr("0.000000000000000001"))
+			}
+		}
+
 		// Addresses
 		feeAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 

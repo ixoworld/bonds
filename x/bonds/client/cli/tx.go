@@ -13,6 +13,7 @@ import (
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -62,48 +63,52 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// Parse function parameters
-			functionParams, err := client2.ParseFunctionParams(_functionParameters, _functionType)
+			functionParams, err := client2.ParseFunctionParams(_functionParameters)
 			if err != nil {
 				return fmt.Errorf(err.Error())
 			}
 
 			// Parse reserve tokens
-			reserveTokens, err := client2.ParseReserveTokens(_reserveTokens, _functionType, _token)
-			if err != nil {
-				return fmt.Errorf(err.Error())
-			}
+			reserveTokens := strings.Split(_reserveTokens, ",")
 
+			// Parse tx fee percentage
 			txFeePercentage, err := sdk.NewDecFromStr(_txFeePercentage)
 			if err != nil {
 				return fmt.Errorf(types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "tx fee percentage").Error())
 			}
 
+			// Parse exit fee percentage
 			exitFeePercentage, err := sdk.NewDecFromStr(_exitFeePercentage)
 			if err != nil {
 				return fmt.Errorf(types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "exit fee percentage").Error())
 			}
 
-			if txFeePercentage.Add(exitFeePercentage).GTE(sdk.NewDec(100)) {
-				return fmt.Errorf(types.ErrFeesCannotBeOrExceed100Percent(types.DefaultCodespace).Error())
-			}
-
+			// Parse fee address
 			feeAddress, err := sdk.AccAddressFromBech32(_feeAddress)
 			if err != nil {
 				return err
 			}
 
-			maxSupply, err := client2.ParseMaxSupply(_maxSupply, _token)
+			// Parse max supply
+			maxSupply, err := sdk.ParseCoin(_maxSupply)
 			if err != nil {
 				return err
 			}
 
+			// Parse order quantity limits
 			orderQuantityLimits, err := sdk.ParseCoins(_orderQuantityLimits)
 			if err != nil {
 				return err
 			}
 
-			// Parse sanity
-			sanityRate, sanityMarginPercentage, err := client2.ParseSanityValues(_sanityRate, _sanityMarginPercentage)
+			// Parse sanity rate
+			sanityRate, err := sdk.NewDecFromStr(_sanityRate)
+			if err != nil {
+				return fmt.Errorf(err.Error())
+			}
+
+			// Parse sanity margin percentage
+			sanityMarginPercentage, err := sdk.NewDecFromStr(_sanityMarginPercentage)
 			if err != nil {
 				return fmt.Errorf(err.Error())
 			}
@@ -115,9 +120,9 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// Parse batch blocks
-			batchBlocks, err := client2.ParseBatchBlocks(_batchBlocks)
+			batchBlocks, err := sdk.ParseUint(_batchBlocks)
 			if err != nil {
-				return fmt.Errorf(err.Error())
+				return types.ErrArgumentMissingOrNonUInteger(types.DefaultCodespace, "max batch blocks")
 			}
 
 			msg := types.NewMsgCreateBond(_token, _name, _description,
@@ -132,7 +137,6 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().AddFlagSet(fsBondGeneral)
 	cmd.Flags().AddFlagSet(fsBondCreate)
 
-	_ = cmd.MarkFlagRequired(client.FlagFrom)
 	_ = cmd.MarkFlagRequired(FlagToken)
 	_ = cmd.MarkFlagRequired(FlagName)
 	_ = cmd.MarkFlagRequired(FlagDescription)
@@ -265,22 +269,10 @@ func GetCmdSwap(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			// Check that bond token is a valid token name
-			err := client2.CheckCoinDenom(args[0])
-			if err != nil {
-				return err
-			}
-
 			// Check that from amount and token can be parsed to a coin
-			from, err := sdk.ParseCoin(args[1] + args[2])
+			from, err := client2.ParseTwoPartCoin(args[0], args[1])
 			if err != nil {
 				return err
-			}
-
-			// Check that to_token is a valid token name
-			_, err = sdk.ParseCoin("0" + args[3])
-			if err != nil {
-				return types.ErrInvalidCoinDenomination(types.DefaultCodespace, args[3])
 			}
 
 			msg := types.NewMsgSwap(cliCtx.GetFromAddress(), args[0], from, args[3])

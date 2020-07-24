@@ -46,7 +46,7 @@ func TestCreateBondThatAlreadyExistsFails(t *testing.T) {
 	res := h(ctx, newValidMsgCreateBond())
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeBondAlreadyExists)
+	require.Equal(t, res.Code, types.CodeBondAlreadyExists)
 }
 
 func TestCreatingABondUsingStakingTokenFails(t *testing.T) {
@@ -59,7 +59,7 @@ func TestCreatingABondUsingStakingTokenFails(t *testing.T) {
 	res := h(ctx, msg)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeBondTokenInvalid)
+	require.Equal(t, res.Code, types.CodeBondTokenInvalid)
 	require.False(t, app.BondsKeeper.BondExists(ctx, token))
 }
 
@@ -73,7 +73,7 @@ func TestEditingANonExistingBondFails(t *testing.T) {
 	res := h(ctx, msg)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeBondDoesNotExist)
+	require.Equal(t, res.Code, types.CodeBondDoesNotExist)
 	require.False(t, app.BondsKeeper.BondExists(ctx, token))
 }
 
@@ -165,7 +165,7 @@ func TestEditingABondWithNegativeSanityRateFails(t *testing.T) {
 	res := h(ctx, msg)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeArgumentInvalid)
+	require.Equal(t, res.Code, types.CodeArgumentInvalid)
 }
 
 func TestEditingABondWithNonFloatSanityRateFails(t *testing.T) {
@@ -181,7 +181,7 @@ func TestEditingABondWithNonFloatSanityRateFails(t *testing.T) {
 	res := h(ctx, msg)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeArgumentMissingOrIncorrectType)
+	require.Equal(t, res.Code, types.CodeArgumentMissingOrIncorrectType)
 }
 
 func TestEditingABondWithNegativeSanityMarginPercentageFails(t *testing.T) {
@@ -197,7 +197,7 @@ func TestEditingABondWithNegativeSanityMarginPercentageFails(t *testing.T) {
 	res := h(ctx, msg)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeArgumentInvalid)
+	require.Equal(t, res.Code, types.CodeArgumentInvalid)
 }
 
 func TestEditingABondWithNonFloatSanityMarginPercentageFails(t *testing.T) {
@@ -213,7 +213,7 @@ func TestEditingABondWithNonFloatSanityMarginPercentageFails(t *testing.T) {
 	res := h(ctx, msg)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeArgumentMissingOrIncorrectType)
+	require.Equal(t, res.Code, types.CodeArgumentMissingOrIncorrectType)
 }
 
 func TestEditingABondCorrectlyPasses(t *testing.T) {
@@ -247,7 +247,7 @@ func TestBuyingANonExistingBondFails(t *testing.T) {
 	res := h(ctx, newValidMsgBuy(1, 10))
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeBondDoesNotExist)
+	require.Equal(t, res.Code, types.CodeBondDoesNotExist)
 }
 
 func TestBuyingABondWithNonExistentToken(t *testing.T) {
@@ -263,7 +263,7 @@ func TestBuyingABondWithNonExistentToken(t *testing.T) {
 	res := h(ctx, msg)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeReserveDenomsMismatch)
+	require.Equal(t, res.Code, types.CodeReserveDenomsMismatch)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, currentSupply.Amount.IsZero())
 }
@@ -305,7 +305,7 @@ func TestBuyingBondWithOrderQuantityLimitExceededFails(t *testing.T) {
 	res := h(ctx, newValidMsgBuy(10, 4000))
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeOrderQuantityLimitExceeded)
+	require.Equal(t, res.Code, types.CodeOrderQuantityLimitExceeded)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, currentSupply.Amount.IsZero())
 }
@@ -345,7 +345,7 @@ func TestBuyingABondExceedingMaxPriceFails(t *testing.T) {
 	res := h(ctx, newValidMsgBuy(amountLTMaxSupply, 1))
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeMaxPriceExceeded)
+	require.Equal(t, res.Code, types.CodeMaxPriceExceeded)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, currentSupply.Amount.IsZero())
 }
@@ -365,7 +365,7 @@ func TestBuyingABondWithoutSufficientFundsFails(t *testing.T) {
 	res := h(ctx, newValidMsgBuy(10, 4000))
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeMaxPriceExceeded)
+	require.Equal(t, res.Code, types.CodeMaxPriceExceeded)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, currentSupply.Amount.IsZero())
 }
@@ -385,7 +385,7 @@ func TestBuyingABondWithoutSufficientFundsDueToTxFeeFails(t *testing.T) {
 	res := h(ctx, newValidMsgBuy(10, 5000))
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeMaxPriceExceeded)
+	require.Equal(t, res.Code, types.CodeMaxPriceExceeded)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, currentSupply.Amount.IsZero())
 }
@@ -405,9 +405,9 @@ func TestBuyingABondCorrectlyPasses(t *testing.T) {
 	res := h(ctx, newValidMsgBuy(2, 4000))
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
-	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
 	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
-	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
+	feeBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, initFeeAddress)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, res.IsOK())
 	require.Equal(t, sdk.NewInt(3767), userBalance.AmountOf(reserveToken))
@@ -425,7 +425,7 @@ func TestSellingANonExistingBondFails(t *testing.T) {
 	res := h(ctx, newValidMsgSell(10))
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeBondDoesNotExist)
+	require.Equal(t, res.Code, types.CodeBondDoesNotExist)
 	require.False(t, app.BondsKeeper.BondExists(ctx, token))
 }
 
@@ -452,7 +452,7 @@ func TestSellingABondWhichCannotBeSoldFails(t *testing.T) {
 	bondPostSell := app.BondsKeeper.MustGetBond(ctx, token)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeBondDoesNotAllowSelling)
+	require.Equal(t, res.Code, types.CodeBondDoesNotAllowSelling)
 	require.Equal(t, bondPostSell.CurrentSupply.Amount, bondPreSell.CurrentSupply.Amount)
 }
 
@@ -479,7 +479,7 @@ func TestSellBondExceedingOrderQuantityLimitFails(t *testing.T) {
 	bondPostSell := app.BondsKeeper.MustGetBond(ctx, token)
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeOrderQuantityLimitExceeded)
+	require.Equal(t, res.Code, types.CodeOrderQuantityLimitExceeded)
 	require.Equal(t, bondPostSell.CurrentSupply.Amount, bondPreSell.CurrentSupply.Amount)
 }
 
@@ -503,7 +503,7 @@ func TestSellingABondWithAmountGreaterThanBalanceFails(t *testing.T) {
 	res := h(ctx, newValidMsgSell(11))
 	bondPostSell := app.BondsKeeper.MustGetBond(ctx, token)
 
-	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
 	require.False(t, res.IsOK())
 	require.Contains(t, res.Log, "insufficient account funds; 4995"+reserveToken+",10"+token+" < 11"+token)
 	require.Equal(t, bondPostSell.CurrentSupply.Amount, bondPreSell.CurrentSupply.Amount)
@@ -535,7 +535,7 @@ func TestSellingABondWhichSellerDoesNotOwnFails(t *testing.T) {
 	msg.Amount = sdk.NewInt64Coin(token2, 11)
 	res := h(ctx, msg)
 
-	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
 	require.False(t, res.IsOK())
 	require.Contains(t, res.Log,
 		"insufficient account funds; 4995"+reserveToken+",10"+token+" < 11"+token2)
@@ -563,7 +563,7 @@ func TestSellingMoreTokensThanThereIsSupplyFails(t *testing.T) {
 	res := h(ctx, newValidMsgSell(amountGTMaxSupply))
 	bondPostSell := app.BondsKeeper.MustGetBond(ctx, token)
 
-	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
 	require.False(t, res.IsOK())
 	require.Contains(t, res.Log, "insufficient account funds; 4995"+reserveToken+",10"+token+" < 10001"+token)
 	require.Equal(t, sdk.NewInt(10), userBalance.AmountOf(token))
@@ -590,9 +590,9 @@ func TestSellingABondCorrectlyPasses(t *testing.T) {
 	res := h(ctx, msg)
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
-	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
 	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
-	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
+	feeBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, initFeeAddress)
 	currentSupply := app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.True(t, res.IsOK())
 	require.Equal(t, sdk.NewInt(3997), userBalance.AmountOf(reserveToken))
@@ -610,7 +610,7 @@ func TestSwapBondDoesNotExistFails(t *testing.T) {
 	res := h(ctx, newValidMsgSwap(reserveToken, reserveToken2, 1))
 
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeBondDoesNotExist)
+	require.Equal(t, res.Code, types.CodeBondDoesNotExist)
 	require.False(t, app.BondsKeeper.BondExists(ctx, token))
 }
 
@@ -644,7 +644,7 @@ func TestSwapOrderInvalidReserveDenomsFails(t *testing.T) {
 
 	userBalance := app.AccountKeeper.GetAccount(ctx, userAddress).GetCoins()
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeReserveDenomsMismatch)
+	require.Equal(t, res.Code, types.CodeReserveDenomsMismatch)
 	require.Equal(t, sdk.NewInt(2), userBalance.AmountOf(token))
 
 	// Perform swap (invalid instead of reserveToken2)
@@ -653,7 +653,7 @@ func TestSwapOrderInvalidReserveDenomsFails(t *testing.T) {
 
 	userBalance = app.AccountKeeper.GetAccount(ctx, userAddress).GetCoins()
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeReserveDenomsMismatch)
+	require.Equal(t, res.Code, types.CodeReserveDenomsMismatch)
 	require.Equal(t, sdk.NewInt(2), userBalance.AmountOf(token))
 }
 
@@ -689,7 +689,7 @@ func TestSwapOrderQuantityLimitExceededFails(t *testing.T) {
 
 	userBalance := app.AccountKeeper.GetAccount(ctx, userAddress).GetCoins()
 	require.False(t, res.IsOK())
-	require.Equal(t, res.Code, bonds.CodeOrderQuantityLimitExceeded)
+	require.Equal(t, res.Code, types.CodeOrderQuantityLimitExceeded)
 	require.Equal(t, sdk.NewInt(2), userBalance.AmountOf(token))
 }
 
@@ -750,9 +750,9 @@ func TestSwapValidAmount(t *testing.T) {
 	res := h(ctx, newValidMsgSwap(reserveToken, reserveToken2, 10))
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
-	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
 	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
-	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
+	feeBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, initFeeAddress)
 	require.True(t, res.IsOK())
 	require.Equal(t, sdk.NewInt(89990), userBalance.AmountOf(reserveToken))
 	require.Equal(t, sdk.NewInt(90008), userBalance.AmountOf(reserveToken2))
@@ -790,9 +790,9 @@ func TestSwapValidAmountReversed(t *testing.T) {
 	res := h(ctx, newValidMsgSwap(reserveToken2, reserveToken, 10))
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
-	userBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, userAddress)
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
 	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
-	feeBalance := app.BondsKeeper.CoinKeeper.GetCoins(ctx, initFeeAddress)
+	feeBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, initFeeAddress)
 	require.True(t, res.IsOK())
 	require.Equal(t, sdk.NewInt(90008), userBalance.AmountOf(reserveToken))
 	require.Equal(t, sdk.NewInt(89990), userBalance.AmountOf(reserveToken2))

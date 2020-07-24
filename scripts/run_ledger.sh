@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 PASSWORD="12345678"
+GAS_PRICES="0.025stake"
 
 bondsd init local --chain-id bondschain-1
 

@@ -17,13 +17,13 @@ wait() {
 tx_from_m() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 tx_from_f() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 RET=$(bondscli status 2>&1)
@@ -32,6 +32,7 @@ if [[ ($RET == ERROR*) || ($RET == *'"latest_block_height": "0"'*) ]]; then
 fi
 
 PASSWORD="12345678"
+GAS_PRICES="0.025stake"
 
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
 
@@ -53,8 +54,8 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --fee-address="$FEE1" \
   --max-supply=1000000token1 \
   --order-quantity-limits="" \
-  --sanity-rate="" \
-  --sanity-margin-percentage="" \
+  --sanity-rate="0" \
+  --sanity-margin-percentage="0" \
   --allow-sells=true \
   --signers="$MIGUEL" \
   --batch-blocks=1 \
@@ -74,8 +75,8 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --fee-address="$FEE2" \
   --max-supply=1000000token2 \
   --order-quantity-limits="" \
-  --sanity-rate="" \
-  --sanity-margin-percentage="" \
+  --sanity-rate="0" \
+  --sanity-margin-percentage="0" \
   --allow-sells=true \
   --signers="$MIGUEL" \
   --batch-blocks=3 \
@@ -95,8 +96,8 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --fee-address="$FEE3" \
   --max-supply=1000000token3 \
   --order-quantity-limits="" \
-  --sanity-rate="" \
-  --sanity-margin-percentage="" \
+  --sanity-rate="0" \
+  --sanity-margin-percentage="0" \
   --allow-sells=true \
   --signers="$MIGUEL" \
   --batch-blocks=2 \
@@ -116,8 +117,8 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --fee-address="$FEE4" \
   --max-supply=1000000token4 \
   --order-quantity-limits="" \
-  --sanity-rate="" \
-  --sanity-margin-percentage="" \
+  --sanity-rate="0" \
+  --sanity-margin-percentage="0" \
   --allow-sells=true \
   --signers="$MIGUEL" \
   --batch-blocks=1 \

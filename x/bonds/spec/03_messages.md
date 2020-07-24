@@ -8,8 +8,8 @@ Bonds can be created by any address using `MsgCreateBond`.
 
 | **Field**              | **Type**         | **Description**                                                                                               |
 |:-----------------------|:-----------------|:--------------------------------------------------------------------------------------------------------------|
-| Token                  | `string`           | The denomination of the bond's tokens |
-| Name                   | `string`           | A friendly name as a title for the bond |
+| Token                  | `string`           | The denomination of the bond's tokens (e.g. `abc`, `mytoken1`) |
+| Name                   | `string`           | A friendly name as a title for the bond (e.g. `A B C`, `My Token`) |
 | Description            | `string`           | A description of what the bond represents or its purpose |
 | FunctionType           | `string`           | The type of function that will define the bonding curve (`power_function`, `sigmoid_function`, or `swapper_function`)|
 | FunctionParameters     | `FunctionParams`   | The parameters of the function defining the bonding curve (e.g. `m:12,n:2,c:100`) |
@@ -20,7 +20,7 @@ Bonds can be created by any address using `MsgCreateBond`.
 | FeeAddress             | `sdk.AccAddress`   | The address of the account that will store charged fees |
 | MaxSupply              | `sdk.Coin`         | The maximum number of bond tokens that can be minted |
 | OrderQuantityLimits    | `sdk.Coins`        | The maximum number of tokens that one can buy/sell/swap in a single order (e.g. `100abc,200res,300rez`) |
-| SanityRate             | `sdk.Dec`          | For a swapper function bond, restricts the conversion rate (`r1/r2`) to the specified value plus or minus the sanity margin percentage `0` for no sanity checks. |
+| SanityRate             | `sdk.Dec`          | For a swapper function bond, restricts the conversion rate (`r1/r2`) to the specified value plus or minus the sanity margin percentage. `0` for no sanity checks. |
 | SanityMarginPercentage | `sdk.Dec`          | Used as described above. `0` for no sanity checks. |
 | AllowSells             | `string`           | Whether or not selling is allowed (`"true"/"false"`) |
 | Signers                | `[]sdk.AccAddress` | The addresses of the accounts that must sign this message and any future message that edits the bond's parameters. |
@@ -53,17 +53,17 @@ This message is expected to fail if:
 - another bond with this token is already registered, the token is the staking token, or the token is not a valid denomination
 - name or description is an empty string
 - function type is not one of the defined function types (`power_function`, `sigmoid_function`, `swapper_function`)
-- function parameters are faulty for the selected function type:
+- function parameters are negative or invalid for the selected function type:
   - Valid example for `power_function`: `"m:12,n:2,c:100"`
   - Valid example for `sigmoid_function`: `"a:3,b:5,c:1"`
   - For `swapper_function`: `""` (no parameters)
-- reserve tokens list is faulty:
+- function parameters do not satisfy the extra parameter restrictions
+  - Function parameter `c` for `sigmoid_function` cannot be zero
+- reserve tokens list is invalid. Valid inputs are:
   - For `swapper_function`: two valid comma-separated denominations, e.g. `res,rez`
   - Otherwise: one or more valid comma-separated denominations, e.g. `res,rez,rex`
-- for `power_function` or `sigmoid_function`, reserve address is the fee address
 - tx or exit fee percentage is negative
 - sum of tx and exit fee percentages exceeds 100%
-- for `power_function` or `sigmoid_function`, fee address is the reserve address
 - order quantity limits is not one or more valid comma-separated amount
   - Valid example: `"100res,200rez"`
 - max supply value is not in the bond token denomination
@@ -74,7 +74,7 @@ This message is expected to fail if:
 - signers is not one or more valid comma-separated account addresses
 - any field is empty, except for order quantity limits, sanity rate, sanity margin percentage, and function parameters for `swapper_function`
 
-This message creates and stores the `Bond` object at appropriate indexes. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
+This message creates and stores the `Bond` object at appropriate indexes. A reserve address is generated for the bond by taking the hash of "bond/<TOKEN>/reserveAddress", where "<TOKEN>" is the unique bond token. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
 
 ## MsgEditBond
 

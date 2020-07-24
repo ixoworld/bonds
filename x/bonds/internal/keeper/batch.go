@@ -11,9 +11,11 @@ func (k Keeper) MustGetBatch(ctx sdk.Context, token string) types.Batch {
 	if !k.BatchExists(ctx, token) {
 		panic(fmt.Sprintf("batch not found for %s\n", token))
 	}
+
 	bz := store.Get(types.GetBatchKey(token))
 	var batch types.Batch
 	k.cdc.MustUnmarshalBinaryBare(bz, &batch)
+
 	return batch
 }
 
@@ -22,9 +24,11 @@ func (k Keeper) MustGetLastBatch(ctx sdk.Context, token string) types.Batch {
 	if !k.LastBatchExists(ctx, token) {
 		panic(fmt.Sprintf("last batch not found for %s\n", token))
 	}
+
 	bz := store.Get(types.GetLastBatchKey(token))
 	var batch types.Batch
 	k.cdc.MustUnmarshalBinaryBare(bz, &batch)
+
 	return batch
 }
 
@@ -235,6 +239,9 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("performed buy order for %s from %s", bo.Amount.String(), bo.Address.String()))
 
+	// Get new bond token balance
+	bondTokenBalance := k.BankKeeper.GetCoins(ctx, bo.Address).AmountOf(bond.Token)
+
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeOrderFulfill,
 		sdk.NewAttribute(types.AttributeKeyBond, bond.Token),
@@ -244,6 +251,7 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 		sdk.NewAttribute(types.AttributeKeyChargedPrices, reservePricesRounded.String()),
 		sdk.NewAttribute(types.AttributeKeyChargedFees, txFees.String()),
 		sdk.NewAttribute(types.AttributeKeyReturnedToAddress, returnToBuyer.String()),
+		sdk.NewAttribute(types.AttributeKeyNewBondTokenBalance, bondTokenBalance.String()),
 	))
 
 	return nil
@@ -262,14 +270,14 @@ func (k Keeper) PerformSellAtPrice(ctx sdk.Context, token string, so types.SellO
 
 	// Send total returns to seller (totalReturns should never be zero)
 	// TODO: investigate possibility of zero totalReturns
-	err = k.CoinKeeper.SendCoins(ctx, bond.ReserveAddress, so.Address, totalReturns)
+	err = k.BankKeeper.SendCoins(ctx, bond.ReserveAddress, so.Address, totalReturns)
 	if err != nil {
 		return err
 	}
 
 	// Send total fee to fee address
 	if !totalFees.IsZero() {
-		err := k.CoinKeeper.SendCoins(ctx, bond.ReserveAddress, bond.FeeAddress, totalFees)
+		err := k.BankKeeper.SendCoins(ctx, bond.ReserveAddress, bond.FeeAddress, totalFees)
 		if err != nil {
 			return err
 		}
@@ -281,6 +289,9 @@ func (k Keeper) PerformSellAtPrice(ctx sdk.Context, token string, so types.SellO
 	logger := k.Logger(ctx)
 	logger.Info(fmt.Sprintf("performed sell order for %s from %s", so.Amount.String(), so.Address.String()))
 
+	// Get new bond token balance
+	bondTokenBalance := k.BankKeeper.GetCoins(ctx, so.Address).AmountOf(bond.Token)
+
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeOrderFulfill,
 		sdk.NewAttribute(types.AttributeKeyBond, bond.Token),
@@ -289,6 +300,7 @@ func (k Keeper) PerformSellAtPrice(ctx sdk.Context, token string, so types.SellO
 		sdk.NewAttribute(types.AttributeKeyTokensBurned, so.Amount.Amount.String()),
 		sdk.NewAttribute(types.AttributeKeyChargedFees, txFees.String()),
 		sdk.NewAttribute(types.AttributeKeyReturnedToAddress, totalReturns.String()),
+		sdk.NewAttribute(types.AttributeKeyNewBondTokenBalance, bondTokenBalance.String()),
 	))
 
 	return nil
@@ -314,7 +326,7 @@ func (k Keeper) PerformSwap(ctx sdk.Context, token string, so types.SwapOrder) (
 	}
 
 	// Give resultant tokens to swapper (reserveReturns should never be zero)
-	err = k.CoinKeeper.SendCoins(ctx, bond.ReserveAddress, so.Address, reserveReturns)
+	err = k.BankKeeper.SendCoins(ctx, bond.ReserveAddress, so.Address, reserveReturns)
 	if err != nil {
 		return err, false
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/ixoworld/bonds/x/bonds/client"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	"net/http"
+	"strings"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
@@ -78,27 +79,17 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// Check that bond token is a valid token name
-		err = client.CheckCoinDenom(req.Token)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		// Parse function parameters
-		functionParams, err := client.ParseFunctionParams(req.FunctionParameters, req.FunctionType)
+		functionParams, err := client.ParseFunctionParams(req.FunctionParameters)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// Parse reserve tokens
-		reserveTokens, err2 := client.ParseReserveTokens(req.ReserveTokens, req.FunctionType, req.Token)
-		if err2 != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
-			return
-		}
+		reserveTokens := strings.Split(req.ReserveTokens, ",")
 
+		// Parse tx fee percentage
 		txFeePercentageDec, err := sdk.NewDecFromStr(req.TxFeePercentage)
 		if err != nil {
 			err = types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "tx fee percentage")
@@ -106,6 +97,7 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Parse exit fee percentage
 		exitFeePercentageDec, err := sdk.NewDecFromStr(req.ExitFeePercentage)
 		if err != nil {
 			err = types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "exit fee percentage")
@@ -113,32 +105,36 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		if txFeePercentageDec.Add(exitFeePercentageDec).GTE(sdk.NewDec(100)) {
-			err = types.ErrFeesCannotBeOrExceed100Percent(types.DefaultCodespace)
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		// Parse fee address
+		feeAddress, err2 := sdk.AccAddressFromBech32(req.FeeAddress)
+		if err2 != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
 			return
 		}
 
-		feeAddress, err := sdk.AccAddressFromBech32(req.FeeAddress)
+		// Parse max supply
+		maxSupply, err2 := sdk.ParseCoin(req.MaxSupply)
+		if err2 != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
+			return
+		}
+
+		// Parse order quantity limits
+		orderQuantityLimits, err2 := sdk.ParseCoins(req.OrderQuantityLimits)
+		if err2 != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
+			return
+		}
+
+		// Parse sanity rate
+		sanityRate, err := sdk.NewDecFromStr(req.SanityRate)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		maxSupply, err := client.ParseMaxSupply(req.MaxSupply, req.Token)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		orderQuantityLimits, err := sdk.ParseCoins(req.OrderQuantityLimits)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// Parse sanity
-		sanityRate, sanityMarginPercentage, err := client.ParseSanityValues(req.SanityRate, req.SanityMarginPercentage)
+		// Parse sanity margin percentage
+		sanityMarginPercentage, err := sdk.NewDecFromStr(req.SanityMarginPercentage)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -152,8 +148,9 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// Parse batch blocks
-		batchBlocks, err := client.ParseBatchBlocks(req.BatchBlocks)
-		if err != nil {
+		batchBlocks, err2 := sdk.ParseUint(req.BatchBlocks)
+		if err2 != nil {
+			err := types.ErrArgumentMissingOrNonUInteger(types.DefaultCodespace, "max batch blocks")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -163,11 +160,6 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			txFeePercentageDec, exitFeePercentageDec, feeAddress, maxSupply,
 			orderQuantityLimits, sanityRate, sanityMarginPercentage,
 			req.AllowSells, signers, batchBlocks)
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
@@ -214,11 +206,6 @@ func editBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		msg := types.NewMsgEditBond(req.Token, req.Name, req.Description,
 			req.OrderQuantityLimits, req.SanityRate, req.SanityMarginPercentage,
 			editor, signers)
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
@@ -251,7 +238,7 @@ func buyHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		bondCoin, err := client.ParseCoin(req.BondAmount, req.BondToken)
+		bondCoin, err := client.ParseTwoPartCoin(req.BondAmount, req.BondToken)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -264,12 +251,6 @@ func buyHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		msg := types.NewMsgBuy(buyer, bondCoin, maxPrices)
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }
@@ -300,19 +281,13 @@ func sellHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		bondCoin, err := client.ParseCoin(req.BondAmount, req.BondToken)
+		bondCoin, err := client.ParseTwoPartCoin(req.BondAmount, req.BondToken)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		msg := types.NewMsgSell(seller, bondCoin)
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }
@@ -345,34 +320,14 @@ func swapHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// Check that bond token is a valid token name
-		err = client.CheckCoinDenom(req.BondToken)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		// Check that from amount and token can be parsed to a coin
-		fromCoin, err := client.ParseCoin(req.FromAmount, req.FromToken)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// Check that ToToken is a valid token name
-		err = client.CheckCoinDenom(req.ToToken)
+		fromCoin, err := client.ParseTwoPartCoin(req.FromAmount, req.FromToken)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		msg := types.NewMsgSwap(swapper, req.BondToken, fromCoin, req.ToToken)
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }
