@@ -15,7 +15,7 @@ const (
 	AnyNumberOfReserveTokens = -1
 )
 
-type FunctionParamRestrictions func(paramsMap map[string]sdk.Int) sdk.Error
+type FunctionParamRestrictions func(paramsMap map[string]sdk.Dec) sdk.Error
 
 var (
 	RequiredParamsForFunctionType = map[string][]string{
@@ -31,7 +31,7 @@ var (
 	}
 
 	ExtraParameterRestrictions = map[string]FunctionParamRestrictions{
-		PowerFunction:   nil,
+		PowerFunction:   powerParameterRestrictions,
 		SigmoidFunction: sigmoidParameterRestrictions,
 		SwapperFunction: nil,
 	}
@@ -39,10 +39,10 @@ var (
 
 type FunctionParam struct {
 	Param string  `json:"param" yaml:"param"`
-	Value sdk.Int `json:"value" yaml:"value"`
+	Value sdk.Dec `json:"value" yaml:"value"`
 }
 
-func NewFunctionParam(param string, value sdk.Int) FunctionParam {
+func NewFunctionParam(param string, value sdk.Dec) FunctionParam {
 	return FunctionParam{
 		Param: param,
 		Value: value,
@@ -68,7 +68,7 @@ func (fps FunctionParams) Validate(functionType string) sdk.Error {
 	for _, p := range expectedParams {
 		val, ok := paramsMap[p]
 		if !ok {
-			return ErrFunctionParameterMissingOrNonInteger(DefaultCodespace, p)
+			return ErrFunctionParameterMissingOrNonFloat(DefaultCodespace, p)
 		} else if val.IsNegative() {
 			return ErrArgumentCannotBeNegative(DefaultCodespace, "FunctionParams:"+p)
 		}
@@ -101,15 +101,26 @@ func (fps FunctionParams) String() (result string) {
 	return result + "}"
 }
 
-func (fps FunctionParams) AsMap() (paramsMap map[string]sdk.Int) {
-	paramsMap = make(map[string]sdk.Int)
+func (fps FunctionParams) AsMap() (paramsMap map[string]sdk.Dec) {
+	paramsMap = make(map[string]sdk.Dec)
 	for _, fp := range fps {
 		paramsMap[fp.Param] = fp.Value
 	}
 	return paramsMap
 }
 
-func sigmoidParameterRestrictions(paramsMap map[string]sdk.Int) sdk.Error {
+func powerParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
+	// Power exception 1: n must be an integer, otherwise x^n loop does not work
+	val, ok := paramsMap["n"]
+	if !ok {
+		panic("did not find parameter n for power function")
+	} else if !val.TruncateDec().Equal(val) {
+		return ErrArgumentMustBeInteger(DefaultCodespace, "FunctionParams:n")
+	}
+	return nil
+}
+
+func sigmoidParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
 	// Sigmoid exception 1: c != 0, otherwise we run into divisions by zero
 	val, ok := paramsMap["c"]
 	if !ok {
@@ -191,27 +202,27 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 	}
 
 	args := bond.FunctionParameters.AsMap()
-	x := supply
+	x := sdk.NewDecFromInt(supply)
 	switch bond.FunctionType {
 	case PowerFunction:
 		// TODO: should try using simpler approach, especially
 		//       if function params are changed to decimals
 		m := args["m"]
-		n64 := args["n"].Int64()
+		n64 := args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
 		temp := x
 		for i := n64; i > 1; i-- {
 			temp = temp.Mul(x)
 		}
-		result = bond.GetNewReserveDecCoins(sdk.NewDecFromInt(temp.Mul(m).Add(c)))
+		result = bond.GetNewReserveDecCoins(temp.Mul(m).Add(c))
 	case SigmoidFunction:
-		aDec := sdk.NewDecFromInt(args["a"])
+		a := args["a"]
 		b := args["b"]
 		c := args["c"]
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
-		temp3 := SquareRootInt(temp2)
-		result = bond.GetNewReserveDecCoins(aDec.Mul(sdk.NewDecFromInt(temp1).Quo(temp3).Add(sdk.OneDec())))
+		temp3 := SquareRootDec(temp2)
+		result = bond.GetNewReserveDecCoins(a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
 	case SwapperFunction:
 		return nil, ErrFunctionNotAvailableForFunctionType(DefaultCodespace)
 	default:
@@ -245,30 +256,30 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 	}
 
 	args := bond.FunctionParameters.AsMap()
-	x, xDec := supply, sdk.NewDecFromInt(supply)
+	x := sdk.NewDecFromInt(supply)
 	switch bond.FunctionType {
 	case PowerFunction:
 		// TODO: should try using simpler approach, especially
 		//       if function params are changed to decimals
 		m := args["m"]
-		n, n64 := args["n"], args["n"].Int64()
+		n, n64 := args["n"], args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
 		temp1 := x
 		for i := n64 + 1; i > 1; i-- {
 			temp1 = temp1.Mul(x)
 		}
-		temp2 := sdk.NewDecFromInt(temp1.Mul(m)).Quo(sdk.NewDecFromInt(n.Add(sdk.OneInt())))
-		temp3 := sdk.NewDecFromInt(x.Mul(c))
+		temp2 := temp1.Mul(m).Quo(n.Add(sdk.OneDec()))
+		temp3 := x.Mul(c)
 		result = temp2.Add(temp3)
 	case SigmoidFunction:
-		aDec := sdk.NewDecFromInt(args["a"])
-		b, bDec := args["b"], sdk.NewDecFromInt(args["b"])
-		c, cDec := args["c"], sdk.NewDecFromInt(args["c"])
+		a := args["a"]
+		b := args["b"]
+		c := args["c"]
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
-		temp3 := SquareRootInt(temp2)
-		temp5 := aDec.Mul(temp3.Add(xDec))
-		constant := aDec.Mul(SquareRootDec(bDec.Mul(bDec).Add(cDec)))
+		temp3 := SquareRootDec(temp2)
+		temp5 := a.Mul(temp3.Add(x))
+		constant := a.Mul(SquareRootDec(b.Mul(b).Add(c)))
 		result = temp5.Sub(constant)
 	case SwapperFunction:
 		panic("invalid function for function type")

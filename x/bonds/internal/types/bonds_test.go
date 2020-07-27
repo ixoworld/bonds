@@ -10,10 +10,10 @@ import (
 
 func TestFunctionParamsAsMap(t *testing.T) {
 	actualResult := functionParametersPower.AsMap()
-	expectedResult := map[string]sdk.Int{
-		"m": sdk.NewInt(12),
-		"n": sdk.NewInt(2),
-		"c": sdk.NewInt(100),
+	expectedResult := map[string]sdk.Dec{
+		"m": sdk.NewDec(12),
+		"n": sdk.NewDec(2),
+		"c": sdk.NewDec(100),
 	}
 	require.Equal(t, expectedResult, actualResult)
 }
@@ -24,9 +24,16 @@ func TestFunctionParamsStringWithZeroParameters(t *testing.T) {
 		expected string
 	}{
 		{FunctionParams{}, "{}"},
-		{FunctionParams{NewFunctionParam("a", sdk.OneInt())}, "{a:1}"},
-		{functionParametersPower, "{m:12,n:2,c:100}"},
-		{functionParametersSigmoid, "{a:3,b:5,c:1}"},
+		{FunctionParams{NewFunctionParam("a", sdk.OneDec())},
+			"{a:1.000000000000000000}"},
+		{functionParametersPower,
+			"{m:12.000000000000000000," +
+				"n:2.000000000000000000," +
+				"c:100.000000000000000000}"},
+		{functionParametersSigmoid,
+			"{a:3.000000000000000000," +
+				"b:5.000000000000000000," +
+				"c:1.000000000000000000}"},
 	}
 	for _, tc := range testCases {
 		require.Equal(t, tc.expected, tc.params.String())
@@ -35,7 +42,8 @@ func TestFunctionParamsStringWithZeroParameters(t *testing.T) {
 
 func TestFunctionParamsAsMapReturnIsAsExpected(t *testing.T) {
 	actualResult := functionParametersPower.AsMap()
-	expectedResult := map[string]sdk.Int{"m": sdk.NewInt(12), "n": sdk.NewInt(2), "c": sdk.NewInt(100)}
+	expectedResult := map[string]sdk.Dec{
+		"m": sdk.NewDec(12), "n": sdk.NewDec(2), "c": sdk.NewDec(100)}
 	require.Equal(t, expectedResult, actualResult)
 }
 
@@ -92,10 +100,14 @@ func TestGetPriceAtSupply(t *testing.T) {
 		expected          string
 		functionAvailable bool
 	}{
-		{PowerFunction, functionParametersPower, multitokenReserve, sdk.NewInt(0), "100", true},
-		{PowerFunction, functionParametersPower, multitokenReserve, sdk.NewInt(1000), "12000100", true},
-		{SigmoidFunction, functionParametersSigmoid, multitokenReserve, sdk.NewInt(1000), "5.999998484889207399", true},
-		{SwapperFunction, nil, swapperReserves, sdk.NewInt(100), "100", false},
+		{PowerFunction, functionParametersPower, multitokenReserve,
+			sdk.NewInt(0), "100", true},
+		{PowerFunction, functionParametersPower, multitokenReserve,
+			sdk.NewInt(1000), "12000100", true},
+		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
+			sdk.NewInt(1000), "5.999998484889207399", true},
+		{SwapperFunction, nil, swapperReserves,
+			sdk.NewInt(100), "100", false},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
@@ -131,9 +143,12 @@ func TestGetCurrentPrices(t *testing.T) {
 		reserveBalances sdk.Coins
 		expected        string
 	}{
-		{PowerFunction, functionParametersPower, multitokenReserve, sdk.NewInt(100), nil, "120100"},
-		{SigmoidFunction, functionParametersSigmoid, multitokenReserve, sdk.NewInt(100), nil, "5.999833808828064549"},
-		{SwapperFunction, nil, swapperReserves, sdk.NewInt(100), swapperReserveBalances, "100"},
+		{PowerFunction, functionParametersPower, multitokenReserve,
+			sdk.NewInt(100), nil, "120100"},
+		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
+			sdk.NewInt(100), nil, "5.999833808828064549"},
+		{SwapperFunction, nil, swapperReserves,
+			sdk.NewInt(100), swapperReserveBalances, "100"},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
@@ -157,15 +172,23 @@ func TestCurveIntegral(t *testing.T) {
 		supply         sdk.Int
 		expected       string
 	}{
-		{PowerFunction, functionParametersPower, sdk.NewInt(100), "4010000"},
-		{PowerFunction, functionParametersPower, maxInt64, "3138550867693340380897047610841017818694071568064447512472.0"},
-		{PowerFunction, functionParametersPowerHuge, sdk.NewInt(5), "390525200604461289807786418456824866174854670846050992460534124091120.049504950495049505"},
-		//{PowerFunction, functionParametersPowerHuge, sdk.NewInt(6), ""}, // causes integer overflow
+		{PowerFunction, functionParametersPower, sdk.NewInt(100),
+			"4010000"},
+		{PowerFunction, functionParametersPower, maxInt64,
+			"3138550867693340380897047610841017818694071568064447512472.0"},
+		{PowerFunction, functionParametersPowerHuge, sdk.NewInt(5),
+			"390525200604461289807786418456824866174854670846050992460534124091120.049504950495049505"},
+		//{PowerFunction, functionParametersPowerHuge, sdk.NewInt(6),
+		//	""}, // causes integer overflow
 
-		{SigmoidFunction, functionParametersSigmoid, sdk.NewInt(100), "569.718730497"},
-		{SigmoidFunction, functionParametersSigmoid, maxInt64, "55340232221128654811.702941461"},
-		{SigmoidFunction, functionParametersSigmoidHuge, sdk.NewInt(1), "13043817821891587770.728894534000000000"},
-		{SigmoidFunction, functionParametersSigmoidHuge, maxInt64, "170141183460469231685570443531610226691.0"},
+		{SigmoidFunction, functionParametersSigmoid, sdk.NewInt(100),
+			"569.718730497"},
+		{SigmoidFunction, functionParametersSigmoid, maxInt64,
+			"55340232221128654811.702941461"},
+		{SigmoidFunction, functionParametersSigmoidHuge, sdk.NewInt(1),
+			"13043817821891587770.728894534000000000"},
+		{SigmoidFunction, functionParametersSigmoidHuge, maxInt64,
+			"170141183460469231685570443531610226691.0"},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
@@ -197,7 +220,8 @@ func TestGetReserveDeltaForLiquidityDelta(t *testing.T) {
 	for _, tc := range testCases {
 		bond.CurrentSupply = sdk.NewCoin(bond.Token, tc.currentSupply)
 
-		actualResult := bond.GetReserveDeltaForLiquidityDelta(tc.liquidityDelta, reserveBalances)
+		actualResult := bond.GetReserveDeltaForLiquidityDelta(
+			tc.liquidityDelta, reserveBalances)
 		expectedResult := NewDecMultitokenReserveFromInt(50000)
 		require.Equal(t, expectedResult, actualResult)
 	}
@@ -226,13 +250,20 @@ func TestGetPricesToMint(t *testing.T) {
 		expectedPrice   string
 		fails           bool
 	}{
-		{PowerFunction, functionParametersPower, multitokenReserve, reserveBalances1000, sdk.ZeroInt(), sdk.NewInt(100), "4000000", false},
-		{PowerFunction, functionParametersPower, multitokenReserve, nil, sdk.ZeroInt(), sdk.NewInt(100), "4010000", false},
-		{SigmoidFunction, functionParametersSigmoid, multitokenReserve, nil, sdk.ZeroInt(), sdk.NewInt(100), "569.718730497", false},
-		{SigmoidFunction, functionParametersSigmoid, multitokenReserve, reserveBalances10, sdk.ZeroInt(), sdk.NewInt(100), "559.718730497", false},
-		{SwapperFunction, FunctionParams{}, swapperReserves, reserveBalances1000, sdk.NewInt(2), sdk.NewInt(10), "50000", false},
-		{SwapperFunction, FunctionParams{}, swapperReserves, nil, sdk.NewInt(2), sdk.NewInt(10), "0", false}, // impossible scenario
-		{SwapperFunction, FunctionParams{}, swapperReserves, nil, sdk.ZeroInt(), sdk.NewInt(10), "0", true},
+		{PowerFunction, functionParametersPower, multitokenReserve,
+			reserveBalances1000, sdk.ZeroInt(), sdk.NewInt(100), "4000000", false},
+		{PowerFunction, functionParametersPower, multitokenReserve,
+			nil, sdk.ZeroInt(), sdk.NewInt(100), "4010000", false},
+		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
+			nil, sdk.ZeroInt(), sdk.NewInt(100), "569.718730497", false},
+		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
+			reserveBalances10, sdk.ZeroInt(), sdk.NewInt(100), "559.718730497", false},
+		{SwapperFunction, FunctionParams{}, swapperReserves,
+			reserveBalances1000, sdk.NewInt(2), sdk.NewInt(10), "50000", false},
+		{SwapperFunction, FunctionParams{}, swapperReserves,
+			nil, sdk.NewInt(2), sdk.NewInt(10), "0", false}, // impossible scenario
+		{SwapperFunction, FunctionParams{}, swapperReserves,
+			nil, sdk.ZeroInt(), sdk.NewInt(10), "0", true},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
@@ -275,9 +306,12 @@ func TestGetReturnsForBurn(t *testing.T) {
 		amount          sdk.Int
 		expectedReturn  string
 	}{
-		{PowerFunction, functionParametersPower, multitokenReserve, reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "128"},
-		{SigmoidFunction, functionParametersSigmoid, multitokenReserve, reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "231.927741664"},
-		{SwapperFunction, FunctionParams{}, swapperReserves, swapperReserveBalances, sdk.NewInt(2), sdk.OneInt(), "5000"},
+		{PowerFunction, functionParametersPower, multitokenReserve,
+			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "128"},
+		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
+			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "231.927741664"},
+		{SwapperFunction, FunctionParams{}, swapperReserves,
+			swapperReserveBalances, sdk.NewInt(2), sdk.OneInt(), "5000"},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
@@ -305,9 +339,11 @@ func TestGetReturnsForSwap(t *testing.T) {
 
 	zeroPoint1Percent := sdk.MustNewDecFromStr("0.001")
 	largeInput := maxInt64
-	largeFee := sdk.NewDecFromInt(largeInput).Mul(zeroPoint1Percent).Ceil().TruncateInt()
+	largeFee := sdk.NewDecFromInt(largeInput).Mul(
+		zeroPoint1Percent).Ceil().TruncateInt()
 	smallInput := sdk.NewInt(3) // but not too small
-	smallFee := sdk.NewDecFromInt(smallInput).Mul(zeroPoint1Percent).Ceil().TruncateInt()
+	smallFee := sdk.NewDecFromInt(smallInput).Mul(
+		zeroPoint1Percent).Ceil().TruncateInt()
 
 	testCases := []struct {
 		bondTxFee           string
@@ -319,18 +355,26 @@ func TestGetReturnsForSwap(t *testing.T) {
 		amountInvalid       bool // too large or too small
 		invalidReserveToken bool
 	}{
-		{"0.1", reserveToken, reserveToken2, smallInput, sdk.OneInt(), smallFee, false, false},
-		{"0.1", reserveToken, reserveToken2, sdk.NewInt(2), sdk.OneInt(), sdk.OneInt(), true, false},
-		{"0.1", reserveToken, reserveToken2, sdk.NewInt(1), sdk.OneInt(), sdk.OneInt(), true, false},
-		{"0.1", reserveToken, reserveToken2, sdk.NewInt(0), sdk.OneInt(), sdk.OneInt(), true, false},
-		{"0.1", reserveToken, reserveToken2, largeInput, sdk.NewInt(9999), largeFee, false, false},
-		{"0.1", reserveToken, "dummytoken", sdk.NewInt(3), sdk.OneInt(), sdk.OneInt(), false, true},  // identical to first case but dummytoken
-		{"0.1", "dummytoken", reserveToken2, sdk.NewInt(3), sdk.OneInt(), sdk.OneInt(), false, true}, // identical to first case but dummytoken
+		{"0.1", reserveToken, reserveToken2, smallInput, sdk.OneInt(),
+			smallFee, false, false},
+		{"0.1", reserveToken, reserveToken2, sdk.NewInt(2), sdk.OneInt(),
+			sdk.OneInt(), true, false},
+		{"0.1", reserveToken, reserveToken2, sdk.NewInt(1), sdk.OneInt(),
+			sdk.OneInt(), true, false},
+		{"0.1", reserveToken, reserveToken2, sdk.NewInt(0), sdk.OneInt(),
+			sdk.OneInt(), true, false},
+		{"0.1", reserveToken, reserveToken2, largeInput, sdk.NewInt(9999),
+			largeFee, false, false},
+		{"0.1", reserveToken, "dummytoken", sdk.NewInt(3), sdk.OneInt(),
+			sdk.OneInt(), false, true}, // identical to first case but dummytoken
+		{"0.1", "dummytoken", reserveToken2, sdk.NewInt(3), sdk.OneInt(),
+			sdk.OneInt(), false, true}, // identical to first case but dummytoken
 	}
 	for _, tc := range testCases {
 		bond.TxFeePercentage = sdk.MustNewDecFromStr(tc.bondTxFee)
 		fromAmount := sdk.NewCoin(tc.from, tc.amount)
-		actualResult, actualFee, err := bond.GetReturnsForSwap(fromAmount, tc.to, reserveBalances)
+		actualResult, actualFee, err := bond.GetReturnsForSwap(
+			fromAmount, tc.to, reserveBalances)
 		if tc.amountInvalid {
 			require.Error(t, err)
 			require.Equal(t, err.Code(), CodeSwapAmountInvalid)
@@ -385,7 +429,8 @@ func TestBondGetTxFee(t *testing.T) {
 		{"0.000002", sdk.ZeroDec(), 0},
 	}
 	for _, tc := range testCases {
-		inputToken := sdk.NewDecCoinFromDec(reserveToken, sdk.MustNewDecFromStr(tc.input))
+		inputToken := sdk.NewDecCoinFromDec(reserveToken,
+			sdk.MustNewDecFromStr(tc.input))
 		expected := sdk.NewInt64Coin(reserveToken, tc.expected)
 
 		bond.TxFeePercentage = tc.txFeePercentage
@@ -414,7 +459,8 @@ func TestBondGetExitFee(t *testing.T) {
 		{"0.000002", sdk.ZeroDec(), 0},
 	}
 	for _, tc := range testCases {
-		inputToken := sdk.NewDecCoinFromDec(reserveToken, sdk.MustNewDecFromStr(tc.input))
+		inputToken := sdk.NewDecCoinFromDec(reserveToken,
+			sdk.MustNewDecFromStr(tc.input))
 		expected := sdk.NewInt64Coin(reserveToken, tc.expected)
 
 		bond.ExitFeePercentage = tc.exitFeePercentage
@@ -541,7 +587,8 @@ func TestAnyOrderQuantityLimitsExceeded(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		amounts, _ := sdk.ParseCoins(tc.amounts)
-		require.Equal(t, tc.exceedsAnyLimit, bond.AnyOrderQuantityLimitsExceeded(amounts))
+		require.Equal(t, tc.exceedsAnyLimit,
+			bond.AnyOrderQuantityLimitsExceeded(amounts))
 	}
 }
 
@@ -558,15 +605,24 @@ func TestReservesViolateSanityRateReturnsFalseWhenSanityRateIsZero(t *testing.T)
 		sanityMarginPercentage string
 		violates               bool
 	}{
-		{fmt.Sprintf(" 500%s,1000%s", r1, r2), "0", "0", false},     // no sanity checks
-		{fmt.Sprintf("1000%s,1000%s", r1, r2), "0", "0", false},     // no sanity checks
-		{fmt.Sprintf(" 500%s,1000%s", r1, r2), "0.5", "0", false},   //  500/1000 == 0.5
-		{fmt.Sprintf("1000%s,1000%s", r1, r2), "0.5", "0", true},    // 1000/1000 != 0.5
-		{fmt.Sprintf(" 100%s,1000%s", r1, r2), "0.5", "0", true},    //  100/1000 != 0.5
-		{fmt.Sprintf(" 100%s,1000%s", r1, r2), "0.5", "79", true},   // 0.5+-79% => 0.105 to 0.895, and 100/1000 is in not this range
-		{fmt.Sprintf(" 100%s,1000%s", r1, r2), "0.5", "80", false},  // 0.5+-80% => 0.100 to 0.900, and 100/1000 is in this range
-		{fmt.Sprintf(" 100%s,1000%s", r1, r2), "0.5", "81", false},  // 0.5+-81% => 0.095 to 0.905, and 100/1000 is in this range
-		{fmt.Sprintf(" 100%s,1000%s", r1, r2), "0.5", "101", false}, // identical to above but negative lower limit gets rounded to 0
+		{fmt.Sprintf(" 500%s,1000%s", r1, r2),
+			"0", "0", false}, // no sanity checks
+		{fmt.Sprintf("1000%s,1000%s", r1, r2),
+			"0", "0", false}, // no sanity checks
+		{fmt.Sprintf(" 500%s,1000%s", r1, r2),
+			"0.5", "0", false}, //  500/1000 == 0.5
+		{fmt.Sprintf("1000%s,1000%s", r1, r2),
+			"0.5", "0", true}, // 1000/1000 != 0.5
+		{fmt.Sprintf(" 100%s,1000%s", r1, r2),
+			"0.5", "0", true}, //  100/1000 != 0.5
+		{fmt.Sprintf(" 100%s,1000%s", r1, r2),
+			"0.5", "79", true}, // 0.5+-79% => 0.105 to 0.895, and 100/1000 is in not this range
+		{fmt.Sprintf(" 100%s,1000%s", r1, r2),
+			"0.5", "80", false}, // 0.5+-80% => 0.100 to 0.900, and 100/1000 is in this range
+		{fmt.Sprintf(" 100%s,1000%s", r1, r2),
+			"0.5", "81", false}, // 0.5+-81% => 0.095 to 0.905, and 100/1000 is in this range
+		{fmt.Sprintf(" 100%s,1000%s", r1, r2),
+			"0.5", "101", false}, // identical to above but negative lower limit gets rounded to 0
 	}
 	for _, tc := range testCases {
 		reserves, _ := sdk.ParseCoins(tc.reserves)

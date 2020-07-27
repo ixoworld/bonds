@@ -62,18 +62,18 @@ func ErrArgumentMustBePositive(codespace sdk.CodespaceType, arg string) sdk.Erro
 	return sdk.NewError(codespace, CodeArgumentInvalid, errMsg)
 }
 
-func ErrFunctionParameterMissingOrNonInteger(codespace sdk.CodespaceType, param string) sdk.Error {
-	errMsg := fmt.Sprintf("%s parameter is missing or is not an integer", param)
+func ErrArgumentMustBeInteger(codespace sdk.CodespaceType, arg string) sdk.Error {
+	errMsg := fmt.Sprintf("%s argument must be an integer value", arg)
+	return sdk.NewError(codespace, CodeArgumentInvalid, errMsg)
+}
+
+func ErrFunctionParameterMissingOrNonFloat(codespace sdk.CodespaceType, param string) sdk.Error {
+	errMsg := fmt.Sprintf("%s parameter is missing or is not a float", param)
 	return sdk.NewError(codespace, CodeArgumentMissingOrIncorrectType, errMsg)
 }
 
 func ErrArgumentMissingOrNonFloat(codespace sdk.CodespaceType, arg string) sdk.Error {
 	errMsg := fmt.Sprintf("%s argument is missing or is not a float", arg)
-	return sdk.NewError(codespace, CodeArgumentMissingOrIncorrectType, errMsg)
-}
-
-func ErrArgumentMissingOrNonInteger(codespace sdk.CodespaceType, arg string) sdk.Error {
-	errMsg := fmt.Sprintf("%s argument is missing or is not an integer", arg)
 	return sdk.NewError(codespace, CodeArgumentMissingOrIncorrectType, errMsg)
 }
 

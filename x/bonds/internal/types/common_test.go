@@ -15,22 +15,22 @@ var (
 	reserveToken3               = "rec"
 
 	functionParametersPower = FunctionParams{
-		NewFunctionParam("m", sdk.NewInt(12)),
-		NewFunctionParam("n", sdk.NewInt(2)),
-		NewFunctionParam("c", sdk.NewInt(100))}
+		NewFunctionParam("m", sdk.NewDec(12)),
+		NewFunctionParam("n", sdk.NewDec(2)),
+		NewFunctionParam("c", sdk.NewDec(100))}
 	functionParametersSigmoid = FunctionParams{
-		NewFunctionParam("a", sdk.NewInt(3)),
-		NewFunctionParam("b", sdk.NewInt(5)),
-		NewFunctionParam("c", sdk.NewInt(1))}
+		NewFunctionParam("a", sdk.NewDec(3)),
+		NewFunctionParam("b", sdk.NewDec(5)),
+		NewFunctionParam("c", sdk.NewDec(1))}
 
 	functionParametersPowerHuge = FunctionParams{
-		NewFunctionParam("m", sdk.NewInt(1)),
-		NewFunctionParam("n", sdk.NewInt(100)),
-		NewFunctionParam("c", sdk.NewInt(0))}
+		NewFunctionParam("m", sdk.NewDec(1)),
+		NewFunctionParam("n", sdk.NewDec(100)),
+		NewFunctionParam("c", sdk.NewDec(0))}
 	functionParametersSigmoidHuge = FunctionParams{
-		NewFunctionParam("a", sdk.NewInt(int64(^uint64(0)>>1))),
-		NewFunctionParam("b", sdk.NewInt(0)),
-		NewFunctionParam("c", sdk.NewInt(1))}
+		NewFunctionParam("a", sdk.NewDec(int64(^uint64(0)>>1))),
+		NewFunctionParam("b", sdk.NewDec(0)),
+		NewFunctionParam("c", sdk.NewDec(1))}
 
 	powerReserves     = []string{reserveToken}
 	multitokenReserve = []string{reserveToken, reserveToken2}

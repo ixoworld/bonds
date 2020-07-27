@@ -30,9 +30,9 @@ func TestDecodeStore(t *testing.T) {
 	creator := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	functionType := types.PowerFunction
 	functionParameters := types.FunctionParams{
-		types.NewFunctionParam("m", sdk.NewInt(12)),
-		types.NewFunctionParam("n", sdk.NewInt(2)),
-		types.NewFunctionParam("c", sdk.NewInt(100))}
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(100))}
 	reserveTokens := []string{"reservetoken"}
 	reserveAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	txFeePercentage := sdk.MustNewDecFromStr("0.1")
@@ -59,9 +59,12 @@ func TestDecodeStore(t *testing.T) {
 	lastBatch := types.NewBatch(bond.Token, bond.BatchBlocks)
 
 	kvPairs := cmn.KVPairs{
-		cmn.KVPair{Key: types.GetBondKey(token), Value: cdc.MustMarshalBinaryBare(bond)},
-		cmn.KVPair{Key: types.GetBatchKey(token), Value: cdc.MustMarshalBinaryBare(batch)},
-		cmn.KVPair{Key: types.GetLastBatchKey(token), Value: cdc.MustMarshalBinaryBare(lastBatch)},
+		cmn.KVPair{Key: types.GetBondKey(token),
+			Value: cdc.MustMarshalBinaryBare(bond)},
+		cmn.KVPair{Key: types.GetBatchKey(token),
+			Value: cdc.MustMarshalBinaryBare(batch)},
+		cmn.KVPair{Key: types.GetLastBatchKey(token),
+			Value: cdc.MustMarshalBinaryBare(lastBatch)},
 		cmn.KVPair{Key: []byte{0x99}, Value: []byte{0x99}},
 	}
 
@@ -80,9 +83,12 @@ func TestDecodeStore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			switch i {
 			case len(tests) - 1:
-				require.Panics(t, func() { DecodeStore(cdc, kvPairs[i], kvPairs[i]) }, tt.name)
+				require.Panics(t, func() {
+					DecodeStore(cdc, kvPairs[i], kvPairs[i])
+				}, tt.name)
 			default:
-				require.Equal(t, tt.expectedLog, DecodeStore(cdc, kvPairs[i], kvPairs[i]), tt.name)
+				require.Equal(t, tt.expectedLog,
+					DecodeStore(cdc, kvPairs[i], kvPairs[i]), tt.name)
 			}
 		})
 	}

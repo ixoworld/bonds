@@ -21,13 +21,13 @@ var (
 	reserveToken2               = "rez"
 
 	functionParametersPower = types.FunctionParams{
-		types.NewFunctionParam("m", sdk.NewInt(12)),
-		types.NewFunctionParam("n", sdk.NewInt(2)),
-		types.NewFunctionParam("c", sdk.NewInt(100))}
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(100))}
 	//functionParametersSigmoid = types.FunctionParams{
-	//	types.NewFunctionParam("a", sdk.NewInt(3)),
-	//	types.NewFunctionParam("b", sdk.NewInt(5)),
-	//	types.NewFunctionParam("c", sdk.NewInt(1))}
+	//	types.NewFunctionParam("a", sdk.NewDec(3)),
+	//	types.NewFunctionParam("b", sdk.NewDec(5)),
+	//	types.NewFunctionParam("c", sdk.NewDec(1))}
 
 	powerReserves   = []string{reserveToken}
 	swapperReserves = []string{reserveToken, reserveToken2}

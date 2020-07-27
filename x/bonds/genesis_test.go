@@ -21,9 +21,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	creator := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	functionType := types.PowerFunction
 	functionParameters := types.FunctionParams{
-		types.NewFunctionParam("m", sdk.NewInt(12)),
-		types.NewFunctionParam("n", sdk.NewInt(2)),
-		types.NewFunctionParam("c", sdk.NewInt(100))}
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(100))}
 	reserveTokens := []string{"reservetoken"}
 	reserveAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	txFeePercentage := sdk.MustNewDecFromStr("0.1")

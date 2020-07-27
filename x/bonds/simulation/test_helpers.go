@@ -62,17 +62,17 @@ func getRandomFunctionParameters(r *rand.Rand, functionType string) types.Functi
 		n := simulation.RandIntBetween(r, 1, 5)    // 5
 		c := simulation.RandIntBetween(r, 1, 1000) // 100
 		return types.FunctionParams{
-			types.NewFunctionParam("m", sdk.NewInt(int64(m))),
-			types.NewFunctionParam("n", sdk.NewInt(int64(n))),
-			types.NewFunctionParam("c", sdk.NewInt(int64(c)))}
+			types.NewFunctionParam("m", sdk.NewDec(int64(m))),
+			types.NewFunctionParam("n", sdk.NewDec(int64(n))),
+			types.NewFunctionParam("c", sdk.NewDec(int64(c)))}
 	case types.SigmoidFunction:
 		a := simulation.RandIntBetween(r, 1, 10) // 3
 		b := simulation.RandIntBetween(r, 1, 10) // 5
 		c := simulation.RandIntBetween(r, 1, 10) // 1
 		return types.FunctionParams{
-			types.NewFunctionParam("a", sdk.NewInt(int64(a))),
-			types.NewFunctionParam("b", sdk.NewInt(int64(b))),
-			types.NewFunctionParam("c", sdk.NewInt(int64(c)))}
+			types.NewFunctionParam("a", sdk.NewDec(int64(a))),
+			types.NewFunctionParam("b", sdk.NewDec(int64(b))),
+			types.NewFunctionParam("c", sdk.NewDec(int64(c)))}
 	case types.SwapperFunction:
 		return nil
 	default:

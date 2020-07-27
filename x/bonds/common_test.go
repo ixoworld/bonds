@@ -21,9 +21,9 @@ var (
 	userAddress    = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	functionParametersPower = types.FunctionParams{
-		types.NewFunctionParam("m", sdk.NewInt(12)),
-		types.NewFunctionParam("n", sdk.NewInt(2)),
-		types.NewFunctionParam("c", sdk.NewInt(100)),
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(100)),
 	}
 
 	powerReserves   = []string{reserveToken}
