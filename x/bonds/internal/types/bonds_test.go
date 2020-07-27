@@ -88,7 +88,7 @@ func TestGetNewReserveDecCoins(t *testing.T) {
 	require.Equal(t, expectedResult, actualResult)
 }
 
-func TestGetPriceAtSupply(t *testing.T) {
+func TestGetPricesAtSupply(t *testing.T) {
 	bond := getValidBond()
 	// TODO: add more test cases
 
