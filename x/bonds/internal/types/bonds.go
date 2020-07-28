@@ -225,8 +225,6 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 	x := sdk.NewDecFromInt(supply)
 	switch bond.FunctionType {
 	case PowerFunction:
-		// TODO: should try using simpler approach, especially
-		//       if function params are changed to decimals
 		m := args["m"]
 		n64 := args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
@@ -284,8 +282,6 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 	x := sdk.NewDecFromInt(supply)
 	switch bond.FunctionType {
 	case PowerFunction:
-		// TODO: should try using simpler approach, especially
-		//       if function params are changed to decimals
 		m := args["m"]
 		n, n64 := args["n"], args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
