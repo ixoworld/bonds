@@ -4,10 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// integer_units = 10**12 // account for decimal places to a token
-// scale_units = 10**6 // millions of tokens, million of DAI
-// mu = integer_units*scale_units
-
 // value function for a given state (R,S)
 func Invariant(R, S sdk.Dec, kappa int64) sdk.Dec {
 	return Power(S, uint64(kappa)).Quo(R)

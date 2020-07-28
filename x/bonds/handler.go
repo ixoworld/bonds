@@ -81,7 +81,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 	// blacklisted addresses (but no guarantee that this will be sufficient), or
 	// (ii) use a global res. address and store (in the bond) the share of the pool.
 
-	// Add R0, S0, V0 parameters
+	// Add R0, S0, V0 as parameters for quick access and for a level of permanence
 	functionParameters := msg.FunctionParameters
 	if msg.FunctionType == types.AugmentedFunction {
 		paramsMap := functionParameters.AsMap()
@@ -90,9 +90,8 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		theta, _ := paramsMap["theta"]
 		kappa, _ := paramsMap["kappa"]
 
-		R0 := d0.Mul(sdk.OneDec().Sub(theta)) // million DAI
+		R0 := d0.Mul(sdk.OneDec().Sub(theta))
 		S0 := d0.Quo(p0)
-
 		V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
 
 		functionParameters = append(functionParameters, types.FunctionParams{
