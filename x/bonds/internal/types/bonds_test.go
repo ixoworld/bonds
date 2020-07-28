@@ -18,25 +18,26 @@ func TestFunctionParamsAsMap(t *testing.T) {
 	require.Equal(t, expectedResult, actualResult)
 }
 
-func TestFunctionParamsStringWithZeroParameters(t *testing.T) {
+func TestFunctionParamsString(t *testing.T) {
 	testCases := []struct {
 		params   FunctionParams
 		expected string
 	}{
-		{FunctionParams{}, "{}"},
+		// Note: square brackets added below in the require.Equal()
+		{FunctionParams{}, ""},
 		{FunctionParams{NewFunctionParam("a", sdk.OneDec())},
-			"{a:1.000000000000000000}"},
-		{functionParametersPower,
-			"{m:12.000000000000000000," +
-				"n:2.000000000000000000," +
-				"c:100.000000000000000000}"},
-		{functionParametersSigmoid,
-			"{a:3.000000000000000000," +
-				"b:5.000000000000000000," +
-				"c:1.000000000000000000}"},
+			"{\"param\":\"a\",\"value\":\"1.000000000000000000\"}"},
+		{functionParametersPower, "" +
+			"{\"param\":\"m\",\"value\":\"12.000000000000000000\"}," +
+			"{\"param\":\"n\",\"value\":\"2.000000000000000000\"}," +
+			"{\"param\":\"c\",\"value\":\"100.000000000000000000\"}"},
+		{functionParametersSigmoid, "" +
+			"{\"param\":\"a\",\"value\":\"3.000000000000000000\"}," +
+			"{\"param\":\"b\",\"value\":\"5.000000000000000000\"}," +
+			"{\"param\":\"c\",\"value\":\"1.000000000000000000\"}"},
 	}
 	for _, tc := range testCases {
-		require.Equal(t, tc.expected, tc.params.String())
+		require.Equal(t, "["+tc.expected+"]", tc.params.String())
 	}
 }
 

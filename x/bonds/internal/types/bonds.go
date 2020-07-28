@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"sort"
@@ -90,15 +91,11 @@ func (fps FunctionParams) Validate(functionType string) sdk.Error {
 }
 
 func (fps FunctionParams) String() (result string) {
-	result = "{"
-	for _, fp := range fps {
-		result += fp.Param + ":" + fp.Value.String() + ","
+	output, err := json.Marshal(fps)
+	if err != nil {
+		panic(err)
 	}
-	if len(fps) > 0 {
-		// Remove last comma
-		result = result[:len(result)-1]
-	}
-	return result + "}"
+	return string(output)
 }
 
 func (fps FunctionParams) AsMap() (paramsMap map[string]sdk.Dec) {
