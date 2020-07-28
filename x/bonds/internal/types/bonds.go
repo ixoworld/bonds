@@ -383,7 +383,7 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 		args := bond.FunctionParameters.AsMap()
 		kappaInt64 := args["kappa"].TruncateInt64()
 		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
-		returnForBurnDec, _ := MintAlt(sdk.NewDecFromInt(mint), reserveBalance, supplyDec, kappaInt64, args["V0"])
+		returnForBurnDec, _ := Mint(sdk.NewDecFromInt(mint), reserveBalance, supplyDec, kappaInt64, args["V0"])
 		return bond.GetNewReserveDecCoins(returnForBurnDec), nil
 	case SwapperFunction:
 		if bond.CurrentSupply.Amount.IsZero() {
