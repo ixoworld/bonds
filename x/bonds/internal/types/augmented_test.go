@@ -2,8 +2,10 @@ package types
 
 import (
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"math"
+	"strings"
 	"testing"
 )
 
@@ -18,45 +20,50 @@ func arange(start, stop, step float64) []float64 {
 	return rnge
 }
 
-func printLines(title string, values []float64) {
+func printLines(title string, values []sdk.Dec) {
 	print(title + " = [")
 	for i, value := range values {
+		index := strings.Index(value.String(), ".") + 7
 		if i == len(values)-1 {
-			fmt.Print(fmt.Sprintf("%f", value))
+			fmt.Print(value.String()[:index])
 		} else {
-			fmt.Print(fmt.Sprintf("%f, ", value))
+			fmt.Print(value.String()[:index] + ", ")
 		}
 	}
 	println("]")
 }
 
 func TestExample1(t *testing.T) {
-	d0 := 5.  // million DAI
-	p0 := .01 // DAI per tokens
-	theta := .4
+	d0 := sdk.MustNewDecFromStr("5.0")  // million DAI
+	p0 := sdk.MustNewDecFromStr("0.01") // DAI per tokens
+	theta := sdk.MustNewDecFromStr("0.4")
 
-	R0 := d0 * (1 - theta) // million DAI
-	S0 := d0 / p0
+	R0 := d0.Mul(sdk.OneDec().Sub(theta)) // million DAI
+	S0 := d0.Quo(p0)
 
-	kappa := 6.
+	kappa := int64(6)
 	V0 := Invariant(R0, S0, kappa)
 
-	expectedR0 := 3.0
-	expectedS0 := 500.0
-	expectedV0 := 5208333333333333.0
+	expectedR0 := sdk.MustNewDecFromStr("3.0")
+	expectedS0 := sdk.MustNewDecFromStr("500.0")
+	expectedV0 := sdk.MustNewDecFromStr("41666666.666666666666666667")
 
 	require.Equal(t, expectedR0, R0)
 	require.Equal(t, expectedS0, S0)
 	require.Equal(t, expectedV0, V0)
 
-	reserve := arange(0, 100, .01)
+	reserveF64 := arange(0, 100, .01)
+	reserve := make([]sdk.Dec, len(reserveF64))
+	for i, r := range reserveF64 {
+		reserve[i] = sdk.MustNewDecFromStr(fmt.Sprintf("%f", r))
+	}
 
-	supp := make([]float64, len(reserve))
+	supp := make([]sdk.Dec, len(reserve))
 	for i, r := range reserve {
 		supp[i] = Supply(r, kappa, V0)
 	}
 
-	price := make([]float64, len(reserve))
+	price := make([]sdk.Dec, len(reserve))
 	for i, r := range reserve {
 		price[i] = SpotPrice(r, kappa, V0)
 	}
@@ -65,84 +72,3 @@ func TestExample1(t *testing.T) {
 	printLines("supp", supp)
 	printLines("price", price)
 }
-
-func TestExample2(t *testing.T) {
-	d0 := 5.  // million DAI
-	p0 := .01 // DAI per tokens
-	theta := .4
-
-	R0 := d0 * (1 - theta) // million DAI
-	S0 := d0 / p0
-
-	kappa := 6.
-	V0 := Invariant(R0, S0, kappa)
-
-	expectedR0 := 3.0
-	expectedS0 := 500.0
-	expectedV0 := 5208333333333333.0
-
-	require.Equal(t, expectedR0, R0)
-	require.Equal(t, expectedS0, S0)
-	require.Equal(t, expectedV0, V0)
-
-	// given V0 and kappa
-	// sweep the reserve
-	reserve := arange(.01, 100, .01)
-
-	price := make([]float64, len(reserve))
-	for i, r := range reserve {
-		price[i] = SpotPrice(r, kappa, V0)
-	}
-
-	// realized price for withdrawing burning .1% of tokens
-	withdrawPrice := make([]float64, len(reserve))
-	for i, r := range reserve {
-		_, withdrawPrice[i] = Withdraw(Supply(r, kappa, V0)/1000, r, Supply(r, kappa, V0), kappa, V0)
-	}
-
-	// realized price for depositing .1% more Xdai into the reserve
-	mintPrice := make([]float64, len(reserve))
-	for i, r := range reserve {
-		_, mintPrice[i] = Mint(r/1000, r, Supply(r, kappa, V0), kappa, V0)
-	}
-
-	printLines("reserve", reserve)
-	printLines("price", price)
-	printLines("withdrawPrice", withdrawPrice)
-	printLines("mintPrice", mintPrice)
-}
-
-//func TestExample3(t *testing.T) {
-//	d0 := 5.  // million DAI
-//	p0 := .01 // DAI per tokens
-//	theta := .4
-//
-//	R0 := d0 * (1 - theta) // million DAI
-//	S0 := d0 / p0
-//
-//	kappa := 6.
-//	V0 := Invariant(R0, S0, kappa)
-//
-//	// given V0 and kappa
-//	R := 20.
-//	S := Supply(R, kappa, V0)
-//	p := SpotPrice(R, kappa, V0)
-//	// sweep the transaction fraction
-//	TXF := logspace(-6, 0, num = 1000)
-//
-//	// realized price for withdrawing burning .1% of tokens
-//	withdrawPrice := make([]float64, len(TXF))
-//	for i, txf := range TXF {
-//		_, withdrawPrice[i] = Withdraw(S*txf, R, S, kappa, V0)
-//	}
-//
-//	// realized price for depositing .1% more Xdai into the reserve
-//	mintPrice := make([]float64, len(TXF))
-//	for i, txf := range TXF {
-//		_, mintPrice[i] = Mint(R*txf, R, S, kappa, V0)
-//	}
-//
-//	printLines("TXF", TXF)
-//	printLines("withdrawPrice", withdrawPrice)
-//	printLines("mintPrice", mintPrice)
-//}

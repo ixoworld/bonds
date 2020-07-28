@@ -7,7 +7,6 @@ import (
 	"github.com/ixoworld/bonds/x/bonds/internal/keeper"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"strconv"
 	"strings"
 )
 
@@ -90,17 +89,11 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		p0, _ := paramsMap["p0"]
 		theta, _ := paramsMap["theta"]
 		kappa, _ := paramsMap["kappa"]
-		kappaF64, _ := strconv.ParseFloat(kappa.String(), 64)
 
 		R0 := d0.Mul(sdk.OneDec().Sub(theta)) // million DAI
 		S0 := d0.Quo(p0)
 
-		R0F64, _ := strconv.ParseFloat(R0.String(), 64)
-		S0F64, _ := strconv.ParseFloat(S0.String(), 64)
-
-		V0F64 := types.Invariant(R0F64, S0F64, kappaF64)
-
-		V0 := sdk.MustNewDecFromStr(strconv.FormatFloat(V0F64, 'f', 6, 64))
+		V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
 
 		functionParameters = append(functionParameters, types.FunctionParams{
 			types.NewFunctionParam("R0", R0),

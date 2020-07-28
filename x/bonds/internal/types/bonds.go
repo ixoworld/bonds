@@ -5,7 +5,6 @@ import (
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"sort"
-	"strconv"
 )
 
 const (
@@ -222,18 +221,11 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 		temp2 := temp1.Mul(temp1).Add(c)
 		temp3 := temp2.ApproxSqrt()
 		result = bond.GetNewReserveDecCoins(a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
-	case AugmentedFunction: // TODO: fix?
-		kappaFloat64, err := strconv.ParseFloat(args["kappa"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		V0Float64, err := strconv.ParseFloat(args["V0"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		resFloat64 := Reserve(float64(supply.Int64()), kappaFloat64, V0Float64)
-		spotPriceFloat64 := SpotPrice(resFloat64, kappaFloat64, V0Float64)
-		spotPriceDec := sdk.MustNewDecFromStr(strconv.FormatFloat(spotPriceFloat64, 'f', 6, 64))
+	case AugmentedFunction:
+		kappaInt64 := args["kappa"].TruncateInt64()
+		supplyDec := sdk.NewDecFromInt(supply)
+		res := Reserve(supplyDec, kappaInt64, args["V0"])
+		spotPriceDec := SpotPrice(res, kappaInt64, args["V0"])
 		result = bond.GetNewReserveDecCoins(spotPriceDec)
 	case SwapperFunction:
 		return nil, ErrFunctionNotAvailableForFunctionType(DefaultCodespace)
@@ -292,17 +284,10 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 		temp5 := a.Mul(temp3.Add(x))
 		constant := a.Mul((b.Mul(b).Add(c)).ApproxSqrt())
 		result = temp5.Sub(constant)
-	case AugmentedFunction: // TODO: fix?
-		kappaFloat64, err := strconv.ParseFloat(args["kappa"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		V0Float64, err := strconv.ParseFloat(args["V0"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		resFloat64 := Reserve(float64(supply.Int64()), kappaFloat64, V0Float64)
-		result = sdk.MustNewDecFromStr(strconv.FormatFloat(resFloat64, 'f', 6, 64))
+	case AugmentedFunction:
+		kappaInt64 := args["kappa"].TruncateInt64()
+		supplyDec := sdk.NewDecFromInt(supply)
+		result = Reserve(supplyDec, kappaInt64, args["V0"])
 	case SwapperFunction:
 		panic("invalid function for function type")
 	default:
@@ -384,7 +369,7 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 			priceToMint = sdk.OneDec()
 		}
 		return bond.GetNewReserveDecCoins(priceToMint), nil
-	case AugmentedFunction: // TODO: fix?
+	case AugmentedFunction:
 		var reserveBalance sdk.Dec
 		if reserveBalances.Empty() {
 			reserveBalance = sdk.ZeroDec()
@@ -396,30 +381,9 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 		}
 
 		args := bond.FunctionParameters.AsMap()
-
-		kappaFloat64, err := strconv.ParseFloat(args["kappa"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		V0Float64, err := strconv.ParseFloat(args["V0"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		resFloat64, err := strconv.ParseFloat(reserveBalance.String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		supplyFloat64, err := strconv.ParseFloat(bond.CurrentSupply.Amount.String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		deltaSFloat64, err := strconv.ParseFloat(mint.String(), 64)
-		if err != nil {
-			panic(err)
-		}
-
-		returnForBurnFloat64, _ := MintAlt(deltaSFloat64, resFloat64, supplyFloat64, kappaFloat64, V0Float64)
-		returnForBurnDec := sdk.MustNewDecFromStr(strconv.FormatFloat(returnForBurnFloat64, 'f', 6, 64))
+		kappaInt64 := args["kappa"].TruncateInt64()
+		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
+		returnForBurnDec, _ := MintAlt(sdk.NewDecFromInt(mint), reserveBalance, supplyDec, kappaInt64, args["V0"])
 		return bond.GetNewReserveDecCoins(returnForBurnDec), nil
 	case SwapperFunction:
 		if bond.CurrentSupply.Amount.IsZero() {
@@ -462,7 +426,7 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 			return bond.GetNewReserveDecCoins(returnForBurn)
 			// TODO: investigate possibility of negative returnForBurn
 		}
-	case AugmentedFunction: // TODO: fix?
+	case AugmentedFunction:
 
 		var reserveBalance sdk.Dec
 		if reserveBalances.Empty() {
@@ -476,29 +440,10 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 
 		args := bond.FunctionParameters.AsMap()
 
-		kappaFloat64, err := strconv.ParseFloat(args["kappa"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		V0Float64, err := strconv.ParseFloat(args["V0"].String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		resFloat64, err := strconv.ParseFloat(reserveBalance.String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		supplyFloat64, err := strconv.ParseFloat(bond.CurrentSupply.Amount.String(), 64)
-		if err != nil {
-			panic(err)
-		}
-		deltaSFloat64, err := strconv.ParseFloat(burn.String(), 64)
-		if err != nil {
-			panic(err)
-		}
-
-		returnForBurnFloat64, _ := Withdraw(deltaSFloat64, resFloat64, supplyFloat64, kappaFloat64, V0Float64)
-		returnForBurnDec := sdk.MustNewDecFromStr(strconv.FormatFloat(returnForBurnFloat64, 'f', 6, 64))
+		kappaInt64 := args["kappa"].TruncateInt64()
+		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
+		burnDec := sdk.NewDecFromInt(burn)
+		returnForBurnDec, _ := Withdraw(burnDec, reserveBalance, supplyDec, kappaInt64, args["V0"])
 		return bond.GetNewReserveDecCoins(returnForBurnDec)
 	case SwapperFunction:
 		return bond.GetReserveDeltaForLiquidityDelta(burn, reserveBalances)
