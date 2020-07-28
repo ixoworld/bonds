@@ -113,7 +113,7 @@ func ErrBondAlreadyExists(codespace sdk.CodespaceType, token string) sdk.Error {
 }
 
 func ErrBondDoesNotAllowSelling(codespace sdk.CodespaceType) sdk.Error {
-	errMsg := "Bond does not allow selling."
+	errMsg := "Bond does not allow selling at the moment."
 	return sdk.NewError(codespace, CodeBondDoesNotAllowSelling, errMsg)
 }
 

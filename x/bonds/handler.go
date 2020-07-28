@@ -36,6 +36,7 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 	for ; iterator.Valid(); iterator.Next() {
 		bond := keeper.MustGetBondByKey(ctx, iterator.Key())
 		batch := keeper.MustGetBatch(ctx, bond.Token)
+		startingSupply := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
 
 		// Subtract one block
 		batch.BlocksRemaining = batch.BlocksRemaining.SubUint64(1)
@@ -49,8 +50,20 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 		// Perform orders
 		keeper.PerformOrders(ctx, bond.Token)
 
+		// Get bond again just in case current supply was updated
 		// Get batch again just in case orders were cancelled
+		bond = keeper.MustGetBond(ctx, bond.Token)
 		batch = keeper.MustGetBatch(ctx, bond.Token)
+
+		// For augmented, if startingSupply < S0 <= newSupply, enable sells
+		if bond.FunctionType == types.AugmentedFunction {
+			args := bond.FunctionParameters.AsMap()
+			supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
+			if startingSupply.LT(args["S0"]) && supplyDec.GTE(args["S0"]) {
+				bond.AllowSells = types.TRUE
+				keeper.SetBond(ctx, bond.Token, bond) // Save bond
+			}
+		}
 
 		// Save current as last and reset current
 		keeper.SetLastBatch(ctx, bond.Token, batch)
@@ -81,10 +94,10 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 	// blacklisted addresses (but no guarantee that this will be sufficient), or
 	// (ii) use a global res. address and store (in the bond) the share of the pool.
 
-	// Add R0, S0, V0 as parameters for quick access and for a level of permanence
-	functionParameters := msg.FunctionParameters
+	// If augmented, add R0, S0, V0 as parameters for quick access
+	// Also, override AllowSells and set to False if S0 > 0
 	if msg.FunctionType == types.AugmentedFunction {
-		paramsMap := functionParameters.AsMap()
+		paramsMap := msg.FunctionParameters.AsMap()
 		d0, _ := paramsMap["d0"]
 		p0, _ := paramsMap["p0"]
 		theta, _ := paramsMap["theta"]
@@ -94,15 +107,21 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		S0 := d0.Quo(p0)
 		V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
 
-		functionParameters = append(functionParameters, types.FunctionParams{
-			types.NewFunctionParam("R0", R0),
-			types.NewFunctionParam("S0", S0),
-			types.NewFunctionParam("V0", V0),
-		}...)
+		msg.FunctionParameters = append(msg.FunctionParameters,
+			types.FunctionParams{
+				types.NewFunctionParam("R0", R0),
+				types.NewFunctionParam("S0", S0),
+				types.NewFunctionParam("V0", V0),
+			}...)
+
+		// Override AllowSells
+		if S0.GT(sdk.ZeroDec()) {
+			msg.AllowSells = types.FALSE
+		}
 	}
 
 	bond := types.NewBond(msg.Token, msg.Name, msg.Description, msg.Creator,
-		msg.FunctionType, functionParameters, msg.ReserveTokens,
+		msg.FunctionType, msg.FunctionParameters, msg.ReserveTokens,
 		reserveAddress, msg.TxFeePercentage, msg.ExitFeePercentage,
 		msg.FeeAddress, msg.MaxSupply, msg.OrderQuantityLimits, msg.SanityRate,
 		msg.SanityMarginPercentage, msg.AllowSells, msg.Signers, msg.BatchBlocks)
@@ -121,7 +140,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 			sdk.NewAttribute(types.AttributeKeyName, msg.Name),
 			sdk.NewAttribute(types.AttributeKeyDescription, msg.Description),
 			sdk.NewAttribute(types.AttributeKeyFunctionType, msg.FunctionType),
-			sdk.NewAttribute(types.AttributeKeyFunctionParameters, functionParameters.String()),
+			sdk.NewAttribute(types.AttributeKeyFunctionParameters, msg.FunctionParameters.String()),
 			sdk.NewAttribute(types.AttributeKeyReserveTokens, types.StringsToString(msg.ReserveTokens)),
 			sdk.NewAttribute(types.AttributeKeyReserveAddress, reserveAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyTxFeePercentage, msg.TxFeePercentage.String()),

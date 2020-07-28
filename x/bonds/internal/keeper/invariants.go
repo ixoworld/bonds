@@ -87,8 +87,9 @@ func ReserveInvariant(k Keeper) sdk.Invariant {
 			bond := k.MustGetBondByKey(ctx, iterator.Key())
 			denom := bond.Token
 
-			if bond.FunctionType == types.SwapperFunction {
-				continue // Check does not apply to swapper function
+			if bond.FunctionType == types.AugmentedFunction ||
+				bond.FunctionType == types.SwapperFunction {
+				continue // Check does not apply to augmented/swapper functions
 			}
 
 			expectedReserve := bond.CurveIntegral(bond.CurrentSupply.Amount)

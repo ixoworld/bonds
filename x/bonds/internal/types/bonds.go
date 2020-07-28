@@ -239,11 +239,17 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 		temp3 := temp2.ApproxSqrt()
 		result = bond.GetNewReserveDecCoins(a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
 	case AugmentedFunction:
-		kappaInt64 := args["kappa"].TruncateInt64()
 		supplyDec := sdk.NewDecFromInt(supply)
-		res := Reserve(supplyDec, kappaInt64, args["V0"])
-		spotPriceDec := SpotPrice(res, kappaInt64, args["V0"])
-		result = bond.GetNewReserveDecCoins(spotPriceDec)
+
+		// Different result depending on if hatch phase or open phase
+		if supplyDec.LT(args["S0"]) {
+			result = bond.GetNewReserveDecCoins(args["p0"])
+		} else {
+			kappaInt64 := args["kappa"].TruncateInt64()
+			res := Reserve(supplyDec, kappaInt64, args["V0"])
+			spotPriceDec := SpotPrice(res, kappaInt64, args["V0"])
+			result = bond.GetNewReserveDecCoins(spotPriceDec)
+		}
 	case SwapperFunction:
 		return nil, ErrFunctionNotAvailableForFunctionType(DefaultCodespace)
 	default:
@@ -300,9 +306,7 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 		constant := a.Mul((b.Mul(b).Add(c)).ApproxSqrt())
 		result = temp5.Sub(constant)
 	case AugmentedFunction:
-		kappaInt64 := args["kappa"].TruncateInt64()
-		supplyDec := sdk.NewDecFromInt(supply)
-		result = Reserve(supplyDec, kappaInt64, args["V0"])
+		fallthrough
 	case SwapperFunction:
 		panic("invalid function for function type")
 	default:
@@ -385,6 +389,15 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 		}
 		return bond.GetNewReserveDecCoins(priceToMint), nil
 	case AugmentedFunction:
+		args := bond.FunctionParameters.AsMap()
+		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
+
+		// Different result depending on if hatch phase or open phase
+		if supplyDec.LT(args["S0"]) {
+			price := args["p0"].Mul(sdk.NewDecFromInt(mint))
+			return bond.GetNewReserveDecCoins(price), nil
+		}
+
 		var reserveBalance sdk.Dec
 		if reserveBalances.Empty() {
 			reserveBalance = sdk.ZeroDec()
@@ -395,9 +408,7 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
 		}
 
-		args := bond.FunctionParameters.AsMap()
 		kappaInt64 := args["kappa"].TruncateInt64()
-		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
 		returnForBurnDec, _ := Mint(sdk.NewDecFromInt(mint), reserveBalance, supplyDec, kappaInt64, args["V0"])
 		return bond.GetNewReserveDecCoins(returnForBurnDec), nil
 	case SwapperFunction:
@@ -442,6 +453,9 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 			// TODO: investigate possibility of negative returnForBurn
 		}
 	case AugmentedFunction:
+
+		// Note: during hatch phase, selling will be disabled so this function
+		// will not be called, i.e. no checks for this need to take place.
 
 		var reserveBalance sdk.Dec
 		if reserveBalances.Empty() {
