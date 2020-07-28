@@ -67,6 +67,11 @@ func ErrArgumentMustBeInteger(codespace sdk.CodespaceType, arg string) sdk.Error
 	return sdk.NewError(codespace, CodeArgumentInvalid, errMsg)
 }
 
+func ErrArgumentMustBeBetween(codespace sdk.CodespaceType, arg string, a, b string) sdk.Error {
+	errMsg := fmt.Sprintf("%s argument must be between %s and %s", arg, a, b)
+	return sdk.NewError(codespace, CodeArgumentInvalid, errMsg)
+}
+
 func ErrFunctionParameterMissingOrNonFloat(codespace sdk.CodespaceType, param string) sdk.Error {
 	errMsg := fmt.Sprintf("%s parameter is missing or is not a float", param)
 	return sdk.NewError(codespace, CodeArgumentMissingOrIncorrectType, errMsg)

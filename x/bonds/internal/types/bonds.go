@@ -38,7 +38,7 @@ var (
 		PowerFunction:     powerParameterRestrictions,
 		SigmoidFunction:   sigmoidParameterRestrictions,
 		SwapperFunction:   nil,
-		AugmentedFunction: nil, // TODO?
+		AugmentedFunction: augmentedParameterRestrictions,
 	}
 )
 
@@ -128,6 +128,25 @@ func sigmoidParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
 		panic("did not find parameter c for sigmoid function")
 	} else if !val.IsPositive() {
 		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:c")
+	}
+	return nil
+}
+
+func augmentedParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
+	// Augmented exception 1: d0 must be an integer, since it is a token amount
+	val, ok := paramsMap["d0"]
+	if !ok {
+		panic("did not find parameter d0 for augmented function")
+	} else if !val.TruncateDec().Equal(val) {
+		return ErrArgumentMustBeInteger(DefaultCodespace, "FunctionParams:d0")
+	}
+
+	// Augmented exception 2: theta must be from 0 to 1 (excluding 1)
+	val, ok = paramsMap["theta"]
+	if !ok {
+		panic("did not find parameter theta for augmented function")
+	} else if val.LT(sdk.ZeroDec()) || val.GTE(sdk.OneDec()) {
+		return ErrArgumentMustBeBetween(DefaultCodespace, "FunctionParams:theta", "0", "1")
 	}
 	return nil
 }
