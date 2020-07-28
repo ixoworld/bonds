@@ -106,7 +106,7 @@ func TestGetPricesAtSupply(t *testing.T) {
 		{PowerFunction, functionParametersPower, multitokenReserve,
 			sdk.NewInt(1000), "12000100", true},
 		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
-			sdk.NewInt(1000), "5.999998484889207399", true},
+			sdk.NewInt(1000), "5.999998484887893066", true},
 		{SwapperFunction, nil, swapperReserves,
 			sdk.NewInt(100), "100", false},
 	}
@@ -147,7 +147,7 @@ func TestGetCurrentPrices(t *testing.T) {
 		{PowerFunction, functionParametersPower, multitokenReserve,
 			sdk.NewInt(100), nil, "120100"},
 		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
-			sdk.NewInt(100), nil, "5.999833808828064549"},
+			sdk.NewInt(100), nil, "5.999833808824623900"},
 		{SwapperFunction, nil, swapperReserves,
 			sdk.NewInt(100), swapperReserveBalances, "100"},
 	}
@@ -183,11 +183,11 @@ func TestCurveIntegral(t *testing.T) {
 		//	""}, // causes integer overflow
 
 		{SigmoidFunction, functionParametersSigmoid, sdk.NewInt(100),
-			"569.718730497"},
+			"569.718730495548543525"},
 		{SigmoidFunction, functionParametersSigmoid, maxInt64,
-			"55340232221128654811.702941461"},
+			"55340232221128654811.702941459221645510"},
 		{SigmoidFunction, functionParametersSigmoidHuge, sdk.NewInt(1),
-			"13043817821891587770.728894534000000000"},
+			"13043817825332782212.764456919596679543"},
 		{SigmoidFunction, functionParametersSigmoidHuge, maxInt64,
 			"170141183460469231685570443531610226691.0"},
 	}
@@ -256,9 +256,9 @@ func TestGetPricesToMint(t *testing.T) {
 		{PowerFunction, functionParametersPower, multitokenReserve,
 			nil, sdk.ZeroInt(), sdk.NewInt(100), "4010000", false},
 		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
-			nil, sdk.ZeroInt(), sdk.NewInt(100), "569.718730497", false},
+			nil, sdk.ZeroInt(), sdk.NewInt(100), "569.718730495548543525", false},
 		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
-			reserveBalances10, sdk.ZeroInt(), sdk.NewInt(100), "559.718730497", false},
+			reserveBalances10, sdk.ZeroInt(), sdk.NewInt(100), "559.718730495548543525", false},
 		{SwapperFunction, FunctionParams{}, swapperReserves,
 			reserveBalances1000, sdk.NewInt(2), sdk.NewInt(10), "50000", false},
 		{SwapperFunction, FunctionParams{}, swapperReserves,
@@ -310,7 +310,7 @@ func TestGetReturnsForBurn(t *testing.T) {
 		{PowerFunction, functionParametersPower, multitokenReserve,
 			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "128"},
 		{SigmoidFunction, functionParametersSigmoid, multitokenReserve,
-			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "231.927741664"},
+			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "231.927741663925372840"},
 		{SwapperFunction, FunctionParams{}, swapperReserves,
 			swapperReserveBalances, sdk.NewInt(2), sdk.OneInt(), "5000"},
 	}

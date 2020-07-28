@@ -8,27 +8,30 @@ import (
 	"testing"
 )
 
-func TestSquareRootDec(t *testing.T) {
+func TestPowerDecDec(t *testing.T) {
 	testCases := []struct {
-		in  string
+		inX string
+		inY uint64
 		out string
-	}{{"0", "0"}, {"0.25", "0.5"}, {"3", "1.732050807"}, {"9", "3"}}
+	}{{"0", 0, "1"}, {"0.5", 2, "0.25"}}
 	for _, tc := range testCases {
-		inDec := sdk.MustNewDecFromStr(tc.in)
+		inXDec := sdk.MustNewDecFromStr(tc.inX)
 		outDec := sdk.MustNewDecFromStr(tc.out)
-		require.Equal(t, outDec, SquareRootDec(inDec))
+		require.Equal(t, outDec, Power(inXDec, tc.inY))
 	}
 }
 
-func TestSquareRootInt(t *testing.T) {
+func TestRootDec(t *testing.T) {
 	testCases := []struct {
-		in  int64
+		in  string
 		out string
-	}{{0, "0"}, {3, "1.732050807"}, {9, "3"}}
+	}{{"0", "0"}, {"0.25", "0.5"}, {"3", "1.732050807568877294"}, {"9", "3"}}
 	for _, tc := range testCases {
-		inInt := sdk.NewInt(tc.in)
+		inDec := sdk.MustNewDecFromStr(tc.in)
 		outDec := sdk.MustNewDecFromStr(tc.out)
-		require.Equal(t, outDec, SquareRootInt(inInt))
+		result, err := ApproxRoot(inDec, 2)
+		require.Nil(t, err)
+		require.Equal(t, outDec, result)
 	}
 }
 

@@ -207,18 +207,15 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 		m := args["m"]
 		n64 := args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
-		temp := x
-		for i := n64; i > 1; i-- {
-			temp = temp.Mul(x)
-		}
-		result = bond.GetNewReserveDecCoins(temp.Mul(m).Add(c))
+		result = bond.GetNewReserveDecCoins(
+			Power(x, uint64(n64)).Mul(m).Add(c))
 	case SigmoidFunction:
 		a := args["a"]
 		b := args["b"]
 		c := args["c"]
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
-		temp3 := SquareRootDec(temp2)
+		temp3 := temp2.ApproxSqrt()
 		result = bond.GetNewReserveDecCoins(a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
 	case SwapperFunction:
 		return nil, ErrFunctionNotAvailableForFunctionType(DefaultCodespace)
@@ -261,10 +258,7 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 		m := args["m"]
 		n, n64 := args["n"], args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
-		temp1 := x
-		for i := n64 + 1; i > 1; i-- {
-			temp1 = temp1.Mul(x)
-		}
+		temp1 := Power(x, uint64(n64+1))
 		temp2 := temp1.Mul(m).Quo(n.Add(sdk.OneDec()))
 		temp3 := x.Mul(c)
 		result = temp2.Add(temp3)
@@ -274,9 +268,9 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 		c := args["c"]
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
-		temp3 := SquareRootDec(temp2)
+		temp3 := temp2.ApproxSqrt()
 		temp5 := a.Mul(temp3.Add(x))
-		constant := a.Mul(SquareRootDec(b.Mul(b).Add(c)))
+		constant := a.Mul((b.Mul(b).Add(c)).ApproxSqrt())
 		result = temp5.Sub(constant)
 	case SwapperFunction:
 		panic("invalid function for function type")
