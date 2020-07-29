@@ -152,6 +152,23 @@ func augmentedParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
 	} else if val.LT(sdk.ZeroDec()) || val.GTE(sdk.OneDec()) {
 		return ErrArgumentMustBeBetween(DefaultCodespace, "FunctionParams:theta", "0", "1")
 	}
+
+	// Augmented exception 3: kappa != 0, otherwise we run into divisions by zero
+	val, ok = paramsMap["kappa"]
+	if !ok {
+		panic("did not find parameter kappa for augmented function")
+	} else if !val.IsPositive() {
+		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:kappa")
+	}
+
+	// Augmented exception 4: p0 != 0, otherwise we run into divisions by zero
+	val, ok = paramsMap["p0"]
+	if !ok {
+		panic("did not find parameter p0 for augmented function")
+	} else if !val.IsPositive() {
+		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:p0")
+	}
+
 	return nil
 }
 
