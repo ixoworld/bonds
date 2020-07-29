@@ -263,15 +263,17 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
 		temp3 := temp2.ApproxSqrt()
-		result = bond.GetNewReserveDecCoins(a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
+		result = bond.GetNewReserveDecCoins(
+			a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
 	case AugmentedFunction:
+		// Note: during the hatch phase, this function returns the hatch price
+		// p0 even if the supply argument is greater than the initial supply S0
 		switch bond.State {
-		case OpenState:
-			result = bond.GetNewReserveDecCoins(args["p0"])
 		case HatchState:
-			supplyDec := sdk.NewDecFromInt(supply)
+			result = bond.GetNewReserveDecCoins(args["p0"])
+		case OpenState:
 			kappa := args["kappa"].TruncateInt64()
-			res := Reserve(supplyDec, kappa, args["V0"])
+			res := Reserve(x, kappa, args["V0"])
 			spotPriceDec := SpotPrice(res, kappa, args["V0"])
 			result = bond.GetNewReserveDecCoins(spotPriceDec)
 		default:
