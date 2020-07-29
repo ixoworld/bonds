@@ -39,6 +39,8 @@ const (
 	AttributeKeyTokensBurned           = "tokens_burned"
 	AttributeKeyTokensSwapped          = "tokens_swapped"
 	AttributeKeyChargedPrices          = "charged_prices"
+	AttributeKeyChargedPricesReserve   = "charged_prices_of_which_reserve"
+	AttributeKeyChargedPricesFunding   = "charged_prices_of_which_funding"
 	AttributeKeyChargedFees            = "charged_fees"
 	AttributeKeyReturnedToAddress      = "returned_to_address"
 	AttributeKeyNewBondTokenBalance    = "new_bond_token_balance"

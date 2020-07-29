@@ -149,10 +149,15 @@ func (k Keeper) GetUpdatedBatchPricesAfterBuy(ctx sdk.Context, token string, bo 
 
 	// If augmented in hatch phase and adjusted supply exceeds S0, disallow buy
 	// since it is not allowed for a batch to cross over to the open phase.
+	//
+	// S0 is rounded to ceil for the case that it has a decimal, otherwise it
+	// cannot be reached without being exceeded, when using integer buy amounts
+	// (e.g. if supply is 100 and S0=100.5, we cannot reach S0 by performing
+	// the minimum buy of 1 token [101>100.5], so S0 is rounded to ceil; S0=101)
 	if bond.FunctionType == types.AugmentedFunction &&
 		bond.State == types.HatchState {
 		args := bond.FunctionParameters.AsMap()
-		if sdk.NewDecFromInt(adjustedSupplyWithBuy.Amount).GT(args["S0"]) {
+		if sdk.NewDecFromInt(adjustedSupplyWithBuy.Amount).GT(args["S0"].Ceil()) {
 			return nil, nil, sdk.ErrInternal(
 				"Buy exceeds initial supply S0. Consider buying less tokens.")
 		}
@@ -194,6 +199,7 @@ func (k Keeper) GetUpdatedBatchPricesAfterSell(ctx sdk.Context, token string, so
 
 func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrder, prices sdk.DecCoins) (err sdk.Error) {
 	bond := k.MustGetBond(ctx, token)
+	var extraEventAttributes []sdk.Attribute
 
 	// Mint bond tokens
 	err = k.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount,
@@ -220,10 +226,36 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 
 	// Add new reserve to reserve address (reservePricesRounded should never be zero)
 	// TODO: investigate possibility of zero reservePricesRounded
-	err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
-		types.BatchesIntermediaryAccount, bond.ReserveAddress, reservePricesRounded)
-	if err != nil {
-		return err
+	if bond.FunctionType == types.AugmentedFunction &&
+		bond.State == types.HatchState {
+		args := bond.FunctionParameters.AsMap()
+		theta := args["theta"]
+		reservePricesRoundedDec := sdk.NewDecCoins(reservePricesRounded)
+
+		fundingPoolShare, _ := reservePricesRoundedDec.MulDec(theta).TruncateDecimal()
+		toInitialReserve := reservePricesRounded.Sub(fundingPoolShare)
+
+		err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
+			types.BatchesIntermediaryAccount, bond.ReserveAddress, toInitialReserve)
+		if err != nil {
+			return err
+		}
+		err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
+			types.BatchesIntermediaryAccount, bond.FeeAddress, fundingPoolShare)
+		if err != nil {
+			return err
+		}
+
+		extraEventAttributes = append(extraEventAttributes,
+			sdk.NewAttribute(types.AttributeKeyChargedPricesReserve, toInitialReserve.String()),
+			sdk.NewAttribute(types.AttributeKeyChargedPricesFunding, fundingPoolShare.String()),
+		)
+	} else {
+		err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
+			types.BatchesIntermediaryAccount, bond.ReserveAddress, reservePricesRounded)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Add charged fee to fee address
@@ -254,7 +286,7 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 	// Get new bond token balance
 	bondTokenBalance := k.BankKeeper.GetCoins(ctx, bo.Address).AmountOf(bond.Token)
 
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	event := sdk.NewEvent(
 		types.EventTypeOrderFulfill,
 		sdk.NewAttribute(types.AttributeKeyBond, bond.Token),
 		sdk.NewAttribute(types.AttributeKeyOrderType, types.AttributeValueBuyOrder),
@@ -264,7 +296,11 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 		sdk.NewAttribute(types.AttributeKeyChargedFees, txFees.String()),
 		sdk.NewAttribute(types.AttributeKeyReturnedToAddress, returnToBuyer.String()),
 		sdk.NewAttribute(types.AttributeKeyNewBondTokenBalance, bondTokenBalance.String()),
-	))
+	)
+	if len(extraEventAttributes) > 0 {
+		event = event.AppendAttributes(extraEventAttributes...)
+	}
+	ctx.EventManager().EmitEvent(event)
 
 	return nil
 }

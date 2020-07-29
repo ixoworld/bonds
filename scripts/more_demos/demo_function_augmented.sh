@@ -26,6 +26,12 @@ tx_from_f() {
   yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
+tx_from_s() {
+  cmd=$1
+  shift
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from shaun -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+}
+
 RET=$(bondscli status 2>&1)
 if [[ ($RET == ERROR*) || ($RET == *'"latest_block_height": "0"'*) ]]; then
   wait
@@ -35,6 +41,7 @@ PASSWORD="12345678"
 GAS_PRICES="0.025stake"
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
 FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
+SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
 FEE=$(yes $PASSWORD | bondscli keys show fee -a)
 
 # d0 := 500.0   // initial raise (reserve)
@@ -77,25 +84,29 @@ tx_from_f buy 20000abc 100000res
 echo "Francesco's account..."
 bondscli query auth account "$FRANCESCO"
 
-echo "Miguel cannot buy 10001abc..."
-tx_from_m buy 10001abc 100000res
-echo "Miguel cannot sell anything..."
-tx_from_m sell 10000abc
+echo "Shaun cannot buy 10001abc..."
+tx_from_s buy 10001abc 100000res
+echo "Shaun cannot sell anything..."
+tx_from_s sell 10000abc
+echo "Shaun can buy 10000abc..."
+tx_from_s buy 10000abc 100000res
+echo "Shaun's account..."
+bondscli query auth account "$SHAUN"
 
-echo "Miguel can buy 10000abc..."
-tx_from_m buy 10000abc 100000res
-echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
-
-echo "Bond state is now open..."
+echo "Bond state is now open..."  # since 50000 (S0) reached
 bondscli query bonds bond abc
 
-echo "Miguel sells 30000abc..."
-tx_from_m sell 30000abc
+echo "Miguel sells 20000abc..."
+tx_from_m sell 20000abc
 echo "Miguel's account..."
 bondscli query auth account "$MIGUEL"
 
-echo "Francesco sells 30000abc..."
-tx_from_f sell 30000abc
+echo "Francesco sells 20000abc..."
+tx_from_f sell 20000abc
 echo "Francesco's account..."
 bondscli query auth account "$FRANCESCO"
+
+echo "Shaun sells 10000abc..."
+tx_from_s sell 10000abc
+echo "Shaun's account..."
+bondscli query auth account "$SHAUN"
