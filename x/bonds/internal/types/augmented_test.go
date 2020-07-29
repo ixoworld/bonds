@@ -34,19 +34,19 @@ func printLines(title string, values []sdk.Dec) {
 }
 
 func TestExample1(t *testing.T) {
-	d0 := sdk.MustNewDecFromStr("5.0")  // million DAI
-	p0 := sdk.MustNewDecFromStr("0.01") // DAI per tokens
-	theta := sdk.MustNewDecFromStr("0.4")
+	d0 := sdk.MustNewDecFromStr("500.0")  // initial raise (reserve)
+	p0 := sdk.MustNewDecFromStr("0.01")   // initial price (reserve per token)
+	theta := sdk.MustNewDecFromStr("0.4") // funding fee fraction
 
-	R0 := d0.Mul(sdk.OneDec().Sub(theta)) // million DAI
-	S0 := d0.Quo(p0)
+	R0 := d0.Mul(sdk.OneDec().Sub(theta)) // initial reserve (raise minus funding)
+	S0 := d0.Quo(p0)                      // initial supply
 
-	kappa := int64(3)
-	V0 := Invariant(R0, S0, kappa)
+	kappa := int64(3)              // price exponent
+	V0 := Invariant(R0, S0, kappa) // invariant
 
-	expectedR0 := sdk.MustNewDecFromStr("3.0")
-	expectedS0 := sdk.MustNewDecFromStr("500.0")
-	expectedV0 := sdk.MustNewDecFromStr("41666666.666666666666666667")
+	expectedR0 := sdk.MustNewDecFromStr("300.0")
+	expectedS0 := sdk.MustNewDecFromStr("50000.0")
+	expectedV0 := sdk.MustNewDecFromStr("416666666666.666666666666666667")
 
 	require.Equal(t, expectedR0, R0)
 	require.Equal(t, expectedS0, S0)
