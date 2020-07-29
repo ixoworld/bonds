@@ -64,6 +64,17 @@ func zeroReserveTokensIfEmpty(reserveCoins sdk.Coins, bond types.Bond) sdk.Coins
 	return reserveCoins
 }
 
+func zeroReserveTokensIfEmptyDec(reserveCoins sdk.DecCoins, bond types.Bond) sdk.DecCoins {
+	if reserveCoins.IsZero() {
+		zeroes := bond.GetNewReserveDecCoins(sdk.OneDec())
+		for i := range zeroes {
+			zeroes[i].Amount = sdk.ZeroDec()
+		}
+		reserveCoins = zeroes
+	}
+	return reserveCoins
+}
+
 func queryBonds(ctx sdk.Context, keeper Keeper) (res []byte, err sdk.Error) {
 	var bondsList types.QueryBonds
 	iterator := keeper.GetBondIterator(ctx)
@@ -144,10 +155,9 @@ func queryCurrentPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byt
 	if err != nil {
 		return nil, err
 	}
-	reservePriceRounded := types.RoundReservePrices(reservePrices)
-	reservePriceRounded = zeroReserveTokensIfEmpty(reservePriceRounded, bond)
+	reservePrices = zeroReserveTokensIfEmptyDec(reservePrices, bond)
 
-	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reservePriceRounded)
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reservePrices)
 	if err2 != nil {
 		panic("could not marshal result to JSON")
 	}
@@ -191,10 +201,9 @@ func queryCustomPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte
 	if err != nil {
 		return nil, err
 	}
-	reservePricesRounded := types.RoundReservePrices(reservePrices)
-	reservePricesRounded = zeroReserveTokensIfEmpty(reservePricesRounded, bond)
+	reservePrices = zeroReserveTokensIfEmptyDec(reservePrices, bond)
 
-	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reservePricesRounded)
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reservePrices)
 	if err2 != nil {
 		panic("could not marshal result to JSON")
 	}
