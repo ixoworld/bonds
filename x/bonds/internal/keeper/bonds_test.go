@@ -181,3 +181,30 @@ func TestSetCurrentSupply(t *testing.T) {
 	supplyFetched = app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.Equal(t, newSupply, supplyFetched)
 }
+
+func TestSetBondState(t *testing.T) {
+	app, ctx := createTestApp(false)
+
+	// Add bond
+	bond := getValidBond()
+	app.BondsKeeper.SetBond(ctx, token, bond)
+
+	// State is initially "initState"
+	require.Equal(t, initState, app.BondsKeeper.MustGetBond(ctx, token).State)
+
+	// Change state
+	newState := "some_other_state"
+	app.BondsKeeper.SetBondState(ctx, token, newState)
+
+	// Check that state changed
+	stateFetched := app.BondsKeeper.MustGetBond(ctx, token).State
+	require.Equal(t, newState, stateFetched)
+
+	// Change supply again
+	newState = "yet another state"
+	app.BondsKeeper.SetBondState(ctx, token, newState)
+
+	// Check that supply changed
+	stateFetched = app.BondsKeeper.MustGetBond(ctx, token).State
+	require.Equal(t, newState, stateFetched)
+}
