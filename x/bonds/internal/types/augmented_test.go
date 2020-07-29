@@ -41,7 +41,7 @@ func TestExample1(t *testing.T) {
 	R0 := d0.Mul(sdk.OneDec().Sub(theta)) // million DAI
 	S0 := d0.Quo(p0)
 
-	kappa := int64(6)
+	kappa := int64(3)
 	V0 := Invariant(R0, S0, kappa)
 
 	expectedR0 := sdk.MustNewDecFromStr("3.0")
