@@ -60,6 +60,7 @@ func SpotPrice(R sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
 //	return deltaS, realizedPrice
 //}
 
+// This is a shortcut of the MintAlt(...) function which accepts deltaR instead
 func Mint(deltaS, R, S sdk.Dec, kappa int64, V0 sdk.Dec) (sdk.Dec, sdk.Dec) {
 	deltaR := (Power(deltaS.Add(S), uint64(kappa)).Quo(V0)).Sub(R)
 	realizedPrice := deltaR.Quo(deltaS)
