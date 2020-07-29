@@ -59,8 +59,10 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 			bond.State == types.HatchState {
 			args := bond.FunctionParameters.AsMap()
 			if sdk.NewDecFromInt(bond.CurrentSupply.Amount).GTE(args["S0"]) {
-				bond.AllowSells = types.TRUE
 				keeper.SetBondState(ctx, bond.Token, types.OpenState)
+				bond = keeper.MustGetBond(ctx, bond.Token) // get bond again
+				bond.AllowSells = types.TRUE               // enable sells
+				keeper.SetBond(ctx, bond.Token, bond)      // update bond
 			}
 		}
 
