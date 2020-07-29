@@ -137,12 +137,15 @@ func sigmoidParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
 }
 
 func augmentedParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
-	// Augmented exception 1: d0 must be an integer, since it is a token amount
+	// Augmented exception 1.1: d0 must be an integer, since it is a token amount
+	// Augmented exception 1.2: d0 != 0, otherwise we run into divisions by zero
 	val, ok := paramsMap["d0"]
 	if !ok {
 		panic("did not find parameter d0 for augmented function")
 	} else if !val.TruncateDec().Equal(val) {
 		return ErrArgumentMustBeInteger(DefaultCodespace, "FunctionParams:d0")
+	} else if !val.IsPositive() {
+		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:d0")
 	}
 
 	// Augmented exception 2: theta must be from 0 to 1 (excluding 1)
