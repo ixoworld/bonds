@@ -297,3 +297,45 @@ func TestAccAddressesToString(t *testing.T) {
 		require.Equal(t, tc.out, AccAddressesToString(tc.in))
 	}
 }
+
+func TestPower(t *testing.T) {
+	testCases := []struct {
+		input    sdk.Dec
+		power    uint64
+		expected sdk.Dec
+	}{
+		{sdk.OneDec(), 10, sdk.OneDec()},                                                   // 1.0 ^ (10) => 1.0
+		{sdk.NewDecWithPrec(5, 1), 2, sdk.NewDecWithPrec(25, 2)},                           // 0.5 ^ 2 => 0.25
+		{sdk.NewDecWithPrec(2, 1), 2, sdk.NewDecWithPrec(4, 2)},                            // 0.2 ^ 2 => 0.04
+		{sdk.NewDecFromInt(sdk.NewInt(3)), 3, sdk.NewDecFromInt(sdk.NewInt(27))},           // 3 ^ 3 => 27
+		{sdk.NewDecFromInt(sdk.NewInt(-3)), 4, sdk.NewDecFromInt(sdk.NewInt(81))},          // -3 ^ 4 = 81
+		{sdk.NewDecWithPrec(1414213562373095049, 18), 2, sdk.NewDecFromInt(sdk.NewInt(2))}, // 1.414213562373095049 ^ 2 = 2
+	}
+
+	for i, tc := range testCases {
+		res := Power(tc.input, tc.power)
+		require.True(t, tc.expected.Sub(res).Abs().LTE(sdk.SmallestDec()), "unexpected result for test case %d, input: %v", i, tc.input)
+	}
+}
+
+func TestApproxRoot(t *testing.T) {
+	testCases := []struct {
+		input    sdk.Dec
+		root     uint64
+		expected sdk.Dec
+	}{
+		{sdk.OneDec(), 10, sdk.OneDec()},                                                   // 1.0 ^ (0.1) => 1.0
+		{sdk.NewDecWithPrec(25, 2), 2, sdk.NewDecWithPrec(5, 1)},                           // 0.25 ^ (0.5) => 0.5
+		{sdk.NewDecWithPrec(4, 2), 2, sdk.NewDecWithPrec(2, 1)},                            // 0.04 => 0.2
+		{sdk.NewDecFromInt(sdk.NewInt(27)), 3, sdk.NewDecFromInt(sdk.NewInt(3))},           // 27 ^ (1/3) => 3
+		{sdk.NewDecFromInt(sdk.NewInt(-81)), 4, sdk.NewDecFromInt(sdk.NewInt(-3))},         // -81 ^ (0.25) => -3
+		{sdk.NewDecFromInt(sdk.NewInt(2)), 2, sdk.NewDecWithPrec(1414213562373095049, 18)}, // 2 ^ (0.5) => 1.414213562373095049
+		{sdk.NewDecWithPrec(1005, 3), 31536000, sdk.MustNewDecFromStr("1.000000000158153904")},
+	}
+
+	for i, tc := range testCases {
+		res, err := ApproxRoot(tc.input, tc.root)
+		require.NoError(t, err)
+		require.True(t, tc.expected.Sub(res).Abs().LTE(sdk.SmallestDec()), "unexpected result for test case %d, input: %v", i, tc.input)
+	}
+}

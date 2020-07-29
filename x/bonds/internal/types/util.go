@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// NOTE: copied off of more recent versions of Cosmos SDK
 // ApproxRoot returns an approximate estimation of a Dec's positive real nth root
 // using Newton's method (where n is positive). The algorithm starts with some guess and
 // computes the sequence of improved guesses until an answer converges to an
@@ -55,6 +56,7 @@ func ApproxRoot(d sdk.Dec, root uint64) (guess sdk.Dec, err error) {
 	return guess, nil
 }
 
+// NOTE: copied off of more recent versions of Cosmos SDK
 // Power returns a the result of raising to a positive integer power
 func Power(d sdk.Dec, power uint64) sdk.Dec {
 	if power == 0 {
