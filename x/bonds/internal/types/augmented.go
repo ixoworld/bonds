@@ -50,15 +50,15 @@ func SpotPrice(R sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
 // and an invariant coeficient V0
 // deposit deltaR to Mint deltaS
 // with realized price deltaR/deltaS
-//func MintAlt(deltaR, R, S sdk.Dec, kappa int64, V0 sdk.Dec) (sdk.Dec, sdk.Dec) {
-//	temp, err := ApproxRoot(V0.Mul(R.Add(deltaR)), uint64(kappa))
-//	if err != nil {
-//		panic(err)
-//	}
-//	deltaS := temp.Sub(S)
-//	realizedPrice := deltaR.Quo(deltaS)
-//	return deltaS, realizedPrice
-//}
+func MintAlt(deltaR, R, S sdk.Dec, kappa int64, V0 sdk.Dec) (sdk.Dec, sdk.Dec) {
+	temp, err := ApproxRoot(V0.Mul(R.Add(deltaR)), uint64(kappa))
+	if err != nil {
+		panic(err)
+	}
+	deltaS := temp.Sub(S)
+	realizedPrice := deltaR.Quo(deltaS)
+	return deltaS, realizedPrice
+}
 
 // This is a shortcut of the MintAlt(...) function which accepts deltaR instead
 func Mint(deltaS, R, S sdk.Dec, kappa int64, V0 sdk.Dec) (sdk.Dec, sdk.Dec) {
