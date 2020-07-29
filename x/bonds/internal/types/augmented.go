@@ -4,6 +4,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Inspired by work from BlockScience:
+// https://github.com/BlockScience/cadCAD-Tutorials/tree/master/00-Reference-Mechanisms
+
 // value function for a given state (R,S)
 func Invariant(R, S sdk.Dec, kappa int64) sdk.Dec {
 	return Power(S, uint64(kappa)).Quo(R)
