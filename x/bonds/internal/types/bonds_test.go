@@ -59,7 +59,7 @@ func TestNewBondDefaultValuesAndSorting(t *testing.T) {
 		customReserveTokens, initReserveAddress, initTxFeePercentage,
 		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		customOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks)
+		initAllowSell, initSigners, initBatchBlocks, initState)
 
 	expectedCurrentSupply := sdk.NewInt64Coin(bond.Token, 0)
 

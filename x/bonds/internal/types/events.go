@@ -9,6 +9,7 @@ const (
 	EventTypeSwap         = "swap"
 	EventTypeOrderCancel  = "order_cancel"
 	EventTypeOrderFulfill = "order_fulfill"
+	EventTypeStateChange  = "state_change"
 
 	AttributeKeyBond                   = "bond"
 	AttributeKeyName                   = "name"
@@ -27,6 +28,7 @@ const (
 	AttributeKeyAllowSells             = "allow_sells"
 	AttributeKeySigners                = "signers"
 	AttributeKeyBatchBlocks            = "batch_blocks"
+	AttributeKeyState                  = "state"
 	AttributeKeyMaxPrices              = "max_prices"
 	AttributeKeySwapFromToken          = "from_token"
 	AttributeKeySwapToToken            = "to_token"
@@ -40,6 +42,8 @@ const (
 	AttributeKeyChargedFees            = "charged_fees"
 	AttributeKeyReturnedToAddress      = "returned_to_address"
 	AttributeKeyNewBondTokenBalance    = "new_bond_token_balance"
+	AttributeKeyOldState               = "old_state"
+	AttributeKeyNewState               = "new_state"
 
 	AttributeValueBuyOrder  = "buy"
 	AttributeValueSellOrder = "sell"

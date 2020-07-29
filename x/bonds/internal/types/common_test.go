@@ -51,6 +51,7 @@ var (
 	initAllowSell              = "true"
 	initSigners                = []sdk.AccAddress{initCreator}
 	initBatchBlocks            = sdk.NewUint(10)
+	initState                  = OpenState
 
 	maxInt64 = sdk.NewInt(int64(^uint64(0) >> 1))
 )
@@ -64,7 +65,7 @@ func getValidPowerFunctionBond() Bond {
 		reserveTokens, initReserveAddress, initTxFeePercentage,
 		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks)
+		initAllowSell, initSigners, initBatchBlocks, initState)
 }
 
 func getValidBond() Bond {

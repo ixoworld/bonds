@@ -47,6 +47,7 @@ var (
 	initAllowSell              = "true"
 	initSigners                = []sdk.AccAddress{initCreator}
 	initBatchBlocks            = sdk.NewUint(10)
+	initState                  = types.OpenState
 
 	buyPrices = sdk.NewDecCoins(sdk.NewCoins(
 		sdk.NewInt64Coin(reserveToken, 2),
@@ -99,7 +100,7 @@ func getValidPowerFunctionBond() types.Bond {
 		reserveTokens, initReserveAddress, initTxFeePercentage,
 		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks)
+		initAllowSell, initSigners, initBatchBlocks, initState)
 }
 
 func getValidSwapperBond() types.Bond {
@@ -111,7 +112,7 @@ func getValidSwapperBond() types.Bond {
 		reserveTokens, initReserveAddress, initTxFeePercentage,
 		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks)
+		initAllowSell, initSigners, initBatchBlocks, initState)
 }
 
 func getValidBond() types.Bond {

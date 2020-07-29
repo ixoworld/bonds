@@ -49,12 +49,13 @@ func TestDecodeStore(t *testing.T) {
 	allowSell := "true"
 	signers := []sdk.AccAddress{creator}
 	batchBlocks := sdk.NewUint(10)
+	state := "dummy_state"
 
 	bond := types.NewBond(token, name, description, creator,
 		functionType, functionParameters, reserveTokens,
 		reserveAddress, txFeePercentage, exitFeePercentage,
 		feeAddress, maxSupply, orderQuantityLimits, sanityRate,
-		sanityMarginPercentage, allowSell, signers, batchBlocks)
+		sanityMarginPercentage, allowSell, signers, batchBlocks, state)
 	batch := types.NewBatch(bond.Token, bond.BatchBlocks)
 	lastBatch := types.NewBatch(bond.Token, bond.BatchBlocks)
 

@@ -12,7 +12,11 @@ const (
 	SigmoidFunction   = "sigmoid_function"
 	SwapperFunction   = "swapper_function"
 	AugmentedFunction = "augmented_function"
-	DoNotModifyField  = "[do-not-modify]"
+
+	HatchState = "HATCH"
+	OpenState  = "OPEN"
+
+	DoNotModifyField = "[do-not-modify]"
 
 	AnyNumberOfReserveTokens = -1
 )
@@ -171,6 +175,7 @@ type Bond struct {
 	AllowSells             string           `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
+	State                  string           `json:"state" yaml:"state"`
 }
 
 func NewBond(token, name, description string, creator sdk.AccAddress,
@@ -179,7 +184,7 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress,
 	maxSupply sdk.Coin, orderQuantityLimits sdk.Coins, sanityRate,
 	sanityMarginPercentage sdk.Dec, allowSells string, signers []sdk.AccAddress,
-	batchBlocks sdk.Uint) Bond {
+	batchBlocks sdk.Uint, state string) Bond {
 
 	// Ensure tokens and coins are sorted
 	sort.Strings(reserveTokens)
@@ -205,6 +210,7 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 		AllowSells:             allowSells,
 		Signers:                signers,
 		BatchBlocks:            batchBlocks,
+		State:                  state,
 	}
 }
 
@@ -239,16 +245,17 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 		temp3 := temp2.ApproxSqrt()
 		result = bond.GetNewReserveDecCoins(a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
 	case AugmentedFunction:
-		supplyDec := sdk.NewDecFromInt(supply)
-
-		// Different result depending on if hatch phase or open phase
-		if supplyDec.LT(args["S0"]) {
+		switch bond.State {
+		case OpenState:
 			result = bond.GetNewReserveDecCoins(args["p0"])
-		} else {
-			kappaInt64 := args["kappa"].TruncateInt64()
-			res := Reserve(supplyDec, kappaInt64, args["V0"])
-			spotPriceDec := SpotPrice(res, kappaInt64, args["V0"])
+		case HatchState:
+			supplyDec := sdk.NewDecFromInt(supply)
+			kappa := args["kappa"].TruncateInt64()
+			res := Reserve(supplyDec, kappa, args["V0"])
+			spotPriceDec := SpotPrice(res, kappa, args["V0"])
 			result = bond.GetNewReserveDecCoins(spotPriceDec)
+		default:
+			panic("unrecognized bond state")
 		}
 	case SwapperFunction:
 		return nil, ErrFunctionNotAvailableForFunctionType(DefaultCodespace)
@@ -390,10 +397,9 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 		return bond.GetNewReserveDecCoins(priceToMint), nil
 	case AugmentedFunction:
 		args := bond.FunctionParameters.AsMap()
-		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
 
-		// Different result depending on if hatch phase or open phase
-		if supplyDec.LT(args["S0"]) {
+		// If hatch phase, use fixed p0 price
+		if bond.State == HatchState {
 			price := args["p0"].Mul(sdk.NewDecFromInt(mint))
 			return bond.GetNewReserveDecCoins(price), nil
 		}
@@ -408,8 +414,14 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
 		}
 
-		kappaInt64 := args["kappa"].TruncateInt64()
-		returnForBurnDec, _ := Mint(sdk.NewDecFromInt(mint), reserveBalance, supplyDec, kappaInt64, args["V0"])
+		// Get parameters and decimal arguments
+		kappa := args["kappa"].TruncateInt64()
+		V0 := args["V0"]
+		mintDec := sdk.NewDecFromInt(mint)
+		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
+
+		returnForBurnDec, _ :=
+			Mint(mintDec, reserveBalance, supplyDec, kappa, V0)
 		return bond.GetNewReserveDecCoins(returnForBurnDec), nil
 	case SwapperFunction:
 		if bond.CurrentSupply.Amount.IsZero() {
@@ -467,12 +479,15 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
 		}
 
+		// Get parameters and decimal arguments
 		args := bond.FunctionParameters.AsMap()
-
-		kappaInt64 := args["kappa"].TruncateInt64()
+		kappa := args["kappa"].TruncateInt64()
+		V0 := args["V0"]
 		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
 		burnDec := sdk.NewDecFromInt(burn)
-		returnForBurnDec, _ := Withdraw(burnDec, reserveBalance, supplyDec, kappaInt64, args["V0"])
+
+		returnForBurnDec, _ :=
+			Withdraw(burnDec, reserveBalance, supplyDec, kappa, V0)
 		return bond.GetNewReserveDecCoins(returnForBurnDec)
 	case SwapperFunction:
 		return bond.GetReserveDeltaForLiquidityDelta(burn, reserveBalances)

@@ -36,7 +36,6 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 	for ; iterator.Valid(); iterator.Next() {
 		bond := keeper.MustGetBondByKey(ctx, iterator.Key())
 		batch := keeper.MustGetBatch(ctx, bond.Token)
-		startingSupply := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
 
 		// Subtract one block
 		batch.BlocksRemaining = batch.BlocksRemaining.SubUint64(1)
@@ -55,17 +54,17 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 		bond = keeper.MustGetBond(ctx, bond.Token)
 		batch = keeper.MustGetBatch(ctx, bond.Token)
 
-		// For augmented, if startingSupply < S0 <= newSupply, enable sells
-		if bond.FunctionType == types.AugmentedFunction {
+		// For augmented, if hatch phase and newSupply >= S0, go to open phase
+		if bond.FunctionType == types.AugmentedFunction &&
+			bond.State == types.HatchState {
 			args := bond.FunctionParameters.AsMap()
-			supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
-			if startingSupply.LT(args["S0"]) && supplyDec.GTE(args["S0"]) {
+			if sdk.NewDecFromInt(bond.CurrentSupply.Amount).GTE(args["S0"]) {
 				bond.AllowSells = types.TRUE
-				keeper.SetBond(ctx, bond.Token, bond) // Save bond
+				keeper.SetBondState(ctx, bond.Token, types.OpenState)
 			}
 		}
 
-		// Save current as last and reset current
+		// Save current batch as last batch and reset current batch
 		keeper.SetLastBatch(ctx, bond.Token, batch)
 		keeper.SetBatch(ctx, bond.Token, types.NewBatch(bond.Token, bond.BatchBlocks))
 	}
@@ -83,8 +82,12 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		return types.ErrBondTokenCannotBeStakingToken(DefaultCodespace).Result()
 	}
 
+	// Get reserve address
 	reserveAddress := supply.NewModuleAddress(
 		fmt.Sprintf("bonds/%s/reserveAddress", msg.Token))
+
+	// Set state to open by default (can get overridden if augmented_function)
+	state := types.OpenState
 
 	// TODO: investigate ways to prevent reserve address from receiving transactions
 
@@ -116,7 +119,13 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 
 		// Override AllowSells
 		if S0.GT(sdk.ZeroDec()) {
+			// Hatch phase does not allow sells
+			state = types.HatchState
 			msg.AllowSells = types.FALSE
+		} else {
+			// Open phase allows sells
+			state = types.OpenState
+			msg.AllowSells = types.TRUE
 		}
 	}
 
@@ -124,7 +133,8 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		msg.FunctionType, msg.FunctionParameters, msg.ReserveTokens,
 		reserveAddress, msg.TxFeePercentage, msg.ExitFeePercentage,
 		msg.FeeAddress, msg.MaxSupply, msg.OrderQuantityLimits, msg.SanityRate,
-		msg.SanityMarginPercentage, msg.AllowSells, msg.Signers, msg.BatchBlocks)
+		msg.SanityMarginPercentage, msg.AllowSells, msg.Signers,
+		msg.BatchBlocks, state)
 
 	keeper.SetBond(ctx, msg.Token, bond)
 	keeper.SetBatch(ctx, msg.Token, types.NewBatch(bond.Token, msg.BatchBlocks))
@@ -153,6 +163,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 			sdk.NewAttribute(types.AttributeKeyAllowSells, msg.AllowSells),
 			sdk.NewAttribute(types.AttributeKeySigners, types.AccAddressesToString(msg.Signers)),
 			sdk.NewAttribute(types.AttributeKeyBatchBlocks, msg.BatchBlocks.String()),
+			sdk.NewAttribute(types.AttributeKeyState, state),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,

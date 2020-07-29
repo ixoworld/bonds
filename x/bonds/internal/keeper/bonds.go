@@ -79,3 +79,20 @@ func (k Keeper) SetCurrentSupply(ctx sdk.Context, token string, currentSupply sd
 	bond.CurrentSupply = currentSupply
 	k.SetBond(ctx, token, bond)
 }
+
+func (k Keeper) SetBondState(ctx sdk.Context, token string, newState string) {
+	bond := k.MustGetBond(ctx, token)
+	previousState := bond.State
+	bond.State = newState
+	k.SetBond(ctx, token, bond)
+
+	logger := k.Logger(ctx)
+	logger.Info(fmt.Sprintf("updated state for %s from %s to %s", bond.Token, previousState, newState))
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeStateChange,
+		sdk.NewAttribute(types.AttributeKeyBond, bond.Token),
+		sdk.NewAttribute(types.AttributeKeyOldState, previousState),
+		sdk.NewAttribute(types.AttributeKeyNewState, newState),
+	))
+}

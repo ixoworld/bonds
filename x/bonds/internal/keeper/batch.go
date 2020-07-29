@@ -142,16 +142,17 @@ func (k Keeper) GetUpdatedBatchPricesAfterBuy(ctx sdk.Context, token string, bo 
 
 	// Max supply cannot be less than supply (max supply >= supply)
 	adjustedSupply := k.GetSupplyAdjustedForBuy(ctx, token)
-	if bond.MaxSupply.IsLT(adjustedSupply.Add(bo.Amount)) {
+	adjustedSupplyWithBuy := adjustedSupply.Add(bo.Amount)
+	if bond.MaxSupply.IsLT(adjustedSupplyWithBuy) {
 		return nil, nil, types.ErrCannotMintMoreThanMaxSupply(types.DefaultCodespace)
 	}
 
-	// If augmented and adjusted supply exceeds S0, do not allow the buy
-	if bond.FunctionType == types.AugmentedFunction {
-		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
-		adjustedSupplyWithBuy := sdk.NewDecFromInt(adjustedSupply.Add(bo.Amount).Amount)
-		S0 := bond.FunctionParameters.AsMap()["S0"]
-		if supplyDec.LT(S0) && adjustedSupplyWithBuy.GT(S0) {
+	// If augmented in hatch phase and adjusted supply exceeds S0, disallow buy
+	// since it is not allowed for a batch to cross over to the open phase.
+	if bond.FunctionType == types.AugmentedFunction &&
+		bond.State == types.HatchState {
+		args := bond.FunctionParameters.AsMap()
+		if sdk.NewDecFromInt(adjustedSupplyWithBuy.Amount).GT(args["S0"]) {
 			return nil, nil, sdk.ErrInternal(
 				"Buy exceeds initial supply S0. Consider buying less tokens.")
 		}
