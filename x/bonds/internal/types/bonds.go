@@ -550,30 +550,34 @@ func (bond Bond) GetReturnsForSwap(from sdk.Coin, toToken string, reserveBalance
 	}
 }
 
-func (bond Bond) GetTxFee(reserveAmount sdk.DecCoin) sdk.Coin {
-	feeAmount := bond.TxFeePercentage.QuoInt64(100).Mul(reserveAmount.Amount)
+func (bond Bond) GetFee(reserveAmount sdk.DecCoin, percentage sdk.Dec) sdk.Coin {
+	feeAmount := percentage.QuoInt64(100).Mul(reserveAmount.Amount)
 	return RoundFee(sdk.NewDecCoinFromDec(reserveAmount.Denom, feeAmount))
 }
 
+func (bond Bond) GetTxFee(reserveAmount sdk.DecCoin) sdk.Coin {
+	return bond.GetFee(reserveAmount, bond.TxFeePercentage)
+}
+
 func (bond Bond) GetExitFee(reserveAmount sdk.DecCoin) sdk.Coin {
-	feeAmount := bond.ExitFeePercentage.QuoInt64(100).Mul(reserveAmount.Amount)
-	return RoundFee(sdk.NewDecCoinFromDec(reserveAmount.Denom, feeAmount))
+	return bond.GetFee(reserveAmount, bond.ExitFeePercentage)
+}
+
+func (bond Bond) GetFees(reserveAmounts sdk.DecCoins, percentage sdk.Dec) (fees sdk.Coins) {
+	for _, r := range reserveAmounts {
+		fees = fees.Add(sdk.Coins{bond.GetFee(r, percentage)})
+	}
+	return fees
 }
 
 //noinspection GoNilness
 func (bond Bond) GetTxFees(reserveAmounts sdk.DecCoins) (fees sdk.Coins) {
-	for _, r := range reserveAmounts {
-		fees = fees.Add(sdk.Coins{bond.GetTxFee(r)})
-	}
-	return fees
+	return bond.GetFees(reserveAmounts, bond.TxFeePercentage)
 }
 
 //noinspection GoNilness
 func (bond Bond) GetExitFees(reserveAmounts sdk.DecCoins) (fees sdk.Coins) {
-	for _, r := range reserveAmounts {
-		fees = fees.Add(sdk.Coins{bond.GetExitFee(r)})
-	}
-	return fees
+	return bond.GetFees(reserveAmounts, bond.ExitFeePercentage)
 }
 
 func (bond Bond) SignersEqualTo(signers []sdk.AccAddress) bool {
