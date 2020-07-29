@@ -42,6 +42,10 @@ FEE=$(yes $PASSWORD | bondscli keys show fee -a)
 # theta := 0.4  // initial allocation (percentage)
 # kappa := 3.0  // degrees of polynomial (i.e. x^2, x^4, x^6)
 
+# R0 = 300              // initial reserve (1-theta)*d0
+# S0 = 50000            // initial supply
+# V0 = 416666666666.667 // invariant
+
 echo "Creating bond..."
 tx_from_m create-bond \
   --token=abc \
@@ -63,22 +67,35 @@ tx_from_m create-bond \
 echo "Created bond..."
 bondscli query bonds bond abc
 
-echo "Miguel buys 10000abc..."
-tx_from_m buy 10000abc 1000000res
+echo "Miguel buys 20000abc..."
+tx_from_m buy 20000abc 100000res
 echo "Miguel's account..."
 bondscli query auth account "$MIGUEL"
 
-echo "Francesco buys 10000abc..."
-tx_from_f buy 10000abc 1000000res
+echo "Francesco buys 20000abc..."
+tx_from_f buy 20000abc 100000res
 echo "Francesco's account..."
 bondscli query auth account "$FRANCESCO"
 
-echo "Miguel sells 10000abc..."
+echo "Miguel cannot buy 10001abc..."
+tx_from_m buy 10001abc 100000res
+echo "Miguel cannot sell anything..."
 tx_from_m sell 10000abc
+
+echo "Miguel can buy 10000abc..."
+tx_from_m buy 10000abc 100000res
 echo "Miguel's account..."
 bondscli query auth account "$MIGUEL"
 
-echo "Francesco sells 10000abc..."
-tx_from_f sell 10000abc
+echo "Bond state is now open..."
+bondscli query bonds bond abc
+
+echo "Miguel sells 30000abc..."
+tx_from_m sell 30000abc
+echo "Miguel's account..."
+bondscli query auth account "$MIGUEL"
+
+echo "Francesco sells 30000abc..."
+tx_from_f sell 30000abc
 echo "Francesco's account..."
 bondscli query auth account "$FRANCESCO"
