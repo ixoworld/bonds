@@ -112,6 +112,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		R0 := d0.Mul(sdk.OneDec().Sub(theta))
 		S0 := d0.Quo(p0)
 		V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
+		// TODO: consider calculating these on-the-fly, especially R0 and S0
 
 		msg.FunctionParameters = append(msg.FunctionParameters,
 			types.FunctionParams{
