@@ -56,7 +56,7 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --order-quantity-limits="" \
   --sanity-rate="0" \
   --sanity-margin-percentage="0" \
-  --allow-sells=true \
+  --allow-sells \
   --signers="$MIGUEL" \
   --batch-blocks=1 \
   --from miguel -y \
@@ -77,7 +77,7 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --order-quantity-limits="" \
   --sanity-rate="0" \
   --sanity-margin-percentage="0" \
-  --allow-sells=true \
+  --allow-sells \
   --signers="$MIGUEL" \
   --batch-blocks=3 \
   --from miguel -y \
@@ -98,7 +98,7 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --order-quantity-limits="" \
   --sanity-rate="0" \
   --sanity-margin-percentage="0" \
-  --allow-sells=true \
+  --allow-sells \
   --signers="$MIGUEL" \
   --batch-blocks=2 \
   --from miguel -y \
@@ -119,7 +119,7 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --order-quantity-limits="" \
   --sanity-rate="0" \
   --sanity-margin-percentage="0" \
-  --allow-sells=true \
+  --allow-sells \
   --signers="$MIGUEL" \
   --batch-blocks=1 \
   --from miguel -y \

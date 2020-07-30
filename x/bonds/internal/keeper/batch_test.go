@@ -848,7 +848,7 @@ func TestOrderCancelled(t *testing.T) {
 	require.False(t, baseOrder.IsCancelled())
 
 	// Set as cancelled
-	baseOrder.Cancelled = types.TRUE
+	baseOrder.Cancelled = true
 
 	// Check that cancelled
 	require.True(t, baseOrder.IsCancelled())
@@ -949,7 +949,7 @@ func TestCancelUnfulfillableBuys(t *testing.T) {
 		batch := app.BondsKeeper.MustGetBatch(ctx, bond.Token)
 		require.Equal(t, bo.Amount, batch.TotalBuyAmount)
 		require.Len(t, batch.Buys, 1)
-		require.Equal(t, types.FALSE, batch.Buys[0].Cancelled)
+		require.False(t, batch.Buys[0].Cancelled)
 
 		// Get account balance before possible cancellation
 		balanceBefore := app.BankKeeper.GetCoins(ctx, buyerAddress)
@@ -967,7 +967,7 @@ func TestCancelUnfulfillableBuys(t *testing.T) {
 		if tc.orderFulfillable {
 			// Check that not cancelled
 			require.Equal(t, bo.Amount, batch.TotalBuyAmount)
-			require.Equal(t, types.FALSE, batch.Buys[0].Cancelled)
+			require.False(t, batch.Buys[0].Cancelled)
 			require.Equal(t, buyPrices, batch.BuyPrices)
 
 			// Check that balances unchanged
@@ -976,7 +976,7 @@ func TestCancelUnfulfillableBuys(t *testing.T) {
 		} else {
 			// Check that cancelled
 			require.Equal(t, zeroTokens, batch.TotalBuyAmount)
-			require.Equal(t, types.TRUE, batch.Buys[0].Cancelled)
+			require.True(t, batch.Buys[0].Cancelled)
 			require.Equal(t, buyPrices, batch.BuyPrices) // this changes only CancelUnfulfillableOrders is used
 
 			// Check that reserve tokens returned to buyer
@@ -1039,7 +1039,7 @@ func TestCancelUnfulfillableOrders(t *testing.T) {
 		batch := app.BondsKeeper.MustGetBatch(ctx, bond.Token)
 		require.Equal(t, bo.Amount, batch.TotalBuyAmount)
 		require.Len(t, batch.Buys, 1)
-		require.Equal(t, types.FALSE, batch.Buys[0].Cancelled)
+		require.False(t, batch.Buys[0].Cancelled)
 
 		// Get account balance before possible cancellation
 		balanceBefore := app.BankKeeper.GetCoins(ctx, buyerAddress)
@@ -1057,7 +1057,7 @@ func TestCancelUnfulfillableOrders(t *testing.T) {
 		if tc.orderFulfillable {
 			// Check that not cancelled
 			require.Equal(t, bo.Amount, batch.TotalBuyAmount)
-			require.Equal(t, types.FALSE, batch.Buys[0].Cancelled)
+			require.False(t, batch.Buys[0].Cancelled)
 			require.Equal(t, buyPrices, batch.BuyPrices)
 
 			// Check that balances unchanged
@@ -1066,7 +1066,7 @@ func TestCancelUnfulfillableOrders(t *testing.T) {
 		} else {
 			// Check that cancelled
 			require.Equal(t, zeroTokens, batch.TotalBuyAmount)
-			require.Equal(t, types.TRUE, batch.Buys[0].Cancelled)
+			require.True(t, batch.Buys[0].Cancelled)
 			require.NotEqual(t, buyPrices, batch.BuyPrices)
 
 			// Check that reserve tokens returned to buyer

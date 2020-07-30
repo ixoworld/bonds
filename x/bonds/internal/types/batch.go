@@ -32,7 +32,7 @@ func NewBatch(token string, blocks sdk.Uint) Batch {
 type BaseOrder struct {
 	Address      sdk.AccAddress `json:"address" yaml:"address"`
 	Amount       sdk.Coin       `json:"amount" yaml:"amount"`
-	Cancelled    string         `json:"cancelled" yaml:"cancelled"`
+	Cancelled    bool           `json:"cancelled" yaml:"cancelled"`
 	CancelReason string         `json:"cancel_reason" yaml:"cancel_reason"`
 }
 
@@ -40,13 +40,13 @@ func NewBaseOrder(address sdk.AccAddress, amount sdk.Coin) BaseOrder {
 	return BaseOrder{
 		Address:      address,
 		Amount:       amount,
-		Cancelled:    FALSE,
+		Cancelled:    false,
 		CancelReason: "",
 	}
 }
 
 func (bo BaseOrder) IsCancelled() bool {
-	return bo.Cancelled == TRUE
+	return bo.Cancelled == true
 }
 
 type BuyOrder struct {

@@ -54,7 +54,7 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			_orderQuantityLimits := viper.GetString(FlagOrderQuantityLimits)
 			_sanityRate := viper.GetString(FlagSanityRate)
 			_sanityMarginPercentage := viper.GetString(FlagSanityMarginPercentage)
-			_allowSells := viper.GetString(FlagAllowSells)
+			_allowSells := viper.GetBool(FlagAllowSells)
 			_signers := viper.GetString(FlagSigners)
 			_batchBlocks := viper.GetString(FlagBatchBlocks)
 

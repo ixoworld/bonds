@@ -192,7 +192,7 @@ type Bond struct {
 	SanityRate             sdk.Dec          `json:"sanity_rate" yaml:"sanity_rate"`
 	SanityMarginPercentage sdk.Dec          `json:"sanity_margin_percentage" yaml:"sanity_margin_percentage"`
 	CurrentSupply          sdk.Coin         `json:"current_supply" yaml:"current_supply"`
-	AllowSells             string           `json:"allow_sells" yaml:"allow_sells"`
+	AllowSells             bool             `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
 	State                  string           `json:"state" yaml:"state"`
@@ -203,7 +203,7 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 	reserveTokens []string, reserveAdddress sdk.AccAddress,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress,
 	maxSupply sdk.Coin, orderQuantityLimits sdk.Coins, sanityRate,
-	sanityMarginPercentage sdk.Dec, allowSells string, signers []sdk.AccAddress,
+	sanityMarginPercentage sdk.Dec, allowSells bool, signers []sdk.AccAddress,
 	batchBlocks sdk.Uint, state string) Bond {
 
 	// Ensure tokens and coins are sorted
@@ -244,7 +244,7 @@ func (bond Bond) GetNewReserveDecCoins(amount sdk.Dec) (coins sdk.DecCoins) {
 
 func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk.Error) {
 	if supply.IsNegative() {
-		panic(fmt.Sprintf("negative supply for bond %s", bond))
+		panic(fmt.Sprintf("negative supply for bond %s", bond.Token))
 	}
 
 	args := bond.FunctionParameters.AsMap()
@@ -287,7 +287,7 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 
 	if result.IsAnyNegative() {
 		// assumes that the curve is above the x-axis and does not intersect it
-		panic(fmt.Sprintf("negative price result for bond %s", bond))
+		panic(fmt.Sprintf("negative price result for bond %s", bond.Token))
 	}
 	return result, nil
 }
@@ -310,7 +310,7 @@ func (bond Bond) GetCurrentPricesPT(reserveBalances sdk.Coins) (sdk.DecCoins, sd
 
 func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 	if supply.IsNegative() {
-		panic(fmt.Sprintf("negative supply for bond %s", bond))
+		panic(fmt.Sprintf("negative supply for bond %s", bond.Token))
 	}
 
 	args := bond.FunctionParameters.AsMap()
@@ -344,16 +344,16 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 
 	if result.IsNegative() {
 		// assumes that the curve is above the x-axis and does not intersect it
-		panic(fmt.Sprintf("negative integral result for bond %s", bond))
+		panic(fmt.Sprintf("negative integral result for bond %s", bond.Token))
 	}
 	return result
 }
 
 func (bond Bond) GetReserveDeltaForLiquidityDelta(mintOrBurn sdk.Int, reserveBalances sdk.Coins) sdk.DecCoins {
 	if mintOrBurn.IsNegative() {
-		panic(fmt.Sprintf("negative liquidity delta for bond %s", bond))
+		panic(fmt.Sprintf("negative liquidity delta for bond %s", bond.Token))
 	} else if reserveBalances.IsAnyNegative() {
-		panic(fmt.Sprintf("negative reserve balance for bond %s", bond))
+		panic(fmt.Sprintf("negative reserve balance for bond %s", bond.Token))
 	}
 
 	switch bond.FunctionType {
@@ -381,7 +381,7 @@ func (bond Bond) GetReserveDeltaForLiquidityDelta(mintOrBurn sdk.Int, reserveBal
 			sdk.NewDecCoinFromDec(resToken2, alpha.Mul(resBalance2)),
 		}
 		if result.IsAnyNegative() {
-			panic(fmt.Sprintf("negative reserve delta result for bond %s", bond))
+			panic(fmt.Sprintf("negative reserve delta result for bond %s", bond.Token))
 		}
 		return result
 	default:
@@ -391,9 +391,9 @@ func (bond Bond) GetReserveDeltaForLiquidityDelta(mintOrBurn sdk.Int, reserveBal
 
 func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.DecCoins, sdk.Error) {
 	if mint.IsNegative() {
-		panic(fmt.Sprintf("negative mint amount for bond %s", bond))
+		panic(fmt.Sprintf("negative mint amount for bond %s", bond.Token))
 	} else if reserveBalances.IsAnyNegative() {
-		panic(fmt.Sprintf("negative reserve balance for bond %s", bond))
+		panic(fmt.Sprintf("negative reserve balance for bond %s", bond.Token))
 	}
 
 	switch bond.FunctionType {
@@ -458,9 +458,9 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 
 func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.DecCoins {
 	if burn.IsNegative() {
-		panic(fmt.Sprintf("negative burn amount for bond %s", bond))
+		panic(fmt.Sprintf("negative burn amount for bond %s", bond.Token))
 	} else if reserveBalances.IsAnyNegative() {
-		panic(fmt.Sprintf("negative reserve balance for bond %s", bond))
+		panic(fmt.Sprintf("negative reserve balance for bond %s", bond.Token))
 	}
 
 	switch bond.FunctionType {
@@ -521,9 +521,9 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 
 func (bond Bond) GetReturnsForSwap(from sdk.Coin, toToken string, reserveBalances sdk.Coins) (returns sdk.Coins, txFee sdk.Coin, err sdk.Error) {
 	if from.IsNegative() {
-		panic(fmt.Sprintf("negative from amount for bond %s", bond))
+		panic(fmt.Sprintf("negative from amount for bond %s", bond.Token))
 	} else if reserveBalances.IsAnyNegative() {
-		panic(fmt.Sprintf("negative reserve balance for bond %s", bond))
+		panic(fmt.Sprintf("negative reserve balance for bond %s", bond.Token))
 	}
 
 	switch bond.FunctionType {
@@ -563,7 +563,7 @@ func (bond Bond) GetReturnsForSwap(from sdk.Coin, toToken string, reserveBalance
 		} else if outAmt.IsZero() {
 			return nil, sdk.Coin{}, ErrSwapAmountTooSmallToGiveAnyReturn(DefaultCodespace, from.Denom, toToken)
 		} else if outAmt.IsNegative() {
-			panic(fmt.Sprintf("negative return for swap result for bond %s", bond))
+			panic(fmt.Sprintf("negative return for swap result for bond %s", bond.Token))
 		}
 
 		return sdk.Coins{sdk.NewCoin(toToken, outAmt)}, txFee, nil

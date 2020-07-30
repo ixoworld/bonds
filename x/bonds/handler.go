@@ -7,6 +7,7 @@ import (
 	"github.com/ixoworld/bonds/x/bonds/internal/keeper"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"strconv"
 	"strings"
 )
 
@@ -61,7 +62,7 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 			if sdk.NewDecFromInt(bond.CurrentSupply.Amount).GTE(args["S0"]) {
 				keeper.SetBondState(ctx, bond.Token, types.OpenState)
 				bond = keeper.MustGetBond(ctx, bond.Token) // get bond again
-				bond.AllowSells = types.TRUE               // enable sells
+				bond.AllowSells = true                     // enable sells
 				keeper.SetBond(ctx, bond.Token, bond)      // update bond
 			}
 		}
@@ -122,7 +123,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		// Set state to Hatch and disable sells. Note that it is never the case
 		// that we start with OpenState because S0>0, since S0=d0/p0 and d0>0
 		state = types.HatchState
-		msg.AllowSells = types.FALSE
+		msg.AllowSells = false
 	}
 
 	bond := types.NewBond(msg.Token, msg.Name, msg.Description, msg.Creator,
@@ -156,7 +157,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 			sdk.NewAttribute(types.AttributeKeyOrderQuantityLimits, msg.OrderQuantityLimits.String()),
 			sdk.NewAttribute(types.AttributeKeySanityRate, msg.SanityRate.String()),
 			sdk.NewAttribute(types.AttributeKeySanityMarginPercentage, msg.SanityMarginPercentage.String()),
-			sdk.NewAttribute(types.AttributeKeyAllowSells, msg.AllowSells),
+			sdk.NewAttribute(types.AttributeKeyAllowSells, strconv.FormatBool(msg.AllowSells)),
 			sdk.NewAttribute(types.AttributeKeySigners, types.AccAddressesToString(msg.Signers)),
 			sdk.NewAttribute(types.AttributeKeyBatchBlocks, msg.BatchBlocks.String()),
 			sdk.NewAttribute(types.AttributeKeyState, state),
@@ -376,7 +377,7 @@ func handleMsgSell(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgSell) sdk
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, token).Result()
 	}
 
-	if strings.ToLower(bond.AllowSells) == types.FALSE {
+	if !bond.AllowSells {
 		return types.ErrBondDoesNotAllowSelling(types.DefaultCodespace).Result()
 	}
 

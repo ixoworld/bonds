@@ -481,7 +481,7 @@ func TestSellingABondWhichCannotBeSoldFails(t *testing.T) {
 
 	// Create bond
 	createMsg := newValidMsgCreateBond()
-	createMsg.AllowSells = types.FALSE
+	createMsg.AllowSells = false
 	h(ctx, createMsg)
 
 	// Add reserve tokens to user
@@ -927,7 +927,7 @@ func TestEndBlockerAugmentedFunction(t *testing.T) {
 
 	// Get bond to confirm allowSells==false, S0==50000, state==hatch
 	bond := app.BondsKeeper.MustGetBond(ctx, token)
-	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.False(t, bond.AllowSells)
 	require.Equal(t, sdk.NewDec(50000), bond.FunctionParameters.AsMap()["S0"])
 	require.Equal(t, types.HatchState, bond.State)
 
@@ -944,7 +944,7 @@ func TestEndBlockerAugmentedFunction(t *testing.T) {
 
 	// Confirm allowSells and state still the same
 	bond = app.BondsKeeper.MustGetBond(ctx, token)
-	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.False(t, bond.AllowSells)
 	require.Equal(t, types.HatchState, bond.State)
 
 	// Buy 1 more token, to reach S0 => state is now open
@@ -953,7 +953,7 @@ func TestEndBlockerAugmentedFunction(t *testing.T) {
 
 	// Confirm allowSells==true, state==open
 	bond = app.BondsKeeper.MustGetBond(ctx, token)
-	require.Equal(t, types.TRUE, bond.AllowSells)
+	require.True(t, bond.AllowSells)
 	require.Equal(t, types.OpenState, bond.State)
 
 	// Check user balance of tokens
@@ -994,7 +994,7 @@ func TestEndBlockerAugmentedFunctionDecimalS0(t *testing.T) {
 	// Get bond to confirm S0==49999.5, allowSells==false, state==hatch
 	bond = app.BondsKeeper.MustGetBond(ctx, token)
 	require.Equal(t, decimalS0, bond.FunctionParameters.AsMap()["S0"])
-	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.False(t, bond.AllowSells)
 	require.Equal(t, types.HatchState, bond.State)
 
 	// Buy 49999 tokens; just below S0
@@ -1003,7 +1003,7 @@ func TestEndBlockerAugmentedFunctionDecimalS0(t *testing.T) {
 
 	// Confirm allowSells and state still the same
 	bond = app.BondsKeeper.MustGetBond(ctx, token)
-	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.False(t, bond.AllowSells)
 	require.Equal(t, types.HatchState, bond.State)
 
 	// Buy 1 more token, to exceed S0
@@ -1012,6 +1012,6 @@ func TestEndBlockerAugmentedFunctionDecimalS0(t *testing.T) {
 
 	// Confirm allowSells==true, state==open
 	bond = app.BondsKeeper.MustGetBond(ctx, token)
-	require.Equal(t, types.TRUE, bond.AllowSells)
+	require.True(t, bond.AllowSells)
 	require.Equal(t, types.OpenState, bond.State)
 }

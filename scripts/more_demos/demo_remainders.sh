@@ -59,7 +59,7 @@ tx_from_m create-bond \
   --order-quantity-limits="" \
   --sanity-rate="0" \
   --sanity-margin-percentage="0" \
-  --allow-sells=true \
+  --allow-sells \
   --signers="$MIGUEL" \
   --batch-blocks=1
 echo "Created bond..."

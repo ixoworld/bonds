@@ -80,11 +80,11 @@ func getRandomFunctionParameters(r *rand.Rand, functionType string) types.Functi
 	}
 }
 
-func getRandomAllowSellsValue(r *rand.Rand) string {
+func getRandomAllowSellsValue(r *rand.Rand) bool {
 	if simulation.RandIntBetween(r, 1, 11) == 1 {
-		return types.FALSE
+		return false
 	} else { // 9 times out of 10, sells are allowed
-		return types.TRUE
+		return true
 	}
 }
 

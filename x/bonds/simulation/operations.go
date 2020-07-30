@@ -415,7 +415,7 @@ func SimulateMsgSell(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operatio
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 		bond, found := k.GetBond(ctx, token)
-		if !found || bond.AllowSells == types.FALSE || bond.CurrentSupply.IsZero() {
+		if !found || !bond.AllowSells || bond.CurrentSupply.IsZero() {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 

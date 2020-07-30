@@ -461,7 +461,7 @@ func (k Keeper) PerformSwapOrders(ctx sdk.Context, token string) {
 			err, ok := k.PerformSwap(ctx, token, so)
 			if err != nil {
 				if ok {
-					batch.Swaps[i].Cancelled = types.TRUE
+					batch.Swaps[i].Cancelled = true
 					batch.Swaps[i].CancelReason = err.Error()
 
 					logger.Info(fmt.Sprintf("cancelled swap order for %s to %s from %s", so.Amount.String(), so.ToToken, so.Address.String()))
@@ -518,7 +518,7 @@ func (k Keeper) CancelUnfulfillableBuys(ctx sdk.Context, token string) (cancelle
 			err := k.CheckIfBuyOrderFulfillableAtPrice(ctx, token, bo, batch.BuyPrices)
 			if err != nil {
 				// Cancel (important to use batch.Buys[i] and not bo!)
-				batch.Buys[i].Cancelled = types.TRUE
+				batch.Buys[i].Cancelled = true
 				batch.Buys[i].CancelReason = err.Error()
 				batch.TotalBuyAmount = batch.TotalBuyAmount.Sub(bo.Amount)
 				cancelledOrders += 1

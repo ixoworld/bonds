@@ -140,6 +140,19 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Parse allowSells
+		var allowSells bool
+		allowSellsStrLower := strings.ToLower(req.AllowSells)
+		if allowSellsStrLower == "true" {
+			allowSells = true
+		} else if allowSellsStrLower == "false" {
+			allowSells = false
+		} else {
+			err := types.ErrArgumentMissingOrNonBoolean(types.DefaultCodespace, "allow_sells")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		// Parse signers
 		signers, err := client.ParseSigners(req.Signers)
 		if err != nil {
@@ -159,7 +172,7 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			creator, req.FunctionType, functionParams, reserveTokens,
 			txFeePercentageDec, exitFeePercentageDec, feeAddress, maxSupply,
 			orderQuantityLimits, sanityRate, sanityMarginPercentage,
-			req.AllowSells, signers, batchBlocks)
+			allowSells, signers, batchBlocks)
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
