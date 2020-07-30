@@ -65,9 +65,10 @@ This message is expected to fail if:
   - `power_function`: `n` must be an integer
   - `sigmoid_function`: `c != 0`
   - `augmented_function`:
-    - `d0 != 0` and `d0` must be an integer
-    - `0 <= theta < 1`
+    - `d0 != 0` and must be an integer
     - `p0 != 0`
+    - `0 <= theta < 1`
+    - `kappa != 0` and must be an integer
 - reserve tokens list is invalid. Valid inputs are:
   - For `swapper_function`: two valid comma-separated denominations, e.g. `res,rez`
   - Otherwise: one or more valid comma-separated denominations, e.g. `res,rez,rex`

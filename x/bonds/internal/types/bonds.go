@@ -148,7 +148,15 @@ func augmentedParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
 		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:d0")
 	}
 
-	// Augmented exception 2: theta must be from 0 to 1 (excluding 1)
+	// Augmented exception 2: p0 != 0, otherwise we run into divisions by zero
+	val, ok = paramsMap["p0"]
+	if !ok {
+		panic("did not find parameter p0 for augmented function")
+	} else if !val.IsPositive() {
+		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:p0")
+	}
+
+	// Augmented exception 3: theta must be from 0 to 1 (excluding 1)
 	val, ok = paramsMap["theta"]
 	if !ok {
 		panic("did not find parameter theta for augmented function")
@@ -156,20 +164,15 @@ func augmentedParameterRestrictions(paramsMap map[string]sdk.Dec) sdk.Error {
 		return ErrArgumentMustBeBetween(DefaultCodespace, "FunctionParams:theta", "0", "1")
 	}
 
-	// Augmented exception 3: kappa != 0, otherwise we run into divisions by zero
+	// Augmented exception 4.1: kappa must be an integer, since we use it for powers
+	// Augmented exception 4.2: kappa != 0, otherwise we run into divisions by zero
 	val, ok = paramsMap["kappa"]
 	if !ok {
 		panic("did not find parameter kappa for augmented function")
+	} else if !val.TruncateDec().Equal(val) {
+		return ErrArgumentMustBeInteger(DefaultCodespace, "FunctionParams:kappa")
 	} else if !val.IsPositive() {
 		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:kappa")
-	}
-
-	// Augmented exception 4: p0 != 0, otherwise we run into divisions by zero
-	val, ok = paramsMap["p0"]
-	if !ok {
-		panic("did not find parameter p0 for augmented function")
-	} else if !val.IsPositive() {
-		return ErrArgumentMustBePositive(DefaultCodespace, "FunctionParams:p0")
 	}
 
 	return nil

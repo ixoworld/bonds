@@ -8,6 +8,114 @@ import (
 	"testing"
 )
 
+func TestExtraParameterRestrictions_Power(t *testing.T) {
+	paramRestrictions := ExtraParameterRestrictions[PowerFunction]
+
+	testCases := []struct {
+		m           string
+		n           string
+		c           string
+		expectError bool
+	}{
+		{"10", "10", "10", false},       // integers allowed for all
+		{"0", "0", "0", false},          // zeroes allowed for all
+		{"10.10", "10", "10.10", false}, // float m and c allowed
+		{"10", "10.10", "10", true},     // float n not allowed
+	}
+
+	for _, tc := range testCases {
+		mDec := sdk.MustNewDecFromStr(tc.m)
+		nDec := sdk.MustNewDecFromStr(tc.n)
+		cDec := sdk.MustNewDecFromStr(tc.c)
+		err := paramRestrictions(FunctionParams{
+			NewFunctionParam("m", mDec),
+			NewFunctionParam("n", nDec),
+			NewFunctionParam("c", cDec),
+		}.AsMap())
+
+		if tc.expectError {
+			require.Error(t, err)
+		} else {
+			require.Nil(t, err)
+		}
+	}
+}
+
+func TestExtraParameterRestrictions_Sigmoid(t *testing.T) {
+	paramRestrictions := ExtraParameterRestrictions[SigmoidFunction]
+
+	testCases := []struct {
+		a           string
+		b           string
+		c           string
+		expectError bool
+	}{
+		{"10", "10", "10", false},          // integers allowed for all
+		{"0", "0", "10", false},            // zeroes allowed for a and b
+		{"10", "10", "0", true},            // zero not allowed for c
+		{"10.10", "10.10", "10.10", false}, // floats allowed for all
+	}
+
+	for _, tc := range testCases {
+		aDec := sdk.MustNewDecFromStr(tc.a)
+		bDec := sdk.MustNewDecFromStr(tc.b)
+		cDec := sdk.MustNewDecFromStr(tc.c)
+		err := paramRestrictions(FunctionParams{
+			NewFunctionParam("a", aDec),
+			NewFunctionParam("b", bDec),
+			NewFunctionParam("c", cDec),
+		}.AsMap())
+
+		if tc.expectError {
+			require.Error(t, err)
+		} else {
+			require.Nil(t, err)
+		}
+	}
+}
+
+func TestExtraParameterRestrictions_Augmented(t *testing.T) {
+	paramRestrictions := ExtraParameterRestrictions[AugmentedFunction]
+
+	testCases := []struct {
+		d0          string
+		p0          string
+		theta       string
+		kappa       string
+		expectError bool
+	}{
+		{"10", "10", "0.5", "10", false},      // valid values
+		{"0", "10", "0.5", "10", true},        // d0 can NOT be 0
+		{"10", "0", "0.5", "10", true},        // p0 can NOT be 0
+		{"10", "10", "0", "10", false},        // theta can be 0
+		{"10", "10", "0.5", "0", true},        // kappa can NOT be 0
+		{"10", "10", "1", "10", true},         // theta can NOT be 1
+		{"10", "10", "1.1", "10", true},       // theta can NOT be >1
+		{"10", "10.10", "0.5", "10", false},   // p0 and theta can be floats
+		{"10.10", "10.10", "0.5", "10", true}, // d0 can NOT be a float
+		{"10", "10.10", "0.5", "10.10", true}, // kappa can NOT be a float
+	}
+
+	for _, tc := range testCases {
+		d0Dec := sdk.MustNewDecFromStr(tc.d0)
+		p0Dec := sdk.MustNewDecFromStr(tc.p0)
+		thetaDec := sdk.MustNewDecFromStr(tc.theta)
+		kappaDec := sdk.MustNewDecFromStr(tc.kappa)
+		err := paramRestrictions(FunctionParams{
+			NewFunctionParam("d0", d0Dec),
+			NewFunctionParam("p0", p0Dec),
+			NewFunctionParam("theta", thetaDec),
+			NewFunctionParam("kappa", kappaDec),
+		}.AsMap())
+
+		if tc.expectError {
+			require.Error(t, err)
+		} else {
+			require.Nil(t, err)
+		}
+	}
+}
+
 func TestFunctionParamsAsMap(t *testing.T) {
 	actualResult := functionParametersPower.AsMap()
 	expectedResult := map[string]sdk.Dec{
