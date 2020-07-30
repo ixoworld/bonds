@@ -56,6 +56,28 @@ func TestCreateValidAugmentedBondHatchState(t *testing.T) {
 	// Check initial state (hatch since augmented)
 	bond := app.BondsKeeper.MustGetBond(ctx, token)
 	require.Equal(t, types.HatchState, bond.State)
+
+	// Check function params (R0, S0, V0 added)
+	paramsMap := bond.FunctionParameters.AsMap()
+	d0, _ := paramsMap["d0"]
+	p0, _ := paramsMap["p0"]
+	theta, _ := paramsMap["theta"]
+	kappa, _ := paramsMap["kappa"]
+
+	initialParams := functionParametersAugmented.AsMap()
+	require.Equal(t, d0, initialParams["d0"])
+	require.Equal(t, p0, initialParams["p0"])
+	require.Equal(t, theta, initialParams["theta"])
+	require.Equal(t, kappa, initialParams["kappa"])
+
+	R0 := d0.Mul(sdk.OneDec().Sub(theta))
+	S0 := d0.Quo(p0)
+	V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
+
+	require.Equal(t, R0, paramsMap["R0"])
+	require.Equal(t, S0, paramsMap["S0"])
+	require.Equal(t, V0, paramsMap["V0"])
+	require.Len(t, bond.FunctionParameters, 7)
 }
 
 func TestCreateBondThatAlreadyExistsFails(t *testing.T) {
