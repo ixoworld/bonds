@@ -20,22 +20,6 @@ var (
 	anotherAddress = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	userAddress    = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	functionParametersPower = types.FunctionParams{
-		types.NewFunctionParam("m", sdk.NewDec(12)),
-		types.NewFunctionParam("n", sdk.NewDec(2)),
-		types.NewFunctionParam("c", sdk.NewDec(100)),
-	}
-
-	functionParametersAugmented = types.FunctionParams{
-		types.NewFunctionParam("d0", sdk.MustNewDecFromStr("500.0")),
-		types.NewFunctionParam("p0", sdk.MustNewDecFromStr("0.01")),
-		types.NewFunctionParam("theta", sdk.MustNewDecFromStr("0.4")),
-		types.NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0")),
-	}
-
-	powerReserves   = []string{reserveToken}
-	swapperReserves = []string{reserveToken, reserveToken2}
-
 	initToken                  = token
 	initName                   = "test token"
 	initDescription            = "this is a test token"
@@ -57,6 +41,24 @@ var (
 
 	extraMaxSupply = sdk.NewInt64Coin(initToken, 1000000)
 )
+
+func functionParametersPower() types.FunctionParams {
+	return types.FunctionParams{
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(100))}
+}
+
+func functionParametersAugmented() types.FunctionParams {
+	return types.FunctionParams{
+		types.NewFunctionParam("d0", sdk.MustNewDecFromStr("500.0")),
+		types.NewFunctionParam("p0", sdk.MustNewDecFromStr("0.01")),
+		types.NewFunctionParam("theta", sdk.MustNewDecFromStr("0.4")),
+		types.NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0"))}
+}
+
+func powerReserves() []string   { return []string{reserveToken} }
+func swapperReserves() []string { return []string{reserveToken, reserveToken2} }
 
 func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
 	app := simapp.Setup(isCheckTx)
@@ -80,22 +82,22 @@ func newValidMsgCreateSwapperBond() types.MsgCreateBond {
 	validMsg := newValidMsgCreateBond()
 	validMsg.FunctionType = types.SwapperFunction
 	validMsg.FunctionParameters = nil
-	validMsg.ReserveTokens = swapperReserves
+	validMsg.ReserveTokens = swapperReserves()
 	return validMsg
 }
 
 func newValidMsgCreateAugmentedBond() types.MsgCreateBond {
 	validMsg := newValidMsgCreateBond()
 	validMsg.FunctionType = types.AugmentedFunction
-	validMsg.FunctionParameters = functionParametersAugmented
+	validMsg.FunctionParameters = functionParametersAugmented()
 	validMsg.MaxSupply = extraMaxSupply
 	return validMsg
 }
 
 func newValidMsgCreateBond() types.MsgCreateBond {
 	functionType := types.PowerFunction
-	functionParams := functionParametersPower
-	reserveTokens := powerReserves
+	functionParams := functionParametersPower()
+	reserveTokens := powerReserves()
 	return types.NewMsgCreateBond(token, initName, initDescription,
 		initCreator, functionType, functionParams, reserveTokens,
 		initTxFeePercentage, initExitFeePercentage, initFeeAddress,

@@ -227,7 +227,7 @@ func TestGetPricesAtSupply(t *testing.T) {
 		if tc.functionAvailable {
 			require.Nil(t, err)
 			expectedDec := sdk.MustNewDecFromStr(tc.expected)
-			expectedResult := NewDecMultitokenReserveFromDec(expectedDec)
+			expectedResult := newDecMultitokenReserveFromDec(expectedDec)
 			require.Equal(t, expectedResult, actualResult)
 		} else {
 			require.Error(t, err)
@@ -267,7 +267,7 @@ func TestGetCurrentPrices(t *testing.T) {
 
 		actualResult, _ := bond.GetCurrentPricesPT(tc.reserveBalances)
 		expectedDec := sdk.MustNewDecFromStr(tc.expected)
-		expectedResult := NewDecMultitokenReserveFromDec(expectedDec)
+		expectedResult := newDecMultitokenReserveFromDec(expectedDec)
 		require.Equal(t, expectedResult, actualResult)
 	}
 }
@@ -331,7 +331,7 @@ func TestGetReserveDeltaForLiquidityDelta(t *testing.T) {
 
 		actualResult := bond.GetReserveDeltaForLiquidityDelta(
 			tc.liquidityDelta, reserveBalances)
-		expectedResult := NewDecMultitokenReserveFromInt(50000)
+		expectedResult := newDecMultitokenReserveFromInt(50000)
 		require.Equal(t, expectedResult, actualResult)
 	}
 }
@@ -386,7 +386,7 @@ func TestGetPricesToMint(t *testing.T) {
 		} else {
 			require.Nil(t, err)
 			expectedDec := sdk.MustNewDecFromStr(tc.expectedPrice)
-			expectedResult := NewDecMultitokenReserveFromDec(expectedDec)
+			expectedResult := newDecMultitokenReserveFromDec(expectedDec)
 			require.Equal(t, expectedResult, actualResult)
 		}
 	}
@@ -430,7 +430,7 @@ func TestGetReturnsForBurn(t *testing.T) {
 
 		actualResult := bond.GetReturnsForBurn(tc.amount, tc.reserveBalances)
 		expectedDec := sdk.MustNewDecFromStr(tc.expectedReturn)
-		expectedResult := NewDecMultitokenReserveFromDec(expectedDec)
+		expectedResult := newDecMultitokenReserveFromDec(expectedDec)
 		require.Equal(t, expectedResult, actualResult)
 	}
 }

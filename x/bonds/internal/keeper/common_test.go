@@ -20,18 +20,6 @@ var (
 	reserveToken                = "res"
 	reserveToken2               = "rez"
 
-	functionParametersPower = types.FunctionParams{
-		types.NewFunctionParam("m", sdk.NewDec(12)),
-		types.NewFunctionParam("n", sdk.NewDec(2)),
-		types.NewFunctionParam("c", sdk.NewDec(100))}
-	//functionParametersSigmoid = types.FunctionParams{
-	//	types.NewFunctionParam("a", sdk.NewDec(3)),
-	//	types.NewFunctionParam("b", sdk.NewDec(5)),
-	//	types.NewFunctionParam("c", sdk.NewDec(1))}
-
-	powerReserves   = []string{reserveToken}
-	swapperReserves = []string{reserveToken, reserveToken2}
-
 	initToken                  = token
 	initName                   = "test token"
 	initDescription            = "this is a test token"
@@ -83,6 +71,23 @@ var (
 	batchBlocks = sdk.NewUint(5)
 )
 
+func functionParametersPower() types.FunctionParams {
+	return types.FunctionParams{
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(100))}
+}
+
+func functionParametersSigmoid() types.FunctionParams {
+	return types.FunctionParams{
+		types.NewFunctionParam("a", sdk.NewDec(3)),
+		types.NewFunctionParam("b", sdk.NewDec(5)),
+		types.NewFunctionParam("c", sdk.NewDec(1))}
+}
+
+func powerReserves() []string   { return []string{reserveToken} }
+func swapperReserves() []string { return []string{reserveToken, reserveToken2} }
+
 func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
 	app := simapp.Setup(isCheckTx)
 
@@ -93,8 +98,8 @@ func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
 
 func getValidPowerFunctionBond() types.Bond {
 	functionType := types.PowerFunction
-	functionParams := functionParametersPower
-	reserveTokens := powerReserves
+	functionParams := functionParametersPower()
+	reserveTokens := powerReserves()
 	return types.NewBond(initToken, initName, initDescription,
 		initCreator, functionType, functionParams,
 		reserveTokens, initReserveAddress, initTxFeePercentage,
@@ -106,7 +111,7 @@ func getValidPowerFunctionBond() types.Bond {
 func getValidSwapperBond() types.Bond {
 	functionType := types.SwapperFunction
 	functionParams := types.FunctionParams(nil)
-	reserveTokens := swapperReserves
+	reserveTokens := swapperReserves()
 	return types.NewBond(initToken, initName, initDescription,
 		initCreator, functionType, functionParams,
 		reserveTokens, initReserveAddress, initTxFeePercentage,
@@ -117,13 +122,6 @@ func getValidSwapperBond() types.Bond {
 
 func getValidBond() types.Bond {
 	return getValidPowerFunctionBond()
-}
-
-func getValidBondWithToken(token string) types.Bond {
-	bond := getValidPowerFunctionBond()
-	bond.Token = token
-	bond.MaxSupply = sdk.NewCoin(token, bond.MaxSupply.Amount)
-	return bond
 }
 
 func getValidBatch() types.Batch {

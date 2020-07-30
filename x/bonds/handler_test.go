@@ -64,7 +64,7 @@ func TestCreateValidAugmentedBondHatchState(t *testing.T) {
 	theta, _ := paramsMap["theta"]
 	kappa, _ := paramsMap["kappa"]
 
-	initialParams := functionParametersAugmented.AsMap()
+	initialParams := functionParametersAugmented().AsMap()
 	require.Equal(t, d0, initialParams["d0"])
 	require.Equal(t, p0, initialParams["p0"])
 	require.Equal(t, theta, initialParams["theta"])
