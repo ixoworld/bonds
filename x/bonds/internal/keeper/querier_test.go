@@ -166,6 +166,41 @@ func TestQueryCurrentPrice(t *testing.T) {
 	require.Equal(t, queryResult, manualPrices)
 }
 
+func TestQueryCurrentPriceWithZeroPrice(t *testing.T) {
+	app, ctx := createTestApp(false)
+	querier := keeper.NewQuerier(app.BondsKeeper)
+	req := abci.RequestQuery{}
+	var queryResult sdk.DecCoins
+
+	// Initially error since no bond
+	res, err := querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	// Add bond
+	bond := getValidBond()
+	bond.FunctionParameters = types.FunctionParams{
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(0))} // set to 0 for P(R=0)=0
+	app.BondsKeeper.SetBond(ctx, token, bond)
+
+	// Calculate current price manually
+	// y = mx^n + c = 12(0^2) + 0 = 0 + 0 = 0
+	manualPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 0)}
+
+	// Check that prices are correct
+	res, err = querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
+	require.Equal(t, manualPrices, queryResult)
+	require.Equal(t, "0.000000000000000000res", queryResult.String())
+
+	// Important note: the fact that queryResult is "0.000000000000000000res"
+	// rather than the default "" (for empty coins) is intentional
+}
+
 func TestQueryCurrentPriceForSwapper(t *testing.T) {
 	app, ctx := createTestApp(false)
 	querier := keeper.NewQuerier(app.BondsKeeper)
