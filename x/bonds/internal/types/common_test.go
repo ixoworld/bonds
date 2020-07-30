@@ -14,28 +14,6 @@ var (
 	reserveToken2               = "rez"
 	reserveToken3               = "rec"
 
-	functionParametersPower = FunctionParams{
-		NewFunctionParam("m", sdk.NewDec(12)),
-		NewFunctionParam("n", sdk.NewDec(2)),
-		NewFunctionParam("c", sdk.NewDec(100))}
-	functionParametersSigmoid = FunctionParams{
-		NewFunctionParam("a", sdk.NewDec(3)),
-		NewFunctionParam("b", sdk.NewDec(5)),
-		NewFunctionParam("c", sdk.NewDec(1))}
-
-	functionParametersPowerHuge = FunctionParams{
-		NewFunctionParam("m", sdk.NewDec(1)),
-		NewFunctionParam("n", sdk.NewDec(100)),
-		NewFunctionParam("c", sdk.NewDec(0))}
-	functionParametersSigmoidHuge = FunctionParams{
-		NewFunctionParam("a", sdk.NewDec(int64(^uint64(0)>>1))),
-		NewFunctionParam("b", sdk.NewDec(0)),
-		NewFunctionParam("c", sdk.NewDec(1))}
-
-	powerReserves     = []string{reserveToken}
-	multitokenReserve = []string{reserveToken, reserveToken2}
-	swapperReserves   = []string{reserveToken, reserveToken2}
-
 	initToken                  = token
 	initName                   = "test token"
 	initDescription            = "this is a test token"
@@ -56,10 +34,39 @@ var (
 	maxInt64 = sdk.NewInt(int64(^uint64(0) >> 1))
 )
 
+func functionParametersPower() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("m", sdk.NewDec(12)),
+		NewFunctionParam("n", sdk.NewDec(2)),
+		NewFunctionParam("c", sdk.NewDec(100))}
+}
+func functionParametersSigmoid() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("a", sdk.NewDec(3)),
+		NewFunctionParam("b", sdk.NewDec(5)),
+		NewFunctionParam("c", sdk.NewDec(1))}
+}
+func functionParametersPowerHuge() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("m", sdk.NewDec(1)),
+		NewFunctionParam("n", sdk.NewDec(100)),
+		NewFunctionParam("c", sdk.NewDec(0))}
+}
+func functionParametersSigmoidHuge() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("a", sdk.NewDec(int64(^uint64(0)>>1))),
+		NewFunctionParam("b", sdk.NewDec(0)),
+		NewFunctionParam("c", sdk.NewDec(1))}
+}
+
+func powerReserves() []string     { return []string{reserveToken} }
+func multitokenReserve() []string { return []string{reserveToken, reserveToken2} }
+func swapperReserves() []string   { return []string{reserveToken, reserveToken2} }
+
 func getValidPowerFunctionBond() Bond {
 	functionType := PowerFunction
-	functionParams := functionParametersPower
-	reserveTokens := powerReserves
+	functionParams := functionParametersPower()
+	reserveTokens := powerReserves()
 	return NewBond(initToken, initName, initDescription,
 		initCreator, functionType, functionParams,
 		reserveTokens, initReserveAddress, initTxFeePercentage,
@@ -92,8 +99,8 @@ func NewDecMultitokenReserveFromInt(value int64) sdk.DecCoins {
 
 func NewValidMsgCreateBond() MsgCreateBond {
 	functionType := PowerFunction
-	functionParams := functionParametersPower
-	reserveTokens := powerReserves
+	functionParams := functionParametersPower()
+	reserveTokens := powerReserves()
 	return NewMsgCreateBond(initToken, initName, initDescription,
 		initCreator, functionType, functionParams,
 		reserveTokens, initTxFeePercentage, initExitFeePercentage,

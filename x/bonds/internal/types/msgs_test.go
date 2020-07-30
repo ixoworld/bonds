@@ -9,7 +9,59 @@ import (
 func TestValidateBasicMsgCreateTokenArgumentMissingGivesError(t *testing.T) {
 	message := NewValidMsgCreateBond()
 	message.Token = ""
+
 	err := message.ValidateBasic()
+
+	require.NotNil(t, err)
+	require.Equal(t, CodeArgumentInvalid, err.Code())
+}
+
+func TestValidateBasicMsgCreateInvalidTokenArgumentGivesError(t *testing.T) {
+	message := NewValidMsgCreateBond()
+	message.Token = "123abc" // starts with number
+	err := message.ValidateBasic()
+	require.NotNil(t, err)
+	require.Equal(t, CodeInvalidCoinDenomination, err.Code())
+
+	message.Token = "a" // too short
+	err = message.ValidateBasic()
+	require.NotNil(t, err)
+	require.Equal(t, CodeInvalidCoinDenomination, err.Code())
+}
+
+func TestValidateBasicMsgCreateMissingFunctionParamGivesError(t *testing.T) {
+	message := NewValidMsgCreateBond()
+	message.FunctionParameters = []FunctionParam{
+		message.FunctionParameters[0],
+		message.FunctionParameters[1],
+	}
+
+	err := message.ValidateBasic()
+
+	require.NotNil(t, err)
+	require.Equal(t, CodeIncorrectNumberOfValues, err.Code())
+}
+
+func TestValidateBasicMsgCreateTypoFunctionParamGivesError(t *testing.T) {
+	message := NewValidMsgCreateBond()
+	message.FunctionParameters = []FunctionParam{
+		NewFunctionParam("invalidParam", message.FunctionParameters[0].Value),
+		message.FunctionParameters[1],
+		message.FunctionParameters[2],
+	}
+
+	err := message.ValidateBasic()
+
+	require.NotNil(t, err)
+	require.Equal(t, CodeArgumentMissingOrIncorrectType, err.Code())
+}
+
+func TestValidateBasicMsgCreateNegativeFunctionParamGivesError(t *testing.T) {
+	message := NewValidMsgCreateBond()
+	message.FunctionParameters[0].Value = sdk.NewDec(-1)
+
+	err := message.ValidateBasic()
+
 	require.NotNil(t, err)
 	require.Equal(t, CodeArgumentInvalid, err.Code())
 }
@@ -17,7 +69,9 @@ func TestValidateBasicMsgCreateTokenArgumentMissingGivesError(t *testing.T) {
 func TestValidateBasicMsgCreateNameArgumentMissingGivesError(t *testing.T) {
 	message := NewValidMsgCreateBond()
 	message.Name = ""
+
 	err := message.ValidateBasic()
+
 	require.NotNil(t, err)
 	require.Equal(t, CodeArgumentInvalid, err.Code())
 }
@@ -52,6 +106,16 @@ func TestValidateBasicMsgCreateReserveTokenArgumentMissingGivesError(t *testing.
 	require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
+func TestValidateBasicMsgCreateReserveTokenArgumentInvalidGivesError(t *testing.T) {
+	message := NewValidMsgCreateBond()
+	message.ReserveTokens[0] = "123abc" // invalid denomination
+
+	err := message.ValidateBasic()
+
+	require.NotNil(t, err)
+	require.Equal(t, CodeInvalidCoinDenomination, err.Code())
+}
+
 func TestValidateBasicMsgFeeAddressArgumentMissingGivesError(t *testing.T) {
 	message := NewValidMsgCreateBond()
 	message.FeeAddress = sdk.AccAddress{}
@@ -70,6 +134,16 @@ func TestValidateBasicMsgFunctionTypeArgumentMissingGivesError(t *testing.T) {
 
 	require.NotNil(t, err)
 	require.Equal(t, CodeArgumentInvalid, err.Code())
+}
+
+func TestValidateBasicMsgFunctionTypeArgumentInvalidGivesError(t *testing.T) {
+	message := NewValidMsgCreateBond()
+	message.FunctionType = "invalid_function_type"
+
+	err := message.ValidateBasic()
+
+	require.NotNil(t, err)
+	require.Equal(t, CodeUnrecognizedFunctionType, err.Code())
 }
 
 func TestValidateBasicMsgCreateTxFeeIsNegativeGivesError(t *testing.T) {
