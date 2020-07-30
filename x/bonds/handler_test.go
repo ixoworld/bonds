@@ -931,8 +931,15 @@ func TestEndBlockerAugmentedFunction(t *testing.T) {
 	require.Equal(t, sdk.NewDec(50000), bond.FunctionParameters.AsMap()["S0"])
 	require.Equal(t, types.HatchState, bond.State)
 
-	// Buy 49999 tokens; just below S0
-	h(ctx, newValidMsgBuy(49999, 100000))
+	// - Buy 49999 tokens; just below S0
+	// - Cannot buy 2 tokens in the meantime, since this exceeds S0
+	// - Cannot sell tokens (not even 1) in hatch state
+	res := h(ctx, newValidMsgBuy(49999, 100000))
+	require.True(t, res.IsOK())
+	res = h(ctx, newValidMsgBuy(2, 100000))
+	require.False(t, res.IsOK())
+	res = h(ctx, newValidMsgSell(1))
+	require.False(t, res.IsOK())
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
 	// Confirm allowSells and state still the same
@@ -940,7 +947,7 @@ func TestEndBlockerAugmentedFunction(t *testing.T) {
 	require.Equal(t, types.FALSE, bond.AllowSells)
 	require.Equal(t, types.HatchState, bond.State)
 
-	// Buy 1 more token, to reach S0
+	// Buy 1 more token, to reach S0 => state is now open
 	h(ctx, newValidMsgBuy(1, 100000))
 	bonds.EndBlocker(ctx, app.BondsKeeper)
 
@@ -948,6 +955,17 @@ func TestEndBlockerAugmentedFunction(t *testing.T) {
 	bond = app.BondsKeeper.MustGetBond(ctx, token)
 	require.Equal(t, types.TRUE, bond.AllowSells)
 	require.Equal(t, types.OpenState, bond.State)
+
+	// Check user balance of tokens
+	balance := app.BankKeeper.GetCoins(ctx, userAddress).AmountOf(token).Int64()
+	require.Equal(t, int64(50000), balance)
+
+	// Can now sell tokens (all 50,000 of them)
+	res = h(ctx, newValidMsgSell(50000))
+	require.True(t, res.IsOK())
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+	balance = app.BankKeeper.GetCoins(ctx, userAddress).AmountOf(token).Int64()
+	require.Equal(t, int64(0), balance)
 }
 
 func TestEndBlockerAugmentedFunctionDecimalS0(t *testing.T) {
