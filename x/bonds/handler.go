@@ -88,7 +88,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 	reserveAddress := supply.NewModuleAddress(
 		fmt.Sprintf("bonds/%s/reserveAddress", msg.Token))
 
-	// Set state to open by default (can get overridden if augmented_function)
+	// Set state to open by default (overridden below if augmented function)
 	state := types.OpenState
 
 	// TODO: investigate ways to prevent reserve address from receiving transactions
@@ -119,16 +119,10 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 				types.NewFunctionParam("V0", V0),
 			}...)
 
-		// Override AllowSells
-		if S0.GT(sdk.ZeroDec()) {
-			// Hatch phase does not allow sells
-			state = types.HatchState
-			msg.AllowSells = types.FALSE
-		} else {
-			// Open phase allows sells
-			state = types.OpenState
-			msg.AllowSells = types.TRUE
-		}
+		// Set state to Hatch and disable sells. Note that it is never the case
+		// that we start with OpenState because S0>0, since S0=d0/p0 and d0>0
+		state = types.HatchState
+		msg.AllowSells = types.FALSE
 	}
 
 	bond := types.NewBond(msg.Token, msg.Name, msg.Description, msg.Creator,
