@@ -26,6 +26,13 @@ var (
 		types.NewFunctionParam("c", sdk.NewDec(100)),
 	}
 
+	functionParametersAugmented = types.FunctionParams{
+		types.NewFunctionParam("d0", sdk.MustNewDecFromStr("500.0")),
+		types.NewFunctionParam("p0", sdk.MustNewDecFromStr("0.01")),
+		types.NewFunctionParam("theta", sdk.MustNewDecFromStr("0.4")),
+		types.NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0")),
+	}
+
 	powerReserves   = []string{reserveToken}
 	swapperReserves = []string{reserveToken, reserveToken2}
 
@@ -47,6 +54,8 @@ var (
 
 	amountLTMaxSupply = initMaxSupply.Amount.Sub(sdk.OneInt()).Int64()
 	amountGTMaxSupply = initMaxSupply.Amount.Add(sdk.OneInt()).Int64()
+
+	extraMaxSupply = sdk.NewInt64Coin(initToken, 1000000)
 )
 
 func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
@@ -72,6 +81,14 @@ func newValidMsgCreateSwapperBond() types.MsgCreateBond {
 	validMsg.FunctionType = types.SwapperFunction
 	validMsg.FunctionParameters = nil
 	validMsg.ReserveTokens = swapperReserves
+	return validMsg
+}
+
+func newValidMsgCreateAugmentedBond() types.MsgCreateBond {
+	validMsg := newValidMsgCreateBond()
+	validMsg.FunctionType = types.AugmentedFunction
+	validMsg.FunctionParameters = functionParametersAugmented
+	validMsg.MaxSupply = extraMaxSupply
 	return validMsg
 }
 

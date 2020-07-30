@@ -1,6 +1,8 @@
 package bonds_test
 
 import (
+	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/ixoworld/bonds/x/bonds"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	"testing"
@@ -32,6 +34,28 @@ func TestCreateValidBond(t *testing.T) {
 
 	require.True(t, res.IsOK())
 	require.True(t, app.BondsKeeper.BondExists(ctx, token))
+
+	// Check assigned reserve address and initial state
+	expectedResAddr := supply.NewModuleAddress(
+		fmt.Sprintf("bonds/%s/reserveAddress", token))
+	bond := app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, expectedResAddr, bond.ReserveAddress)
+	require.Equal(t, types.OpenState, bond.State)
+}
+
+func TestCreateValidAugmentedBondHatchState(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create augmented function bond
+	res := h(ctx, newValidMsgCreateAugmentedBond())
+
+	require.True(t, res.IsOK())
+	require.True(t, app.BondsKeeper.BondExists(ctx, token))
+
+	// Check initial state (hatch since augmented)
+	bond := app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, types.HatchState, bond.State)
 }
 
 func TestCreateBondThatAlreadyExistsFails(t *testing.T) {
@@ -865,4 +889,89 @@ func TestEndBlockerPerformsOrdersAfterASpecifiedNumberOfBlocks(t *testing.T) {
 
 	// Buys have been performed
 	require.Equal(t, 0, len(app.BondsKeeper.MustGetBatch(ctx, token).Buys))
+}
+
+func TestEndBlockerAugmentedFunction(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create bond with augmented function type
+	createMsg := newValidMsgCreateAugmentedBond()
+	h(ctx, createMsg)
+
+	// Add reserve tokens to user
+	err := addCoinsToUser(app, ctx, sdk.Coins{sdk.NewInt64Coin(reserveToken, 1000000)})
+	require.Nil(t, err)
+
+	// Get bond to confirm allowSells==false, S0==50000, state==hatch
+	bond := app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.Equal(t, sdk.NewDec(50000), bond.FunctionParameters.AsMap()["S0"])
+	require.Equal(t, types.HatchState, bond.State)
+
+	// Buy 49999 tokens; just below S0
+	h(ctx, newValidMsgBuy(49999, 100000))
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Confirm allowSells and state still the same
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.Equal(t, types.HatchState, bond.State)
+
+	// Buy 1 more token, to reach S0
+	h(ctx, newValidMsgBuy(1, 100000))
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Confirm allowSells==true, state==open
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, types.TRUE, bond.AllowSells)
+	require.Equal(t, types.OpenState, bond.State)
+}
+
+func TestEndBlockerAugmentedFunctionDecimalS0(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create bond with augmented function type
+	createMsg := newValidMsgCreateAugmentedBond()
+	h(ctx, createMsg)
+
+	// Add reserve tokens to user
+	err := addCoinsToUser(app, ctx, sdk.Coins{sdk.NewInt64Coin(reserveToken, 1000000)})
+	require.Nil(t, err)
+
+	// Change bond's S0 parameter to 49999.5
+	decimalS0 := sdk.MustNewDecFromStr("49999.5")
+	bond := app.BondsKeeper.MustGetBond(ctx, token)
+	for i, p := range bond.FunctionParameters {
+		if p.Param == "S0" {
+			bond.FunctionParameters[i].Value = decimalS0
+			break
+		}
+	}
+	app.BondsKeeper.SetBond(ctx, bond.Token, bond)
+
+	// Get bond to confirm S0==49999.5, allowSells==false, state==hatch
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, decimalS0, bond.FunctionParameters.AsMap()["S0"])
+	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.Equal(t, types.HatchState, bond.State)
+
+	// Buy 49999 tokens; just below S0
+	h(ctx, newValidMsgBuy(49999, 100000))
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Confirm allowSells and state still the same
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, types.FALSE, bond.AllowSells)
+	require.Equal(t, types.HatchState, bond.State)
+
+	// Buy 1 more token, to exceed S0
+	h(ctx, newValidMsgBuy(1, 100000))
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Confirm allowSells==true, state==open
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	require.Equal(t, types.TRUE, bond.AllowSells)
+	require.Equal(t, types.OpenState, bond.State)
 }
