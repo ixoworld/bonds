@@ -11,7 +11,7 @@ Algorithmic Applications include:
 * Innovation Bonds (offers bond shareholders contingent rights to future IP rights and/or revenues)
 * Impact Bonds (offers bond shareholders contingent rights to success-based outcomes payments and/or rewards)
 
-### Power Function (exponential)
+### Exponential Function (power)
 
 Pricing function:
 
@@ -21,7 +21,7 @@ Integral:
 
 <img alt="drawing" src="./img/power2.png" height="40"/>
 
-### Logistic Function (sigmoidal)
+### Logistic Function (sigmoid)
 
 Pricing function:
 
@@ -36,3 +36,7 @@ Integral:
 Reserve function:
 
 <img alt="drawing" src="./img/swapper.png" height="20"/>
+
+### Augmented Bonding Curves (augmented)
+
+Reference: https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751
