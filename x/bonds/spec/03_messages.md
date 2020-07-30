@@ -52,13 +52,19 @@ This message is expected to fail if:
 
 - another bond with this token is already registered, the token is the staking token, or the token is not a valid denomination
 - name or description is an empty string
-- function type is not one of the defined function types (`power_function`, `sigmoid_function`, `swapper_function`)
+- function type is not one of the defined function types (`power_function`, `sigmoid_function`, `swapper_function`, `augmented_function`)
 - function parameters are negative or invalid for the selected function type:
   - Valid example for `power_function`: `"m:12,n:2,c:100"`
   - Valid example for `sigmoid_function`: `"a:3,b:5,c:1"`
+  - Valid example for `augmented_function`: `"d0:500.0,p0:0.01,theta:0.4,kappa:3.0"`
   - For `swapper_function`: `""` (no parameters)
 - function parameters do not satisfy the extra parameter restrictions
-  - Function parameter `c` for `sigmoid_function` cannot be zero
+  - `power_function`: `n` must be an integer
+  - `sigmoid_function`: `c != 0`
+  - `augmented_function`:
+    - `d0 != 0` and `d0` must be an integer
+    - `0 <= theta < 1`
+    - `p0 != 0`
 - reserve tokens list is invalid. Valid inputs are:
   - For `swapper_function`: two valid comma-separated denominations, e.g. `res,rez`
   - Otherwise: one or more valid comma-separated denominations, e.g. `res,rez,rex`
