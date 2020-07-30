@@ -54,9 +54,12 @@ This message is expected to fail if:
 - name or description is an empty string
 - function type is not one of the defined function types (`power_function`, `sigmoid_function`, `swapper_function`, `augmented_function`)
 - function parameters are negative or invalid for the selected function type:
-  - Valid example for `power_function`: `"m:12,n:2,c:100"`
-  - Valid example for `sigmoid_function`: `"a:3,b:5,c:1"`
-  - Valid example for `augmented_function`: `"d0:500.0,p0:0.01,theta:0.4,kappa:3.0"`
+  - Valid example for `power_function`: `"m:12.5,n:2,c:100.12"` \
+    (i.e. `m=12`, `n=2`, `n=100.12`)
+  - Valid example for `sigmoid_function`: `"a:3.5,b:5.4,c:1.3"` \
+    (i.e. `a=3.5`, `b=5.4`, `c=1.3`)
+  - Valid example for `augmented_function`: `"d0:500.0,p0:0.01,theta:0.4,kappa:3.0"` \
+    (i.e. `d0=500.0`, `p0=0.01`, `theta=0.4`, `kappa=3.0`)
   - For `swapper_function`: `""` (no parameters)
 - function parameters do not satisfy the extra parameter restrictions
   - `power_function`: `n` must be an integer
