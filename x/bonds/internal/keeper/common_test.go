@@ -78,11 +78,12 @@ func functionParametersPower() types.FunctionParams {
 		types.NewFunctionParam("c", sdk.NewDec(100))}
 }
 
-func functionParametersSigmoid() types.FunctionParams {
+func functionParametersAugmented() types.FunctionParams {
 	return types.FunctionParams{
-		types.NewFunctionParam("a", sdk.NewDec(3)),
-		types.NewFunctionParam("b", sdk.NewDec(5)),
-		types.NewFunctionParam("c", sdk.NewDec(1))}
+		types.NewFunctionParam("d0", sdk.MustNewDecFromStr("500.0")),
+		types.NewFunctionParam("p0", sdk.MustNewDecFromStr("0.01")),
+		types.NewFunctionParam("theta", sdk.MustNewDecFromStr("0.4")),
+		types.NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0"))}
 }
 
 func powerReserves() []string   { return []string{reserveToken} }
@@ -99,6 +100,18 @@ func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
 func getValidPowerFunctionBond() types.Bond {
 	functionType := types.PowerFunction
 	functionParams := functionParametersPower()
+	reserveTokens := powerReserves()
+	return types.NewBond(initToken, initName, initDescription,
+		initCreator, functionType, functionParams,
+		reserveTokens, initReserveAddress, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
+		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
+		initAllowSell, initSigners, initBatchBlocks, initState)
+}
+
+func getValidAugmentedFunctionBond() types.Bond {
+	functionType := types.AugmentedFunction
+	functionParams := functionParametersAugmented()
 	reserveTokens := powerReserves()
 	return types.NewBond(initToken, initName, initDescription,
 		initCreator, functionType, functionParams,

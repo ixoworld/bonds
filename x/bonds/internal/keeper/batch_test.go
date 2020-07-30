@@ -367,6 +367,7 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		prevModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
 		prevFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
 		prevBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
+		prevReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
 
 		// Perform buy
 		err = app.BondsKeeper.PerformBuyAtPrice(ctx, bond.Token, bo, buyPrices)
@@ -390,17 +391,128 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		newModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
 		newFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
 		newBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
+		newReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
 
 		require.Equal(t, prevSupplySDK.Add(tc.amount), newSupplySDK)
 		require.Equal(t, prevSupplyBonds.Add(tokensBought), newSupplyBonds)
 		require.Equal(t, prevModuleAccBal.Sub(tc.maxPrices), newModuleAccBal)
 		require.Equal(t, txFees.IsZero(), tc.txFee.IsZero())
-		if txFees.IsZero() {
-			require.Equal(t, prevFeeAddrBal, newFeeAddrBal)
+		require.Equal(t, prevFeeAddrBal.Add(txFees), newFeeAddrBal.Add(nil))
+		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal), newBuyerBal)
+		require.Equal(t, prevReserveBal.Add(reservePricesRounded), newReserveBal)
+	}
+}
+
+func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
+	app, ctx := createTestApp(false)
+	bond := getValidAugmentedFunctionBond()
+
+	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
+	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
+
+	theta := bond.FunctionParameters.AsMap()["theta"]
+	require.True(t, theta.GT(sdk.ZeroDec()) && theta.LT(sdk.OneDec()))
+	// above check just to make sure that this is a meaningful test
+
+	testCases := []struct {
+		amount         sdk.Int
+		maxPrices      sdk.Coins
+		txFee          sdk.Dec
+		state          string
+		expectedPrices sdk.Int
+	}{
+		{
+			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), types.HatchState, sdk.NewInt(1000),
+		}, // (10 * 100) + (10 * FEE) = 1000 <= 1100, where FEE=0
+		{
+			sdk.NewInt(10), maxPrices, sdk.NewDec(10), types.HatchState, sdk.NewInt(1100),
+		}, // (10 * 100) + (10 * FEE) = 1100 <= 1100, where FEE=10
+		{
+			sdk.NewInt(10), maxPrices, sdk.NewDec(20), types.HatchState, sdk.NewInt(1200),
+		}, // (10 * 100) + (10 * FEE) = 1200 > 1100, where FEE=20 [not fulfillable]
+		{
+			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), types.OpenState, sdk.NewInt(1000),
+		}, // (10 * 100) + (10 * FEE) = 1000 <= 1100, where FEE=0
+		{
+			sdk.NewInt(10), maxPrices, sdk.NewDec(10), types.OpenState, sdk.NewInt(1100),
+		}, // (10 * 100) + (10 * FEE) = 1100 <= 1100, where FEE=10
+		{
+			sdk.NewInt(10), maxPrices, sdk.NewDec(20), types.OpenState, sdk.NewInt(1200),
+		}, // (10 * 100) + (10 * FEE) = 1200 > 1100, where FEE=20 [not fulfillable]
+	}
+
+	for _, tc := range testCases {
+		// Create buy order
+		amount := sdk.NewCoin(bond.Token, tc.amount)
+		bo := types.NewBuyOrder(buyerAddress, amount, tc.maxPrices)
+
+		// Set transaction fee and state
+		bond.TxFeePercentage = tc.txFee
+		bond.State = tc.state
+		app.BondsKeeper.SetBond(ctx, bond.Token, bond)
+
+		// Calculate total prices
+		reservePrice := buyPrices[0].Amount.MulInt(bo.Amount.Amount)
+		reservePrices := sdk.DecCoins{sdk.NewDecCoinFromDec(buyPrices[0].Denom, reservePrice)}
+		reservePricesRounded := types.RoundReserveReturns(reservePrices)
+		txFees := bond.GetTxFees(reservePrices)
+		totalPrices := reservePricesRounded.Add(txFees)
+
+		// Check expected prices
+		require.Equal(t, totalPrices.AmountOf(reserveToken), tc.expectedPrices)
+
+		// Add reserve tokens paid by buyer to module account address
+		moduleAcc := app.SupplyKeeper.GetModuleAccount(ctx, types.BatchesIntermediaryAccount)
+		err := app.BankKeeper.SetCoins(ctx, moduleAcc.GetAddress(), tc.maxPrices)
+		require.NoError(t, err)
+
+		// Previous values
+		prevSupplySDK := app.SupplyKeeper.GetSupply(ctx).GetTotal().AmountOf(bond.Token)
+		prevSupplyBonds := app.BondsKeeper.MustGetBond(ctx, bond.Token).CurrentSupply
+		prevModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
+		prevFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
+		prevBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
+		prevReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
+
+		// Perform buy
+		err = app.BondsKeeper.PerformBuyAtPrice(ctx, bond.Token, bo, buyPrices)
+
+		// Check if error due to max price exceeded
+		if totalPrices.IsAnyGT(tc.maxPrices) {
+			require.Error(t, err)
+			continue // app would panic at this stage
+		} else {
+			require.NoError(t, err)
+		}
+
+		// Calculate increase in buyer balance
+		remainderForBuyer := tc.maxPrices.Sub(totalPrices)
+		tokensBought := sdk.NewCoin(bond.Token, tc.amount)
+		increaseInBuyerBal := sdk.Coins{tokensBought}.Add(remainderForBuyer)
+
+		// New values
+		newSupplySDK := app.SupplyKeeper.GetSupply(ctx).GetTotal().AmountOf(bond.Token)
+		newSupplyBonds := app.BondsKeeper.MustGetBond(ctx, bond.Token).CurrentSupply
+		newModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
+		newFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
+		newBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
+		newReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
+
+		require.Equal(t, prevSupplySDK.Add(tc.amount), newSupplySDK)
+		require.Equal(t, prevSupplyBonds.Add(tokensBought), newSupplyBonds)
+		require.Equal(t, prevModuleAccBal.Sub(tc.maxPrices), newModuleAccBal)
+		require.Equal(t, txFees.IsZero(), tc.txFee.IsZero())
+		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal), newBuyerBal)
+		if tc.state == types.HatchState {
+			pricesFundingPoolShare, _ := sdk.NewDecCoins(reservePricesRounded).MulDec(theta).TruncateDecimal()
+			actualFeeAddrChange := txFees.Add(pricesFundingPoolShare)
+			actualResAddrChange := reservePricesRounded.Sub(pricesFundingPoolShare)
+			require.Equal(t, prevFeeAddrBal.Add(actualFeeAddrChange), newFeeAddrBal)
+			require.Equal(t, prevReserveBal.Add(actualResAddrChange), newReserveBal)
 		} else {
 			require.Equal(t, prevFeeAddrBal.Add(txFees), newFeeAddrBal)
+			require.Equal(t, prevReserveBal.Add(reservePricesRounded), newReserveBal)
 		}
-		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal), newBuyerBal)
 	}
 }
 
