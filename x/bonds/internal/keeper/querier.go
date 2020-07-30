@@ -7,7 +7,6 @@ import (
 	"github.com/ixoworld/bonds/x/bonds/client"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"strings"
 )
 
 const (
@@ -268,7 +267,7 @@ func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 		return nil, sdk.ErrInternal(err2.Error())
 	}
 
-	if strings.ToLower(bond.AllowSells) == types.FALSE {
+	if !bond.AllowSells {
 		return nil, types.ErrBondDoesNotAllowSelling(types.DefaultCodespace)
 	}
 

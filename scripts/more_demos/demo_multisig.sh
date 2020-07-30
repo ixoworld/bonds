@@ -41,7 +41,7 @@ create_bond_multisig() {
     --order-quantity-limits="" \
     --sanity-rate="0" \
     --sanity-margin-percentage="0" \
-    --allow-sells=true \
+    --allow-sells \
     --signers="$(bondscli keys show francesco -a),$(bondscli keys show shaun -a)" \
     --batch-blocks=1 \
     --from="$MIGUEL" -y --broadcast-mode block --generate-only >multisig.json

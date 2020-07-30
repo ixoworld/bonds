@@ -28,7 +28,7 @@ type MsgCreateBond struct {
 	OrderQuantityLimits    sdk.Coins        `json:"order_quantity_limits" yaml:"order_quantity_limits"`
 	SanityRate             sdk.Dec          `json:"sanity_rate" yaml:"sanity_rate"`
 	SanityMarginPercentage sdk.Dec          `json:"sanity_margin_percentage" yaml:"sanity_margin_percentage"`
-	AllowSells             string           `json:"allow_sells" yaml:"allow_sells"`
+	AllowSells             bool             `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
 }
@@ -37,7 +37,7 @@ func NewMsgCreateBond(token, name, description string, creator sdk.AccAddress,
 	functionType string, functionParameters FunctionParams, reserveTokens []string,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress, maxSupply sdk.Coin,
 	orderQuantityLimits sdk.Coins, sanityRate, sanityMarginPercentage sdk.Dec,
-	allowSell string, signers []sdk.AccAddress, batchBlocks sdk.Uint) MsgCreateBond {
+	allowSell bool, signers []sdk.AccAddress, batchBlocks sdk.Uint) MsgCreateBond {
 	return MsgCreateBond{
 		Token:                  token,
 		Name:                   name,
@@ -53,7 +53,7 @@ func NewMsgCreateBond(token, name, description string, creator sdk.AccAddress,
 		OrderQuantityLimits:    orderQuantityLimits,
 		SanityRate:             sanityRate,
 		SanityMarginPercentage: sanityMarginPercentage,
-		AllowSells:             strings.ToLower(allowSell),
+		AllowSells:             allowSell,
 		Signers:                signers,
 		BatchBlocks:            batchBlocks,
 	}
@@ -75,8 +75,6 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Fee address")
 	} else if strings.TrimSpace(msg.FunctionType) == "" {
 		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Function type")
-	} else if strings.TrimSpace(msg.AllowSells) == "" {
-		return ErrArgumentCannotBeEmpty(DefaultCodespace, "AllowSells")
 	}
 	// Note: FunctionParameters can be empty
 
@@ -115,11 +113,6 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 		return ErrArgumentCannotBeNegative(DefaultCodespace, "SanityRate")
 	} else if msg.SanityMarginPercentage.IsNegative() {
 		return ErrArgumentCannotBeNegative(DefaultCodespace, "SanityMarginPercentage")
-	}
-
-	// Check that true or false
-	if msg.AllowSells != TRUE && msg.AllowSells != FALSE {
-		return ErrArgumentMissingOrNonBoolean(DefaultCodespace, "AllowSells")
 	}
 
 	// Check FeePercentages not negative and don't add up to 100

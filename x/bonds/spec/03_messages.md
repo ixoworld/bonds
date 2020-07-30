@@ -42,7 +42,7 @@ type MsgCreateBond struct {
 	OrderQuantityLimits    sdk.Coins
 	SanityRate             sdk.Dec
 	SanityMarginPercentage sdk.Dec
-	AllowSells             string
+	AllowSells             bool
 	Signers                []sdk.AccAddress
 	BatchBlocks            sdk.Uint
 }
