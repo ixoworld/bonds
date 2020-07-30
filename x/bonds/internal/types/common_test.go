@@ -48,7 +48,7 @@ var (
 	initOrderQuantityLimits    = sdk.Coins(nil)
 	initSanityRate             = sdk.MustNewDecFromStr(blankSanityRate)
 	initSanityMarginPercentage = sdk.MustNewDecFromStr(blankSanityMarginPercentage)
-	initAllowSell              = "true"
+	initAllowSell              = true
 	initSigners                = []sdk.AccAddress{initCreator}
 	initBatchBlocks            = sdk.NewUint(10)
 	initState                  = OpenState

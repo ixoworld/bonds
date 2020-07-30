@@ -57,7 +57,7 @@ type Bond struct {
 	SanityRate             sdk.Dec
 	SanityMarginPercentage sdk.Dec
 	CurrentSupply          sdk.Coin
-	AllowSells             string
+	AllowSells             bool
 	Signers                []sdk.AccAddress
 	BatchBlocks            sdk.Uint
     State                  state

@@ -22,7 +22,7 @@ Bonds can be created by any address using `MsgCreateBond`.
 | OrderQuantityLimits    | `sdk.Coins`        | The maximum number of tokens that one can buy/sell/swap in a single order (e.g. `100abc,200res,300rez`) |
 | SanityRate             | `sdk.Dec`          | For a swapper function bond, restricts the conversion rate (`r1/r2`) to the specified value plus or minus the sanity margin percentage. `0` for no sanity checks. |
 | SanityMarginPercentage | `sdk.Dec`          | Used as described above. `0` for no sanity checks. |
-| AllowSells             | `string`           | Whether or not selling is allowed (`"true"/"false"`) |
+| AllowSells             | `bool`             | Whether or not selling is allowed |
 | Signers                | `[]sdk.AccAddress` | The addresses of the accounts that must sign this message and any future message that edits the bond's parameters. |
 | BatchBlocks            | `sdk.Uint`         | The lifespan of each orders batch in blocks. |
 
@@ -42,7 +42,7 @@ type MsgCreateBond struct {
 	OrderQuantityLimits    sdk.Coins
 	SanityRate             sdk.Dec
 	SanityMarginPercentage sdk.Dec
-	AllowSells             string
+	AllowSells             bool
 	Signers                []sdk.AccAddress
 	BatchBlocks            sdk.Uint
 }
@@ -76,7 +76,6 @@ This message is expected to fail if:
 - sanity rate is neither an empty string nor a valid decimal
 - sanity margin percentage is neither an empty string nor a valid decimal
 - sanity rate is not an empty string and sanity margin percentage is an empty string (in other words, sanity rate is defined but sanity margin percentage is not)
-- allow sells is not one of `"true"` or `"false"`
 - signers is not one or more valid comma-separated account addresses
 - any field is empty, except for order quantity limits, sanity rate, sanity margin percentage, and function parameters for `swapper_function`
 

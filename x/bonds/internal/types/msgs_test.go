@@ -72,26 +72,6 @@ func TestValidateBasicMsgFunctionTypeArgumentMissingGivesError(t *testing.T) {
 	require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
-func TestValidateBasicMsgCreateAllowSellsArgumentMissingGivesError(t *testing.T) {
-	message := NewValidMsgCreateBond()
-	message.AllowSells = ""
-
-	err := message.ValidateBasic()
-
-	require.NotNil(t, err)
-	require.Equal(t, CodeArgumentInvalid, err.Code())
-}
-
-func TestValidateBasicMsgCreateAllowSellsIsNotTrueOrFalseGivesError(t *testing.T) {
-	message := NewValidMsgCreateBond()
-	message.AllowSells = "neitherTrueNorFalse"
-
-	err := message.ValidateBasic()
-
-	require.NotNil(t, err)
-	require.Equal(t, CodeArgumentMissingOrIncorrectType, err.Code())
-}
-
 func TestValidateBasicMsgCreateTxFeeIsNegativeGivesError(t *testing.T) {
 	message := NewValidMsgCreateBond()
 	message.TxFeePercentage = sdk.NewDec(-1)

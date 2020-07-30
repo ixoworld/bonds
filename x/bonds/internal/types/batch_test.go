@@ -35,12 +35,11 @@ func TestMoreEqualBuysSells(t *testing.T) {
 func TestBaseOrderIsCancelled(t *testing.T) {
 	testCases := []struct {
 		order       BaseOrder
-		valueToSet  string
+		valueToSet  bool
 		isCancelled bool
 	}{
-		{NewBaseOrder(sdk.AccAddress{}, sdk.Coin{}), TRUE, true},
-		{NewBaseOrder(sdk.AccAddress{}, sdk.Coin{}), FALSE, false},
-		{NewBaseOrder(sdk.AccAddress{}, sdk.Coin{}), "other", false},
+		{NewBaseOrder(sdk.AccAddress{}, sdk.Coin{}), true, true},
+		{NewBaseOrder(sdk.AccAddress{}, sdk.Coin{}), false, false},
 	}
 	for i, tc := range testCases {
 		tc.order.Cancelled = tc.valueToSet
@@ -72,7 +71,7 @@ func TestNewBaseOrderDefaultValues(t *testing.T) {
 
 	require.Equal(t, address, order.Address)
 	require.Equal(t, amount, order.Amount)
-	require.Equal(t, FALSE, order.Cancelled)
+	require.False(t, order.Cancelled)
 	require.Empty(t, order.CancelReason)
 }
 
@@ -86,7 +85,7 @@ func TestNewBuyOrderDefaultValues(t *testing.T) {
 
 	require.Equal(t, address, order.Address)
 	require.Equal(t, amount1, order.Amount)
-	require.Equal(t, FALSE, order.Cancelled)
+	require.False(t, order.Cancelled)
 	require.Empty(t, order.CancelReason)
 	require.Equal(t, maxPrices, order.MaxPrices)
 }
@@ -98,7 +97,7 @@ func TestNewSellOrderDefaultValues(t *testing.T) {
 
 	require.Equal(t, address, order.Address)
 	require.Equal(t, amount, order.Amount)
-	require.Equal(t, FALSE, order.Cancelled)
+	require.False(t, order.Cancelled)
 	require.Empty(t, order.CancelReason)
 }
 
@@ -111,6 +110,6 @@ func TestNewSwapOrderDefaultValues(t *testing.T) {
 	require.Equal(t, address, order.Address)
 	require.Equal(t, fromAmount, order.Amount)
 	require.Equal(t, toToken, order.ToToken)
-	require.Equal(t, FALSE, order.Cancelled)
+	require.False(t, order.Cancelled)
 	require.Empty(t, order.CancelReason)
 }

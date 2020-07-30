@@ -53,7 +53,7 @@ func SupplyInvariant(k Keeper) sdk.Invariant {
 			// Subtract amount to be burned (this amount was already burned
 			// in handleMsgSell but is still a part of bond's CurrentSupply)
 			for _, s := range batch.Sells {
-				if s.Cancelled == types.FALSE {
+				if !s.Cancelled {
 					supplyInBondsAndBatches = supplyInBondsAndBatches.Sub(
 						s.Amount)
 				}

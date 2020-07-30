@@ -37,7 +37,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	)
 	sanityRate := sdk.MustNewDecFromStr("0.3")
 	sanityMarginPercentage := sdk.MustNewDecFromStr("0.4")
-	allowSell := "true"
+	allowSell := true
 	signers := []sdk.AccAddress{creator}
 	batchBlocks := sdk.NewUint(10)
 	state := "dummy_state"
