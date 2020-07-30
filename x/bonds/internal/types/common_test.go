@@ -48,6 +48,29 @@ func functionParametersSigmoid() FunctionParams {
 		NewFunctionParam("c", sdk.NewDec(1))}
 }
 
+func functionParametersAugmented() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("d0", sdk.MustNewDecFromStr("500.0")),
+		NewFunctionParam("p0", sdk.MustNewDecFromStr("0.01")),
+		NewFunctionParam("theta", sdk.MustNewDecFromStr("0.4")),
+		NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0"))}
+}
+
+func functionParametersAugmentedFull() FunctionParams {
+	base := functionParametersAugmented()
+	baseMap := base.AsMap()
+
+	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
+	S0 := baseMap["d0"].Quo(baseMap["p0"])
+	V0 := Invariant(R0, S0, baseMap["kappa"].TruncateInt64())
+	extras := FunctionParams{
+		NewFunctionParam("R0", R0),
+		NewFunctionParam("S0", S0),
+		NewFunctionParam("V0", V0)}
+
+	return append(base, extras...)
+}
+
 func functionParametersPowerHuge() FunctionParams {
 	return FunctionParams{
 		NewFunctionParam("m", sdk.NewDec(1)),

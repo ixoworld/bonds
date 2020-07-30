@@ -201,33 +201,63 @@ func TestGetPricesAtSupply(t *testing.T) {
 	bond := getValidBond()
 	// TODO: add more test cases
 
+	// For augmented function tests
+	baseMap := functionParametersAugmented().AsMap()
+	//R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
+	S0 := baseMap["d0"].Quo(baseMap["p0"])
+	//V0 := Invariant(R0, S0, baseMap["kappa"].TruncateInt64())
+
 	testCases := []struct {
 		functionType      string
 		functionParams    FunctionParams
 		reserveTokens     []string
 		supply            sdk.Int
+		state             string
 		expected          string
 		functionAvailable bool
 	}{
+		// Power
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
-			sdk.NewInt(0), "100", true},
+			sdk.NewInt(0), OpenState, "100", true},
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
-			sdk.NewInt(1000), "12000100", true},
+			sdk.NewInt(1000), OpenState, "12000100", true},
+		// Sigmoid
 		{SigmoidFunction, functionParametersSigmoid(), multitokenReserve(),
-			sdk.NewInt(1000), "5.999998484887893066", true},
+			sdk.NewInt(1000), OpenState, "5.999998484887893066", true},
+		// Augmented
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			sdk.NewInt(0), HatchState, "0.01", true},
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			sdk.NewInt(0), OpenState, "0", true},
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			S0.TruncateInt(), HatchState, "0.01", true}, // p0=0.01
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			S0.TruncateInt(), OpenState, "0.018", true},
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			S0.MulInt64(2).TruncateInt(), HatchState, "0.01", true}, // p0=0.01
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			S0.MulInt64(2).TruncateInt(), OpenState, "0.072", true},
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			sdk.NewInt(10000000), OpenState, "720", true},
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			sdk.NewInt(12345678), OpenState, "1097.3935100137248", true},
+		// Swapper
 		{SwapperFunction, nil, swapperReserves(),
-			sdk.NewInt(100), "100", false},
+			sdk.NewInt(100), OpenState, "100", false},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
 		bond.FunctionParameters = tc.functionParams
 		bond.ReserveTokens = tc.reserveTokens
+		bond.State = tc.state
 
 		actualResult, err := bond.GetPricesAtSupply(tc.supply)
 		if tc.functionAvailable {
 			require.Nil(t, err)
 			expectedDec := sdk.MustNewDecFromStr(tc.expected)
-			expectedResult := newDecMultitokenReserveFromDec(expectedDec)
+			expectedResult := newDecMultitokenReserveFromDec(expectedDec).Add(nil)
+			// __.Add(nil) is added so that zeroes are detected and removed
+			// For example "0.00000res,0.00000rez" becomes ""
 			require.Equal(t, expectedResult, actualResult)
 		} else {
 			require.Error(t, err)
@@ -252,10 +282,16 @@ func TestGetCurrentPrices(t *testing.T) {
 		reserveBalances sdk.Coins
 		expected        string
 	}{
+		// Power
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
 			sdk.NewInt(100), nil, "120100"},
+		// Sigmoid
 		{SigmoidFunction, functionParametersSigmoid(), multitokenReserve(),
 			sdk.NewInt(100), nil, "5.999833808824623900"},
+		// Augmented
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			sdk.NewInt(12345678), nil, "1097.3935100137248"},
+		// Swapper
 		{SwapperFunction, nil, swapperReserves(),
 			sdk.NewInt(100), swapperReserveBalances, "100"},
 	}
@@ -263,6 +299,7 @@ func TestGetCurrentPrices(t *testing.T) {
 		bond.FunctionType = tc.functionType
 		bond.FunctionParameters = tc.functionParams
 		bond.ReserveTokens = tc.reserveTokens
+		bond.State = OpenState
 		bond.CurrentSupply = sdk.NewCoin(bond.Token, tc.currentSupply)
 
 		actualResult, _ := bond.GetCurrentPricesPT(tc.reserveBalances)
@@ -281,15 +318,16 @@ func TestCurveIntegral(t *testing.T) {
 		supply         sdk.Int
 		expected       string
 	}{
+		// Power
 		{PowerFunction, functionParametersPower(), sdk.NewInt(100),
 			"4010000"},
 		{PowerFunction, functionParametersPower(), maxInt64,
 			"3138550867693340380897047610841017818694071568064447512472.0"},
 		{PowerFunction, functionParametersPowerHuge(), sdk.NewInt(5),
 			"390525200604461289807786418456824866174854670846050992460534124091120.049504950495049505"},
-		//{PowerFunction, functionParametersPowerHuge, sdk.NewInt(6),
-		//	""}, // causes integer overflow
-
+		////{PowerFunction, functionParametersPowerHuge, sdk.NewInt(6),
+		////	""}, // causes integer overflow
+		// Sigmoid
 		{SigmoidFunction, functionParametersSigmoid(), sdk.NewInt(100),
 			"569.718730495548543525"},
 		{SigmoidFunction, functionParametersSigmoid(), maxInt64,
@@ -340,14 +378,24 @@ func TestGetPricesToMint(t *testing.T) {
 	bond := getValidBond()
 	// TODO: add more test cases
 
-	reserveBalances1000 := sdk.NewCoins(
-		sdk.NewInt64Coin(reserveToken, 10000),
-		sdk.NewInt64Coin(reserveToken2, 10000),
+	tenK := int64(10000)
+	reserveBalances10000 := sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, tenK),
+		sdk.NewInt64Coin(reserveToken2, tenK),
 	)
 	reserveBalances10 := sdk.NewCoins(
 		sdk.NewInt64Coin(reserveToken, 10),
 		sdk.NewInt64Coin(reserveToken2, 10),
 	)
+
+	// For augmented function tests
+	baseMap := functionParametersAugmented().AsMap()
+	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
+	S0 := baseMap["d0"].Quo(baseMap["p0"])
+	kappa := baseMap["kappa"].TruncateInt64()
+	V0 := Invariant(R0, S0, kappa)
+	augmentedSupplyForReserve10000 :=
+		Supply(sdk.NewDec(tenK), kappa, V0).Ceil().TruncateInt()
 
 	testCases := []struct {
 		functionType    string
@@ -356,28 +404,42 @@ func TestGetPricesToMint(t *testing.T) {
 		reserveBalances sdk.Coins
 		currentSupply   sdk.Int
 		amount          sdk.Int
+		state           string
 		expectedPrice   string
 		fails           bool
 	}{
+		// Power
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
-			reserveBalances1000, sdk.ZeroInt(), sdk.NewInt(100), "4000000", false},
+			reserveBalances10000, sdk.ZeroInt(), sdk.NewInt(100), OpenState, "4000000", false},
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
-			nil, sdk.ZeroInt(), sdk.NewInt(100), "4010000", false},
+			nil, sdk.ZeroInt(), sdk.NewInt(100), OpenState, "4010000", false},
+		// Sigmoid
 		{SigmoidFunction, functionParametersSigmoid(), multitokenReserve(),
-			nil, sdk.ZeroInt(), sdk.NewInt(100), "569.718730495548543525", false},
+			nil, sdk.ZeroInt(), sdk.NewInt(100), OpenState, "569.718730495548543525", false},
 		{SigmoidFunction, functionParametersSigmoid(), multitokenReserve(),
-			reserveBalances10, sdk.ZeroInt(), sdk.NewInt(100), "559.718730495548543525", false},
+			reserveBalances10, sdk.ZeroInt(), sdk.NewInt(100), OpenState, "559.718730495548543525", false},
+		// Augmented
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			nil, sdk.ZeroInt(), sdk.NewInt(5000), HatchState, "50", false}, // p0=0.01; 0.01*5000 = 50
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			reserveBalances10000, augmentedSupplyForReserve10000, sdk.NewInt(5000), HatchState, "50", false}, // p0=0.01; 0.01*5000 = 50
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			nil, sdk.ZeroInt(), sdk.NewInt(5000), OpenState, "0.3", false},
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			reserveBalances10000, augmentedSupplyForReserve10000, sdk.NewInt(5000), OpenState, "961.4547618461", false},
+		// Swapper
 		{SwapperFunction, FunctionParams{}, swapperReserves(),
-			reserveBalances1000, sdk.NewInt(2), sdk.NewInt(10), "50000", false},
+			reserveBalances10000, sdk.NewInt(2), sdk.NewInt(10), OpenState, "50000", false},
 		{SwapperFunction, FunctionParams{}, swapperReserves(),
-			nil, sdk.NewInt(2), sdk.NewInt(10), "0", false}, // impossible scenario
+			nil, sdk.NewInt(2), sdk.NewInt(10), OpenState, "0", false}, // impossible scenario
 		{SwapperFunction, FunctionParams{}, swapperReserves(),
-			nil, sdk.ZeroInt(), sdk.NewInt(10), "0", true},
+			nil, sdk.ZeroInt(), sdk.NewInt(10), OpenState, "0", true},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
 		bond.FunctionParameters = tc.functionParams
 		bond.ReserveTokens = tc.reserveTokens
+		bond.State = tc.state
 		bond.CurrentSupply = sdk.NewCoin(bond.Token, tc.currentSupply)
 
 		actualResult, err := bond.GetPricesToMint(tc.amount, tc.reserveBalances)
@@ -401,10 +463,25 @@ func TestGetReturnsForBurn(t *testing.T) {
 		sdk.NewInt64Coin(reserveToken2, 232),
 	)
 
+	tenK := int64(10000)
+	reserveBalances10000 := sdk.NewCoins(
+		sdk.NewInt64Coin(reserveToken, tenK),
+		sdk.NewInt64Coin(reserveToken2, tenK),
+	)
+
 	swapperReserveBalances := sdk.NewCoins(
 		sdk.NewInt64Coin(reserveToken, 10000),
 		sdk.NewInt64Coin(reserveToken2, 10000),
 	)
+
+	// For augmented function tests
+	baseMap := functionParametersAugmented().AsMap()
+	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
+	S0 := baseMap["d0"].Quo(baseMap["p0"])
+	kappa := baseMap["kappa"].TruncateInt64()
+	V0 := Invariant(R0, S0, kappa)
+	augmentedSupplyForReserve10000 :=
+		Supply(sdk.NewDec(tenK), kappa, V0).Ceil().TruncateInt()
 
 	testCases := []struct {
 		functionType    string
@@ -415,10 +492,17 @@ func TestGetReturnsForBurn(t *testing.T) {
 		amount          sdk.Int
 		expectedReturn  string
 	}{
+		// Power
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
 			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "128"},
+		// Sigmoid
 		{SigmoidFunction, functionParametersSigmoid(), multitokenReserve(),
 			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "231.927741663925372840"},
+		// Augmented (note: unlike in minting, state not taken into consideration when
+		// burning since burning only possible in open phase, so state cannot be hatch)
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			reserveBalances10000, augmentedSupplyForReserve10000, sdk.NewInt(5000), "903.4871183539"},
+		// Swapper
 		{SwapperFunction, FunctionParams{}, swapperReserves(),
 			swapperReserveBalances, sdk.NewInt(2), sdk.OneInt(), "5000"},
 	}
