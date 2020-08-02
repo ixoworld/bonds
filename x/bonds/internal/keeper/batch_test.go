@@ -131,7 +131,7 @@ func TestGetBatchBuySellPrices(t *testing.T) {
 	fiveDec := sdk.NewDec(5)
 
 	// Add appropriate amount of reserve tokens to reserve
-	expectedReserve := bond.CurveIntegral(bond.CurrentSupply.Amount)
+	expectedReserve := bond.ReserveAtSupply(bond.CurrentSupply.Amount)
 	expectedRounded := expectedReserve.Ceil().TruncateInt()
 	reserveBalance := sdk.NewCoins(sdk.NewCoin(bond.ReserveTokens[0], expectedRounded))
 	_, err := app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, reserveBalance)

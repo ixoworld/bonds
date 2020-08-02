@@ -311,7 +311,7 @@ func (bond Bond) GetCurrentPricesPT(reserveBalances sdk.Coins) (sdk.DecCoins, sd
 	}
 }
 
-func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
+func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 	if supply.IsNegative() {
 		panic(fmt.Sprintf("negative supply for bond %s", bond.Token))
 	}
@@ -417,7 +417,7 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 		fallthrough
 	case AugmentedFunction:
 		var priceToMint sdk.Dec
-		result := bond.CurveIntegral(bond.CurrentSupply.Amount.Add(mint))
+		result := bond.ReserveAtSupply(bond.CurrentSupply.Amount.Add(mint))
 		if reserveBalances.Empty() {
 			priceToMint = result
 		} else {
@@ -457,7 +457,7 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 	case SigmoidFunction:
 		fallthrough
 	case AugmentedFunction:
-		result := bond.CurveIntegral(bond.CurrentSupply.Amount.Sub(burn))
+		result := bond.ReserveAtSupply(bond.CurrentSupply.Amount.Sub(burn))
 
 		var reserveBalance sdk.Dec
 		if reserveBalances.Empty() {

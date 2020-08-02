@@ -92,7 +92,7 @@ func ReserveInvariant(k Keeper) sdk.Invariant {
 				continue // Check does not apply to augmented/swapper functions
 			}
 
-			expectedReserve := bond.CurveIntegral(bond.CurrentSupply.Amount)
+			expectedReserve := bond.ReserveAtSupply(bond.CurrentSupply.Amount)
 			expectedRounded := expectedReserve.Ceil().TruncateInt()
 			actualReserve := k.GetReserveBalances(ctx, denom)
 

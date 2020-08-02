@@ -309,7 +309,7 @@ func TestGetCurrentPrices(t *testing.T) {
 	}
 }
 
-func TestCurveIntegral(t *testing.T) {
+func TestReserveAtSupply(t *testing.T) {
 	bond := getValidBond()
 
 	testCases := []struct {
@@ -341,7 +341,7 @@ func TestCurveIntegral(t *testing.T) {
 		bond.FunctionType = tc.functionType
 		bond.FunctionParameters = tc.functionParams
 
-		actualResult := bond.CurveIntegral(tc.supply)
+		actualResult := bond.ReserveAtSupply(tc.supply)
 		expectedResult := sdk.MustNewDecFromStr(tc.expected)
 		require.Equal(t, expectedResult, actualResult)
 	}
