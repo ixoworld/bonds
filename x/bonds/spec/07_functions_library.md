@@ -15,41 +15,47 @@ Algorithmic Applications include:
 
 Function (used as pricing function):
 
-<img alt="drawing" src="./img/power1.png"/>
+<img alt="drawing" src="./img/power1.png" height="20"/>
 
 Integral (used as reserve function):
 
-<img alt="drawing" src="./img/power2.png"/>
+<img alt="drawing" src="./img/power2.png" height="40"/>
 
 ### Logistic Function (sigmoid)
 
 Function (used as pricing function):
 
-<img alt="drawing" src="./img/sigmoid1.png"/>
+<img alt="drawing" src="./img/sigmoid1.png" height="80"/>
 
 Integral (used as reserve function):
 
-<img alt="drawing" src="./img/sigmoid2.png"/>
+<img alt="drawing" src="./img/sigmoid2.png" height="55"/>
 
 ### Augmented Bonding Curves (augmented)
 
-Initial reserve and initial supply:
+Initial reserve:
 
-<img alt="drawing" src="./img/augmented1.png"/>
-<img alt="drawing" src="./img/augmented2.png"/>
+<img alt="drawing" src="./img/augmented1.png" height="20"/>
 
-Constant power function invariant and invariant function:
+Initial supply:
 
-<img alt="drawing" src="./img/augmented3.png"/>
-<img alt="drawing" src="./img/augmented4.png"/>
+<img alt="drawing" src="./img/augmented2.png" height="20"/>
+
+Constant power function invariant:
+
+<img alt="drawing" src="./img/augmented3.png" height="40"/>
+
+Invariant function:
+
+<img alt="drawing" src="./img/augmented4.png" height="55"/>
 
 Pricing function:
 
-<img alt="drawing" src="./img/augmented5.png"/>
+<img alt="drawing" src="./img/augmented5.png" height="55"/>
 
 Reserve function:
 
-<img alt="drawing" src="./img/augmented6.png"/>
+<img alt="drawing" src="./img/augmented6.png" height="50"/>
 
 Ref: https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751
 
@@ -57,4 +63,4 @@ Ref: https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751
 
 Reserve function:
 
-<img alt="drawing" src="./img/swapper.png"/>
+<img alt="drawing" src="./img/swapper.png" height="20"/>
