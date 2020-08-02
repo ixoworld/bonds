@@ -338,7 +338,9 @@ func (bond Bond) CurveIntegral(supply sdk.Int) (result sdk.Dec) {
 		constant := a.Mul((b.Mul(b).Add(c)).ApproxSqrt())
 		result = temp5.Sub(constant)
 	case AugmentedFunction:
-		fallthrough
+		kappa := args["kappa"].TruncateInt64()
+		V0 := args["V0"]
+		result = Reserve(x, kappa, V0)
 	case SwapperFunction:
 		panic("invalid function for function type")
 	default:
@@ -399,10 +401,21 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 		panic(fmt.Sprintf("negative reserve balance for bond %s", bond.Token))
 	}
 
+	// If hatch phase for augmented function, use fixed p0 price
+	if bond.FunctionType == AugmentedFunction && bond.State == HatchState {
+		args := bond.FunctionParameters.AsMap()
+		if bond.State == HatchState {
+			price := args["p0"].Mul(sdk.NewDecFromInt(mint))
+			return bond.GetNewReserveDecCoins(price), nil
+		}
+	}
+
 	switch bond.FunctionType {
 	case PowerFunction:
 		fallthrough
 	case SigmoidFunction:
+		fallthrough
+	case AugmentedFunction:
 		var priceToMint sdk.Dec
 		result := bond.CurveIntegral(bond.CurrentSupply.Amount.Add(mint))
 		if reserveBalances.Empty() {
@@ -420,34 +433,6 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 			priceToMint = sdk.OneDec()
 		}
 		return bond.GetNewReserveDecCoins(priceToMint), nil
-	case AugmentedFunction:
-		args := bond.FunctionParameters.AsMap()
-
-		// If hatch phase, use fixed p0 price
-		if bond.State == HatchState {
-			price := args["p0"].Mul(sdk.NewDecFromInt(mint))
-			return bond.GetNewReserveDecCoins(price), nil
-		}
-
-		var reserveBalance sdk.Dec
-		if reserveBalances.Empty() {
-			reserveBalance = sdk.ZeroDec()
-		} else {
-			// Reserve balances should all be equal given that we are always
-			// applying the same additions/subtractions to all reserve balances.
-			// Thus we can pick the first reserve balance as the global balance.
-			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
-		}
-
-		// Get parameters and decimal arguments
-		kappa := args["kappa"].TruncateInt64()
-		V0 := args["V0"]
-		mintDec := sdk.NewDecFromInt(mint)
-		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
-
-		returnForBurnDec, _ :=
-			Mint(mintDec, reserveBalance, supplyDec, kappa, V0)
-		return bond.GetNewReserveDecCoins(returnForBurnDec), nil
 	case SwapperFunction:
 		if bond.CurrentSupply.Amount.IsZero() {
 			return nil, ErrFunctionRequiresNonZeroCurrentSupply(DefaultCodespace)
@@ -470,6 +455,8 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 	case PowerFunction:
 		fallthrough
 	case SigmoidFunction:
+		fallthrough
+	case AugmentedFunction:
 		result := bond.CurveIntegral(bond.CurrentSupply.Amount.Sub(burn))
 
 		var reserveBalance sdk.Dec
@@ -489,31 +476,6 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 			return bond.GetNewReserveDecCoins(returnForBurn)
 			// TODO: investigate possibility of negative returnForBurn
 		}
-	case AugmentedFunction:
-
-		// Note: during hatch phase, selling will be disabled so this function
-		// will not be called, i.e. no checks for this need to take place.
-
-		var reserveBalance sdk.Dec
-		if reserveBalances.Empty() {
-			reserveBalance = sdk.ZeroDec()
-		} else {
-			// Reserve balances should all be equal given that we are always
-			// applying the same additions/subtractions to all reserve balances.
-			// Thus we can pick the first reserve balance as the global balance.
-			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
-		}
-
-		// Get parameters and decimal arguments
-		args := bond.FunctionParameters.AsMap()
-		kappa := args["kappa"].TruncateInt64()
-		V0 := args["V0"]
-		supplyDec := sdk.NewDecFromInt(bond.CurrentSupply.Amount)
-		burnDec := sdk.NewDecFromInt(burn)
-
-		returnForBurnDec, _ :=
-			Withdraw(burnDec, reserveBalance, supplyDec, kappa, V0)
-		return bond.GetNewReserveDecCoins(returnForBurnDec)
 	case SwapperFunction:
 		return bond.GetReserveDeltaForLiquidityDelta(burn, reserveBalances)
 	default:
