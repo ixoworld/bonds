@@ -98,7 +98,7 @@ func TestReserve(t *testing.T) {
 	}
 }
 
-func TestMint(t *testing.T) {
+func TestMintAlt(t *testing.T) {
 	decimals := sdk.NewDec(100000) // 10^5
 	testCases := []struct {
 		reserve sdk.Dec
@@ -118,8 +118,8 @@ func TestMint(t *testing.T) {
 	for _, tc := range testCases {
 		supply := Supply(tc.reserve, tc.kappa, tc.V0)
 
-		deltaS, price1 := MintAlt(tc.deltaR, tc.reserve, supply, tc.kappa, tc.V0)
-		deltaR, price2 := Mint(deltaS, tc.reserve, supply, tc.kappa, tc.V0)
+		deltaS, price1 := Mint(tc.deltaR, tc.reserve, supply, tc.kappa, tc.V0)
+		deltaR, price2 := MintAlt(deltaS, tc.reserve, supply, tc.kappa, tc.V0)
 
 		tc.deltaR = tc.deltaR.Mul(decimals).TruncateDec()
 		deltaR = deltaR.Mul(decimals).TruncateDec()
