@@ -13,30 +13,48 @@ Algorithmic Applications include:
 
 ### Exponential Function (power)
 
-Pricing function:
+Function (used as pricing function):
 
-<img alt="drawing" src="./img/power1.png" height="20"/>
+<img alt="drawing" src="./img/power1.png"/>
 
-Integral:
+Integral (used as reserve function):
 
-<img alt="drawing" src="./img/power2.png" height="40"/>
+<img alt="drawing" src="./img/power2.png"/>
 
 ### Logistic Function (sigmoid)
 
+Function (used as pricing function):
+
+<img alt="drawing" src="./img/sigmoid1.png"/>
+
+Integral (used as reserve function):
+
+<img alt="drawing" src="./img/sigmoid2.png"/>
+
+### Augmented Bonding Curves (augmented)
+
+Initial reserve and initial supply:
+
+<img alt="drawing" src="./img/augmented1.png"/>
+<img alt="drawing" src="./img/augmented2.png"/>
+
+Constant power function invariant and invariant function:
+
+<img alt="drawing" src="./img/augmented3.png"/>
+<img alt="drawing" src="./img/augmented4.png"/>
+
 Pricing function:
 
-<img alt="drawing" src="./img/sigmoid1.png" height="80"/>
+<img alt="drawing" src="./img/augmented5.png"/>
 
-Integral:
+Reserve function:
 
-<img alt="drawing" src="./img/sigmoid2.png" height="55"/>
+<img alt="drawing" src="./img/augmented6.png"/>
+
+Ref: https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751
 
 ### Constant Product Function (swapper)
 
 Reserve function:
 
-<img alt="drawing" src="./img/swapper.png" height="20"/>
-
-### Augmented Bonding Curves (augmented)
-
-Reference: https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751
+<img alt="drawing" src="./img/swapper.png"/>
