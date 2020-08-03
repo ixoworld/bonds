@@ -44,36 +44,3 @@ func SpotPrice(R sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
 	}
 	return (kappaDec.Mul(temp2)).Quo(temp1)
 }
-
-// for a given state (R,S)
-// given a value function (parameterized by kappa)
-// and an invariant coeficient V0
-// deposit deltaR to Mint deltaS
-// with realized price deltaR/deltaS
-func Mint(deltaR, R, S sdk.Dec, kappa int64, V0 sdk.Dec) (sdk.Dec, sdk.Dec) {
-	temp, err := ApproxRoot(V0.Mul(R.Add(deltaR)), uint64(kappa))
-	if err != nil {
-		panic(err)
-	}
-	deltaS := temp.Sub(S)
-	realizedPrice := deltaR.Quo(deltaS)
-	return deltaS, realizedPrice
-}
-
-// This is a shortcut of the Mint(...) function which accepts deltaR instead
-func MintAlt(deltaS, R, S sdk.Dec, kappa int64, V0 sdk.Dec) (sdk.Dec, sdk.Dec) {
-	deltaR := (Power(deltaS.Add(S), uint64(kappa)).Quo(V0)).Sub(R)
-	realizedPrice := deltaR.Quo(deltaS)
-	return deltaR, realizedPrice
-}
-
-// for a given state (R,S)
-// given a value function (parameterized by kappa)
-// and an invariant coeficient V0
-// burn deltaS to Withdraw deltaR
-// with realized price deltaR/deltaS
-func Withdraw(deltaS, R, S sdk.Dec, kappa int64, V0 sdk.Dec) (sdk.Dec, sdk.Dec) {
-	deltaR := R.Sub(Power(S.Sub(deltaS), uint64(kappa)).Quo(V0))
-	realizedPrice := deltaR.Quo(deltaS)
-	return deltaR, realizedPrice
-}

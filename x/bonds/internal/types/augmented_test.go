@@ -97,36 +97,3 @@ func TestReserve(t *testing.T) {
 		require.Equal(t, tc.reserve, calculatedReserve)
 	}
 }
-
-func TestMintAlt(t *testing.T) {
-	decimals := sdk.NewDec(100000) // 10^5
-	testCases := []struct {
-		reserve sdk.Dec
-		kappa   int64
-		V0      sdk.Dec
-		deltaR  sdk.Dec
-	}{
-		{sdk.MustNewDecFromStr("0.05"), 1, sdk.MustNewDecFromStr("12345678.12345678"), sdk.MustNewDecFromStr("100")},
-		{sdk.MustNewDecFromStr("5"), 2, sdk.MustNewDecFromStr("123456.123456"), sdk.MustNewDecFromStr("100")},
-		{sdk.MustNewDecFromStr("500.500"), 3, sdk.MustNewDecFromStr("50000.50000"), sdk.MustNewDecFromStr("100")},
-		{sdk.MustNewDecFromStr("50000.50000"), 4, sdk.MustNewDecFromStr("500.500"), sdk.MustNewDecFromStr("100")},
-		{sdk.MustNewDecFromStr("123456.123456"), 5, sdk.MustNewDecFromStr("5"), sdk.MustNewDecFromStr("100")},
-		{sdk.MustNewDecFromStr("12345678.12345678"), 6, sdk.MustNewDecFromStr("0.05"), sdk.MustNewDecFromStr("100")},
-		{sdk.MustNewDecFromStr("0.05"), 6, sdk.MustNewDecFromStr("12345678.12345678"), sdk.MustNewDecFromStr("12345678.12345678")},
-		{sdk.MustNewDecFromStr("12345678.12345678"), 6, sdk.MustNewDecFromStr("0.05"), sdk.MustNewDecFromStr("12345678.12345678")},
-	}
-	for _, tc := range testCases {
-		supply := Supply(tc.reserve, tc.kappa, tc.V0)
-
-		deltaS, price1 := Mint(tc.deltaR, tc.reserve, supply, tc.kappa, tc.V0)
-		deltaR, price2 := MintAlt(deltaS, tc.reserve, supply, tc.kappa, tc.V0)
-
-		tc.deltaR = tc.deltaR.Mul(decimals).TruncateDec()
-		deltaR = deltaR.Mul(decimals).TruncateDec()
-		price1 = price1.Mul(decimals).TruncateDec()
-		price2 = price2.Mul(decimals).TruncateDec()
-
-		require.Equal(t, tc.deltaR, deltaR)
-		require.Equal(t, price1, price2)
-	}
-}
