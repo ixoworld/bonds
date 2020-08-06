@@ -7,6 +7,8 @@ At the end of each block, any batch of orders that has reached the end of its li
 
 Since the buy and sell prices are pre-calculated from when the buy and sell orders were added to the batch, there is no additional cancellations of buys or sells that will take place at this stage. However, swaps are processed on a first come first served basis and a swap is cancelled if it violates the sanity rates.
 
+In the case of `augmented_function` bonds, if the new bond supply after performing all orders is greater or equal to the initial supply (`supply >= S0`), the bond's state gets updated from `HATCH` to `OPEN` and sells are enabled (`AllowSells=true`).
+
 ## Buys
 
 Using the buy price stored in the batch, the following steps are followed for each buy order:

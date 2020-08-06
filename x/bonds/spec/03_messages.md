@@ -83,7 +83,7 @@ This message is expected to fail if:
 - signers is not one or more valid comma-separated account addresses
 - any field is empty, except for order quantity limits, sanity rate, sanity margin percentage, and function parameters for `swapper_function`
 
-This message creates and stores the `Bond` object at appropriate indexes. A reserve address is generated for the bond by taking the hash of "bond/<TOKEN>/reserveAddress", where "<TOKEN>" is the unique bond token. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
+This message creates and stores the `Bond` object at appropriate indexes. A reserve address is generated for the bond by taking the hash of `"bond/<TOKEN>/reserveAddress"`, where `<TOKEN>` is the unique bond token. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
 
 ## MsgEditBond
 
@@ -126,6 +126,8 @@ This message stores the updated `Bond` object.
 Any address that holds tokens that a bond uses as its reserve can buy tokens from that bond in exchange for reserve tokens. Rather than performing the buy itself, the `MsgBuy` handler registers a buy order in the current orders batch and cancels any other orders that become unfulfillable. Any order in that batch gets fulfilled at the end of the batch's lifespan. The `MsgBuy` handler also locks away the `MaxPrices` value (`< Balance`) indicated by the address so that these are not used elsewhere whilst the batch is being processed.
 
 A buy order is cancelled if the max prices are exceeded at any point during the lifespan of the batch. Otherwise, the buy order is fulfilled. The number of tokens requested are minted on the fly and any remaining tokens from the locked `MaxPrices`, minus the transaction fee specified by the bond, are returned to the user. The actual price in reserve tokens charged to the address is determined from the bond function, but is also influenced by any other buys and sells in the same orders batch, as a means to prevent front-running.
+
+In the case of `augmented_function` bonds, if the bond state is `HATCH`, a fixed price-per-token `p0` is used. This value (`p0`) is one of the function parameters required for this function type.
 
 | **Field** | **Type**         | **Description**                                   |
 |:----------|:-----------------|:--------------------------------------------------|
@@ -181,6 +183,7 @@ This message is expected to fail if:
 - amount is greater than the bond's current supply
 - amount causes the bond's batch-adjusted current supply to become negative
 - amount violates an order quantity limit defined by the bond
+- bond function type is `augmented_function` and bond state is `HATCH`
 
 The batch-adjusted current supply in the case of sells is the current supply of the bond minus any uncancelled sell amounts in the current batch.
 
