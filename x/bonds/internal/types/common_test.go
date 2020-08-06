@@ -31,6 +31,7 @@ var (
 	initBatchBlocks            = sdk.NewUint(10)
 	initState                  = OpenState
 
+	// 9223372036854775807
 	maxInt64 = sdk.NewInt(int64(^uint64(0) >> 1))
 )
 

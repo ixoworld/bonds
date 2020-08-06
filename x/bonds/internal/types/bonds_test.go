@@ -274,32 +274,37 @@ func TestGetCurrentPrices(t *testing.T) {
 		sdk.NewInt64Coin(reserveToken2, 10000),
 	)
 
+	augmentedP0 := functionParametersAugmented().AsMap()["p0"].String()
+
 	testCases := []struct {
 		functionType    string
 		functionParams  FunctionParams
 		reserveTokens   []string
 		currentSupply   sdk.Int
 		reserveBalances sdk.Coins
+		state           string
 		expected        string
 	}{
 		// Power
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
-			sdk.NewInt(100), nil, "120100"},
+			sdk.NewInt(100), nil, OpenState, "120100"},
 		// Sigmoid
 		{SigmoidFunction, functionParametersSigmoid(), multitokenReserve(),
-			sdk.NewInt(100), nil, "5.999833808824623900"},
+			sdk.NewInt(100), nil, OpenState, "5.999833808824623900"},
 		// Augmented
 		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
-			sdk.NewInt(12345678), nil, "1097.3935100137248"},
+			sdk.NewInt(12345678), nil, HatchState, augmentedP0},
+		{AugmentedFunction, functionParametersAugmentedFull(), multitokenReserve(),
+			sdk.NewInt(12345678), nil, OpenState, "1097.3935100137248"},
 		// Swapper
 		{SwapperFunction, nil, swapperReserves(),
-			sdk.NewInt(100), swapperReserveBalances, "100"},
+			sdk.NewInt(100), swapperReserveBalances, OpenState, "100"},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
 		bond.FunctionParameters = tc.functionParams
 		bond.ReserveTokens = tc.reserveTokens
-		bond.State = OpenState
+		bond.State = tc.state
 		bond.CurrentSupply = sdk.NewCoin(bond.Token, tc.currentSupply)
 
 		actualResult, _ := bond.GetCurrentPricesPT(tc.reserveBalances)
@@ -336,6 +341,13 @@ func TestReserveAtSupply(t *testing.T) {
 			"13043817825332782212.764456919596679543"},
 		{SigmoidFunction, functionParametersSigmoidHuge(), maxInt64,
 			"170141183460469231685570443531610226691.0"},
+		// Augmented
+		{AugmentedFunction, functionParametersAugmentedFull(), sdk.NewInt(1),
+			"0.0000000000024"},
+		{AugmentedFunction, functionParametersAugmentedFull(), sdk.NewInt(50000),
+			"300"},
+		{AugmentedFunction, functionParametersAugmentedFull(), maxInt64,
+			"1883130520616004228538228566503104186246547815.244551376209997517"},
 	}
 	for _, tc := range testCases {
 		bond.FunctionType = tc.functionType
