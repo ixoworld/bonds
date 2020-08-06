@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -95,5 +96,37 @@ func TestReserve(t *testing.T) {
 		calculatedReserve = calculatedReserve.Mul(decimals).TruncateDec()
 
 		require.Equal(t, tc.reserve, calculatedReserve)
+	}
+}
+
+func TestRationalPower(t *testing.T) {
+	testCases := []struct {
+		x      sdk.Dec
+		xFloat float64
+		a      uint64
+		b      uint64
+	}{
+		{sdk.MustNewDecFromStr("5"), 5, 3, 2},
+		{sdk.MustNewDecFromStr("500"), 500, 3, 2},
+		{sdk.MustNewDecFromStr("50000"), 50000, 3, 2},
+		{sdk.MustNewDecFromStr("5000000"), 5000000, 3, 2},
+		{sdk.MustNewDecFromStr("5"), 5, 30, 2},
+		//{sdk.MustNewDecFromStr("500"), 500, 300, 2}, // Int overflow
+	}
+	for _, tc := range testCases {
+		expectedYStr := fmt.Sprintf("%.5f",
+			math.Pow(tc.xFloat, float64(tc.a)/float64(tc.b)))
+
+		temp, err := ApproxRoot(tc.x, tc.b)
+		require.Nil(t, err)
+		y := Power(temp, tc.a)
+
+		y = sdk.NewDecFromInt(
+			y.MulInt64(100000).RoundInt()).QuoInt64(100000)
+		yFlt, err := strconv.ParseFloat(y.String(), 64)
+		require.Nil(t, err)
+		yStr := fmt.Sprintf("%.5f", yFlt)
+
+		require.Equal(t, expectedYStr, yStr)
 	}
 }
