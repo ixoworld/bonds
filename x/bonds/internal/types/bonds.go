@@ -349,8 +349,9 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 	}
 
 	if result.IsNegative() {
-		// assumes that the curve is above the x-axis and does not intersect it
-		panic(fmt.Sprintf("negative integral result for bond %s", bond.Token))
+		// For vanilla bonding curves, we assume that the curve does not
+		// intersect the x-axis and is greater than zero throughout
+		panic(fmt.Sprintf("negative reserve result for bond %s", bond.Token))
 	}
 	return result
 }
