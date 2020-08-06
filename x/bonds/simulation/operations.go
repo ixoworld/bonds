@@ -115,27 +115,21 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 		creator := address
 		signers := []sdk.AccAddress{creator}
 
-		var functionType string
+		functionType := getRandomFunctionType(r)
+
 		var reserveTokens []string
-		randFunctionType := simulation.RandIntBetween(r, 0, 3)
-		if randFunctionType == 0 {
-			functionType = types.PowerFunction
-			reserveTokens = defaultReserveTokens
-		} else if randFunctionType == 1 {
-			functionType = types.SigmoidFunction
-			reserveTokens = defaultReserveTokens
-		} else if randFunctionType == 2 {
-			functionType = types.SwapperFunction
+		switch functionType {
+		case types.SwapperFunction:
 			reserveToken1, ok1 := getRandomBondName(r)
 			reserveToken2, ok2 := getRandomBondNameExcept(r, reserveToken1)
 			if !ok1 || !ok2 {
 				return simulation.NoOpMsg(types.ModuleName), nil, nil
 			}
 			reserveTokens = []string{reserveToken1, reserveToken2}
-		} else {
-			panic("unexpected randFunctionType")
+		default:
+			reserveTokens = defaultReserveTokens
 		}
-		functionParameters := getRandomFunctionParameters(r, functionType)
+		functionParameters := getRandomFunctionParameters(r, functionType, false)
 
 		// Max fee is 100, so exit fee uses 100-txFee as max
 		txFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100))
@@ -415,7 +409,9 @@ func SimulateMsgSell(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operatio
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 		bond, found := k.GetBond(ctx, token)
-		if !found || !bond.AllowSells || bond.CurrentSupply.IsZero() {
+		if !found || !bond.AllowSells ||
+			bond.CurrentSupply.IsZero() ||
+			bond.State == types.HatchState {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 

@@ -62,17 +62,11 @@ func RandomizedGenState(simState *module.SimulationState) {
 		creator := address
 		signers := []sdk.AccAddress{creator}
 
-		var functionType string
+		functionType := getRandomFunctionType(r)
+
 		var reserveTokens []string
-		randFunctionType := simulation.RandIntBetween(r, 0, 3)
-		if randFunctionType == 0 {
-			functionType = types.PowerFunction
-			reserveTokens = defaultReserveTokens
-		} else if randFunctionType == 1 {
-			functionType = types.SigmoidFunction
-			reserveTokens = defaultReserveTokens
-		} else if randFunctionType == 2 {
-			functionType = types.SwapperFunction
+		switch functionType {
+		case types.SwapperFunction:
 			reserveToken1, ok1 := getRandomBondName(r)
 			reserveToken2, ok2 := getRandomBondNameExcept(r, reserveToken1)
 			if !ok1 || !ok2 {
@@ -80,10 +74,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 				continue
 			}
 			reserveTokens = []string{reserveToken1, reserveToken2}
-		} else {
-			panic("unexpected randFunctionType")
+		default:
+			reserveTokens = defaultReserveTokens
 		}
-		functionParameters := getRandomFunctionParameters(r, functionType)
+		functionParameters := getRandomFunctionParameters(r, functionType, true)
 
 		// Max fee is 100, so exit fee uses 100-txFee as max
 		txFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100))
@@ -99,7 +93,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		allowSells := getRandomAllowSellsValue(r)
 		batchBlocks := sdk.NewUint(uint64(
 			simulation.RandIntBetween(r, 1, 10)))
-		state := getRandomNonEmptyString(r)
+		state := getInitialBondState(functionType)
 
 		bond := types.NewBond(token, name, desc, creator, functionType,
 			functionParameters, reserveTokens, reserveAddress, txFeePercentage,

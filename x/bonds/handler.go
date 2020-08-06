@@ -142,8 +142,8 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 	keeper.SetBatch(ctx, msg.Token, types.NewBatch(bond.Token, msg.BatchBlocks))
 
 	logger := keeper.Logger(ctx)
-	logger.Info(fmt.Sprintf("bond %s with reserve(s) [%s] created by %s",
-		msg.Token, strings.Join(bond.ReserveTokens, ","), msg.Creator.String()))
+	logger.Info(fmt.Sprintf("bond %s [%s] with reserve(s) [%s] created by %s", msg.Token,
+		msg.FunctionType, strings.Join(bond.ReserveTokens, ","), msg.Creator.String()))
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
