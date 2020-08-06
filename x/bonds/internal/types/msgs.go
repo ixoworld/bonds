@@ -6,11 +6,13 @@ import (
 )
 
 const (
-	TypeMsgCreateBond = "create_bond"
-	TypeMsgEditBond   = "edit_bond"
-	TypeMsgBuy        = "buy"
-	TypeMsgSell       = "sell"
-	TypeMsgSwap       = "swap"
+	TypeMsgCreateBond         = "create_bond"
+	TypeMsgEditBond           = "edit_bond"
+	TypeMsgBuy                = "buy"
+	TypeMsgSell               = "sell"
+	TypeMsgSwap               = "swap"
+	TypeMsgMakeOutcomePayment = "make_outcome_payment"
+	TypeMsgWithdrawShare      = "withdraw_share"
 )
 
 type MsgCreateBond struct {
@@ -372,3 +374,85 @@ func (msg MsgSwap) GetSigners() []sdk.AccAddress {
 func (msg MsgSwap) Route() string { return RouterKey }
 
 func (msg MsgSwap) Type() string { return TypeMsgSwap }
+
+type MsgMakeOutcomePayment struct {
+	Sender    sdk.AccAddress `json:"recipient" yaml:"recipient"`
+	BondToken string         `json:"bond_token" yaml:"bond_token"`
+}
+
+func NewMsgMakeOutcomePayment(sender sdk.AccAddress, bondToken string) MsgMakeOutcomePayment {
+	return MsgMakeOutcomePayment{
+		Sender:    sender,
+		BondToken: bondToken,
+	}
+}
+
+func (msg MsgMakeOutcomePayment) ValidateBasic() sdk.Error {
+	// Check if empty
+	if msg.Sender.Empty() {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Sender")
+	} else if strings.TrimSpace(msg.BondToken) == "" {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "BondToken")
+	}
+
+	// Validate bond token
+	err := CheckCoinDenom(msg.BondToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (msg MsgMakeOutcomePayment) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgMakeOutcomePayment) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+func (msg MsgMakeOutcomePayment) Route() string { return RouterKey }
+
+func (msg MsgMakeOutcomePayment) Type() string { return TypeMsgMakeOutcomePayment }
+
+type MsgWithdrawShare struct {
+	Recipient sdk.AccAddress `json:"recipient" yaml:"recipient"`
+	BondToken string         `json:"bond_token" yaml:"bond_token"`
+}
+
+func NewMsgWithdrawShare(recipient sdk.AccAddress, bondToken string) MsgWithdrawShare {
+	return MsgWithdrawShare{
+		Recipient: recipient,
+		BondToken: bondToken,
+	}
+}
+
+func (msg MsgWithdrawShare) ValidateBasic() sdk.Error {
+	// Check if empty
+	if msg.Recipient.Empty() {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Recipient")
+	} else if strings.TrimSpace(msg.BondToken) == "" {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "BondToken")
+	}
+
+	// Validate bond token
+	err := CheckCoinDenom(msg.BondToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (msg MsgWithdrawShare) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgWithdrawShare) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Recipient}
+}
+
+func (msg MsgWithdrawShare) Route() string { return RouterKey }
+
+func (msg MsgWithdrawShare) Type() string { return TypeMsgWithdrawShare }

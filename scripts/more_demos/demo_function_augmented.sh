@@ -101,12 +101,17 @@ tx_from_m sell 20000abc
 echo "Miguel's account..."
 bondscli query auth account "$MIGUEL"
 
-echo "Francesco sells 20000abc..."
-tx_from_f sell 20000abc
+echo "Francesco makes outcome payment..."
+tx_from_f make-outcome-payment abc
 echo "Francesco's account..."
 bondscli query auth account "$FRANCESCO"
 
-echo "Shaun sells 10000abc..."
-tx_from_s sell 10000abc
+echo "Francesco withdraws share..."
+tx_from_f withdraw-share abc
+echo "Francesco's account..."
+bondscli query auth account "$FRANCESCO"
+
+echo "Shaun withdraws share..."
+tx_from_s withdraw-share abc
 echo "Shaun's account..."
 bondscli query auth account "$SHAUN"

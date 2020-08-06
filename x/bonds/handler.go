@@ -24,6 +24,10 @@ func NewHandler(keeper keeper.Keeper) sdk.Handler {
 			return handleMsgSell(ctx, keeper, msg)
 		case types.MsgSwap:
 			return handleMsgSwap(ctx, keeper, msg)
+		case types.MsgMakeOutcomePayment:
+			return handleMsgMakeOutcomePayment(ctx, keeper, msg)
+		case types.MsgWithdrawShare:
+			return handleMsgWithdrawShare(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized bonds Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -439,6 +443,11 @@ func handleMsgSwap(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgSwap) sdk
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, msg.BondToken).Result()
 	}
 
+	// Confirm that function type is swapper_function
+	if bond.FunctionType != types.SwapperFunction {
+		return types.ErrFunctionNotAvailableForFunctionType(types.DefaultCodespace).Result()
+	}
+
 	// Check that from and to use reserve token names
 	fromAndTo := sdk.NewCoins(msg.From, sdk.NewCoin(msg.ToToken, sdk.OneInt()))
 	fromAndToDenoms := msg.From.Denom + "," + msg.ToToken
@@ -479,6 +488,118 @@ func handleMsgSwap(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgSwap) sdk
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Swapper.String()),
+		),
+	})
+
+	return sdk.Result{Events: ctx.EventManager().Events()}
+}
+
+func handleMsgMakeOutcomePayment(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgMakeOutcomePayment) sdk.Result {
+
+	bond, found := keeper.GetBond(ctx, msg.BondToken)
+	if !found {
+		return types.ErrBondDoesNotExist(types.DefaultCodespace, msg.BondToken).Result()
+	}
+
+	// Confirm that function type is augmented_function and that state is OPEN
+	if bond.FunctionType != types.AugmentedFunction {
+		return types.ErrFunctionNotAvailableForFunctionType(types.DefaultCodespace).Result()
+	} else if bond.State != types.OpenState {
+		return types.ErrInvalidNextState(types.DefaultCodespace).Result()
+	}
+
+	// Send outcome payment to reserve address
+	// TODO: amount should not be hard-coded
+	outcomePayment := sdk.NewCoins(sdk.NewCoin("res", sdk.NewInt(100000)))
+	err := keeper.BankKeeper.SendCoins(
+		ctx, msg.Sender, bond.ReserveAddress, outcomePayment)
+	if err != nil {
+		return err.Result()
+	}
+
+	// Set bond state to SETTLE and save bond
+	bond.State = types.SettleState
+	keeper.SetBond(ctx, bond.Token, bond)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeOutcomePayment,
+			sdk.NewAttribute(types.AttributeKeyBond, msg.BondToken),
+			sdk.NewAttribute(types.AttributeKeyAddress, msg.Sender.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, outcomePayment.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender.String()),
+		),
+	})
+
+	return sdk.Result{Events: ctx.EventManager().Events()}
+}
+
+func handleMsgWithdrawShare(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgWithdrawShare) sdk.Result {
+
+	bond, found := keeper.GetBond(ctx, msg.BondToken)
+	if !found {
+		return types.ErrBondDoesNotExist(types.DefaultCodespace, msg.BondToken).Result()
+	}
+
+	// Confirm that function type is augmented_function and state is SETTLE
+	if bond.FunctionType != types.AugmentedFunction {
+		return types.ErrFunctionNotAvailableForFunctionType(types.DefaultCodespace).Result()
+	} else if bond.State != types.SettleState {
+		return types.ErrInvalidStateForAction(types.DefaultCodespace).Result()
+	}
+
+	// Get number of bond tokens owned by the recipient
+	bondTokensOwnedAmount := keeper.BankKeeper.GetCoins(ctx, msg.Recipient).AmountOf(msg.BondToken)
+	if bondTokensOwnedAmount.IsZero() {
+		return types.ErrNoBondTokensOwned(types.DefaultCodespace).Result()
+	}
+	bondTokensOwned := sdk.NewCoin(msg.BondToken, bondTokensOwnedAmount)
+
+	// Send coins to be burned from recipient
+	err := keeper.SupplyKeeper.SendCoinsFromAccountToModule(
+		ctx, msg.Recipient, types.BondsMintBurnAccount, sdk.NewCoins(bondTokensOwned))
+	if err != nil {
+		return err.Result()
+	}
+
+	// Burn bond tokens
+	err = keeper.SupplyKeeper.BurnCoins(ctx, types.BondsMintBurnAccount,
+		sdk.NewCoins(sdk.NewCoin(msg.BondToken, bondTokensOwnedAmount)))
+	if err != nil {
+		return err.Result()
+	}
+
+	// Calculate amount owned
+	remainingReserve := keeper.GetReserveBalances(ctx, bond.Token)
+	bondTokensShare := sdk.NewDecFromInt(bondTokensOwnedAmount).QuoInt(bond.CurrentSupply.Amount)
+	reserveOwedDec := sdk.NewDecCoins(remainingReserve).MulDec(bondTokensShare)
+	reserveOwed, _ := reserveOwedDec.TruncateDecimal()
+
+	// Send coins owed to recipient
+	err = keeper.BankKeeper.SendCoins(
+		ctx, bond.ReserveAddress, msg.Recipient, reserveOwed)
+	if err != nil {
+		return err.Result()
+	}
+
+	// Update supply
+	keeper.SetCurrentSupply(ctx, bond.Token, bond.CurrentSupply.Sub(bondTokensOwned))
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeWithdrawShare,
+			sdk.NewAttribute(types.AttributeKeyBond, msg.BondToken),
+			sdk.NewAttribute(types.AttributeKeyAddress, msg.Recipient.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, reserveOwed.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Recipient.String()),
 		),
 	})
 

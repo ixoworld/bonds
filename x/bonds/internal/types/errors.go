@@ -24,27 +24,29 @@ const (
 	CodeDidNotEditAnything      CodeType = 307
 	CodeInvalidSwapper          CodeType = 308
 	CodeInvalidBond             CodeType = 309
+	CodeInvalidState            CodeType = 310
 
 	// Function types and function parameters
-	CodeUnrecognizedFunctionType             CodeType = 310
-	CodeInvalidFunctionParameter             CodeType = 311
-	CodeFunctionNotAvailableForFunctionType  CodeType = 312
-	CodeFunctionRequiresNonZeroCurrentSupply CodeType = 313
+	CodeUnrecognizedFunctionType             CodeType = 311
+	CodeInvalidFunctionParameter             CodeType = 312
+	CodeFunctionNotAvailableForFunctionType  CodeType = 313
+	CodeFunctionRequiresNonZeroCurrentSupply CodeType = 314
 
 	// Token/coin names
-	CodeReserveTokenInvalid     CodeType = 314
-	CodeMaxSupplyDenomInvalid   CodeType = 315
-	CodeBondTokenInvalid        CodeType = 316
-	CodeReserveDenomsMismatch   CodeType = 317
-	CodeInvalidCoinDenomination CodeType = 318
+	CodeReserveTokenInvalid     CodeType = 315
+	CodeMaxSupplyDenomInvalid   CodeType = 316
+	CodeBondTokenInvalid        CodeType = 317
+	CodeReserveDenomsMismatch   CodeType = 318
+	CodeInvalidCoinDenomination CodeType = 319
 
 	// Amounts and fees
-	CodeInvalidResultantSupply     CodeType = 319
-	CodeMaxPriceExceeded           CodeType = 320
-	CodeSwapAmountInvalid          CodeType = 321
-	CodeOrderQuantityLimitExceeded CodeType = 322
-	CodeSanityRateViolated         CodeType = 323
-	CodeFeeTooLarge                CodeType = 324
+	CodeInvalidResultantSupply     CodeType = 320
+	CodeMaxPriceExceeded           CodeType = 321
+	CodeSwapAmountInvalid          CodeType = 322
+	CodeOrderQuantityLimitExceeded CodeType = 323
+	CodeSanityRateViolated         CodeType = 324
+	CodeFeeTooLarge                CodeType = 325
+	CodeNoBondTokensOwned          CodeType = 326
 )
 
 func ErrArgumentCannotBeEmpty(codespace sdk.CodespaceType, argument string) sdk.Error {
@@ -130,6 +132,16 @@ func ErrFromAndToCannotBeTheSameToken(codespace sdk.CodespaceType) sdk.Error {
 func ErrDuplicateReserveToken(codespace sdk.CodespaceType) sdk.Error {
 	errMsg := "Cannot have duplicate tokens in reserve tokens"
 	return sdk.NewError(codespace, CodeInvalidBond, errMsg)
+}
+
+func ErrInvalidStateForAction(codespace sdk.CodespaceType) sdk.Error {
+	errMsg := "Cannot perform that action at the current state"
+	return sdk.NewError(codespace, CodeInvalidState, errMsg)
+}
+
+func ErrInvalidNextState(codespace sdk.CodespaceType) sdk.Error {
+	errMsg := "State is not a valid next state from current state"
+	return sdk.NewError(codespace, CodeInvalidState, errMsg)
 }
 
 func ErrUnrecognizedFunctionType(codespace sdk.CodespaceType) sdk.Error {
@@ -220,4 +232,9 @@ func ErrValuesViolateSanityRate(codespace sdk.CodespaceType) sdk.Error {
 func ErrFeesCannotBeOrExceed100Percent(codespace sdk.CodespaceType) sdk.Error {
 	errMsg := "Sum of fees is or exceeds 100 percent"
 	return sdk.NewError(codespace, CodeFeeTooLarge, errMsg)
+}
+
+func ErrNoBondTokensOwned(codespace sdk.CodespaceType) sdk.Error {
+	errMsg := "No bond tokens of this bond are owned"
+	return sdk.NewError(codespace, CodeNoBondTokensOwned, errMsg)
 }

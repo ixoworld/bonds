@@ -13,8 +13,9 @@ const (
 	SwapperFunction   = "swapper_function"
 	AugmentedFunction = "augmented_function"
 
-	HatchState = "HATCH"
-	OpenState  = "OPEN"
+	HatchState  = "HATCH"
+	OpenState   = "OPEN"
+	SettleState = "SETTLE"
 
 	DoNotModifyField = "[do-not-modify]"
 
