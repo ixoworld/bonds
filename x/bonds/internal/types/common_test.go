@@ -29,6 +29,7 @@ var (
 	initAllowSell              = true
 	initSigners                = []sdk.AccAddress{initCreator}
 	initBatchBlocks            = sdk.NewUint(10)
+	initOutcomePayment         = sdk.Coins(nil)
 	initState                  = OpenState
 
 	// 9223372036854775807
@@ -94,12 +95,11 @@ func getValidPowerFunctionBond() Bond {
 	functionType := PowerFunction
 	functionParams := functionParametersPower()
 	reserveTokens := powerReserves()
-	return NewBond(initToken, initName, initDescription,
-		initCreator, functionType, functionParams,
-		reserveTokens, initReserveAddress, initTxFeePercentage,
-		initExitFeePercentage, initFeeAddress, initMaxSupply,
+	return NewBond(initToken, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initReserveAddress,
+		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks, initState)
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }
 
 func getValidBond() Bond {
@@ -128,11 +128,11 @@ func newValidMsgCreateBond() MsgCreateBond {
 	functionType := PowerFunction
 	functionParams := functionParametersPower()
 	reserveTokens := powerReserves()
-	return NewMsgCreateBond(initToken, initName, initDescription,
-		initCreator, functionType, functionParams,
-		reserveTokens, initTxFeePercentage, initExitFeePercentage,
-		initFeeAddress, initMaxSupply, initOrderQuantityLimits, initSanityRate,
-		initSanityMarginPercentage, initAllowSell, initSigners, initBatchBlocks)
+	return NewMsgCreateBond(initToken, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
+		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment)
 }
 
 func newValidMsgCreateSwapperBond() MsgCreateBond {

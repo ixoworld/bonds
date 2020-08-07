@@ -16,37 +16,38 @@ const (
 	CodeArgumentInvalid                CodeType = 301
 	CodeArgumentMissingOrIncorrectType CodeType = 302
 	CodeIncorrectNumberOfValues        CodeType = 303
+	CodeActionInvalid                  CodeType = 304
 
 	// Bonds
-	CodeBondDoesNotExist        CodeType = 304
-	CodeBondAlreadyExists       CodeType = 305
-	CodeBondDoesNotAllowSelling CodeType = 306
-	CodeDidNotEditAnything      CodeType = 307
-	CodeInvalidSwapper          CodeType = 308
-	CodeInvalidBond             CodeType = 309
-	CodeInvalidState            CodeType = 310
+	CodeBondDoesNotExist        CodeType = 305
+	CodeBondAlreadyExists       CodeType = 306
+	CodeBondDoesNotAllowSelling CodeType = 307
+	CodeDidNotEditAnything      CodeType = 308
+	CodeInvalidSwapper          CodeType = 309
+	CodeInvalidBond             CodeType = 310
+	CodeInvalidState            CodeType = 311
 
 	// Function types and function parameters
-	CodeUnrecognizedFunctionType             CodeType = 311
-	CodeInvalidFunctionParameter             CodeType = 312
-	CodeFunctionNotAvailableForFunctionType  CodeType = 313
-	CodeFunctionRequiresNonZeroCurrentSupply CodeType = 314
+	CodeUnrecognizedFunctionType             CodeType = 312
+	CodeInvalidFunctionParameter             CodeType = 313
+	CodeFunctionNotAvailableForFunctionType  CodeType = 314
+	CodeFunctionRequiresNonZeroCurrentSupply CodeType = 315
 
 	// Token/coin names
-	CodeReserveTokenInvalid     CodeType = 315
-	CodeMaxSupplyDenomInvalid   CodeType = 316
-	CodeBondTokenInvalid        CodeType = 317
-	CodeReserveDenomsMismatch   CodeType = 318
-	CodeInvalidCoinDenomination CodeType = 319
+	CodeReserveTokenInvalid     CodeType = 316
+	CodeMaxSupplyDenomInvalid   CodeType = 317
+	CodeBondTokenInvalid        CodeType = 318
+	CodeReserveDenomsMismatch   CodeType = 319
+	CodeInvalidCoinDenomination CodeType = 320
 
 	// Amounts and fees
-	CodeInvalidResultantSupply     CodeType = 320
-	CodeMaxPriceExceeded           CodeType = 321
-	CodeSwapAmountInvalid          CodeType = 322
-	CodeOrderQuantityLimitExceeded CodeType = 323
-	CodeSanityRateViolated         CodeType = 324
-	CodeFeeTooLarge                CodeType = 325
-	CodeNoBondTokensOwned          CodeType = 326
+	CodeInvalidResultantSupply     CodeType = 321
+	CodeMaxPriceExceeded           CodeType = 322
+	CodeSwapAmountInvalid          CodeType = 323
+	CodeOrderQuantityLimitExceeded CodeType = 324
+	CodeSanityRateViolated         CodeType = 325
+	CodeFeeTooLarge                CodeType = 326
+	CodeNoBondTokensOwned          CodeType = 327
 )
 
 func ErrArgumentCannotBeEmpty(codespace sdk.CodespaceType, argument string) sdk.Error {
@@ -139,11 +140,6 @@ func ErrInvalidStateForAction(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidState, errMsg)
 }
 
-func ErrInvalidNextState(codespace sdk.CodespaceType) sdk.Error {
-	errMsg := "State is not a valid next state from current state"
-	return sdk.NewError(codespace, CodeInvalidState, errMsg)
-}
-
 func ErrUnrecognizedFunctionType(codespace sdk.CodespaceType) sdk.Error {
 	errMsg := "Unrecognized function type"
 	return sdk.NewError(codespace, CodeUnrecognizedFunctionType, errMsg)
@@ -157,6 +153,11 @@ func ErrInvalidFunctionParameter(codespace sdk.CodespaceType, parameter string) 
 func ErrFunctionNotAvailableForFunctionType(codespace sdk.CodespaceType) sdk.Error {
 	errMsg := "Function is not available for the function type"
 	return sdk.NewError(codespace, CodeFunctionNotAvailableForFunctionType, errMsg)
+}
+
+func ErrCannotMakeZeroOutcomePayment(codespace sdk.CodespaceType) sdk.Error {
+	errMsg := "Cannot make outcome payment because outcome payment is set to nil"
+	return sdk.NewError(codespace, CodeActionInvalid, errMsg)
 }
 
 func ErrFunctionRequiresNonZeroCurrentSupply(codespace sdk.CodespaceType) sdk.Error {

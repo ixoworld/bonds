@@ -93,13 +93,14 @@ func RandomizedGenState(simState *module.SimulationState) {
 		allowSells := getRandomAllowSellsValue(r)
 		batchBlocks := sdk.NewUint(uint64(
 			simulation.RandIntBetween(r, 1, 10)))
+		outcomePayment := sdk.Coins(nil)
 		state := getInitialBondState(functionType)
 
 		bond := types.NewBond(token, name, desc, creator, functionType,
 			functionParameters, reserveTokens, reserveAddress, txFeePercentage,
 			exitFeePercentage, feeAddress, maxSupply, blankOrderQuantityLimits,
 			blankSanityRate, blankSanityMarginPercentage, allowSells, signers,
-			batchBlocks, state)
+			batchBlocks, outcomePayment, state)
 		batch := types.NewBatch(bond.Token, bond.BatchBlocks)
 
 		bonds = append(bonds, bond)

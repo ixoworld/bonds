@@ -62,7 +62,8 @@ type Bond struct {
 	AllowSells             bool
 	Signers                []sdk.AccAddress
 	BatchBlocks            sdk.Uint
-    State                  state
+	OutcomePayment         sdk.Coins
+	State                  string
 }
 ```
 

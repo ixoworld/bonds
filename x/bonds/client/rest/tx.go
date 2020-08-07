@@ -40,6 +40,7 @@ type createBondReq struct {
 	AllowSells             string       `json:"allow_sells" yaml:"allow_sells"`
 	Signers                string       `json:"signers" yaml:"signers"`
 	BatchBlocks            string       `json:"batch_blocks" yaml:"batch_blocks"`
+	OutcomePayment         string       `json:"outcome_payment" yaml:"outcome_payment"`
 }
 
 func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -151,11 +152,18 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Parse outcome payment
+		outcomePayment, err2 := sdk.ParseCoins(req.OutcomePayment)
+		if err2 != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
+			return
+		}
+
 		msg := types.NewMsgCreateBond(req.Token, req.Name, req.Description,
 			creator, req.FunctionType, functionParams, reserveTokens,
 			txFeePercentageDec, exitFeePercentageDec, feeAddress, maxSupply,
 			orderQuantityLimits, sanityRate, sanityMarginPercentage,
-			allowSells, signers, batchBlocks)
+			allowSells, signers, batchBlocks, outcomePayment)
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}

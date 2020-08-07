@@ -33,13 +33,15 @@ type MsgCreateBond struct {
 	AllowSells             bool             `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
+	OutcomePayment         sdk.Coins        `json:"outcome_payment" yaml:"outcome_payment"`
 }
 
 func NewMsgCreateBond(token, name, description string, creator sdk.AccAddress,
 	functionType string, functionParameters FunctionParams, reserveTokens []string,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress, maxSupply sdk.Coin,
 	orderQuantityLimits sdk.Coins, sanityRate, sanityMarginPercentage sdk.Dec,
-	allowSell bool, signers []sdk.AccAddress, batchBlocks sdk.Uint) MsgCreateBond {
+	allowSell bool, signers []sdk.AccAddress, batchBlocks sdk.Uint,
+	outcomePayment sdk.Coins) MsgCreateBond {
 	return MsgCreateBond{
 		Token:                  token,
 		Name:                   name,
@@ -58,6 +60,7 @@ func NewMsgCreateBond(token, name, description string, creator sdk.AccAddress,
 		AllowSells:             allowSell,
 		Signers:                signers,
 		BatchBlocks:            batchBlocks,
+		OutcomePayment:         outcomePayment,
 	}
 }
 
@@ -100,9 +103,11 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 
 	// Validate coins
 	if !msg.MaxSupply.IsValid() {
-		return sdk.ErrInternal("max supply is invalid")
+		return sdk.ErrInvalidCoins("max supply is invalid")
 	} else if !msg.OrderQuantityLimits.IsValid() {
-		return sdk.ErrInternal("order quantity limits are invalid")
+		return sdk.ErrInvalidCoins("order quantity limits are invalid")
+	} else if !msg.OutcomePayment.IsValid() {
+		return sdk.ErrInvalidCoins("outcome payment is invalid")
 	}
 
 	// Check that max supply denom matches token denom
@@ -247,14 +252,14 @@ func (msg MsgBuy) ValidateBasic() sdk.Error {
 
 	// Check that amount valid and non zero
 	if !msg.Amount.IsValid() {
-		return sdk.ErrInternal("amount is invalid")
+		return sdk.ErrInvalidCoins("amount is invalid")
 	} else if msg.Amount.Amount.IsZero() {
 		return ErrArgumentMustBePositive(DefaultCodespace, "Amount")
 	}
 
 	// Check that maxPrices valid
 	if !msg.MaxPrices.IsValid() {
-		return sdk.ErrInternal("maxprices is invalid")
+		return sdk.ErrInvalidCoins("maxprices is invalid")
 	}
 
 	return nil
@@ -292,7 +297,7 @@ func (msg MsgSell) ValidateBasic() sdk.Error {
 
 	// Check that amount valid and non zero
 	if !msg.Amount.IsValid() {
-		return sdk.ErrInternal("amount is invalid")
+		return sdk.ErrInvalidCoins("amount is invalid")
 	} else if msg.Amount.Amount.IsZero() {
 		return ErrArgumentMustBePositive(DefaultCodespace, "Amount")
 	}
@@ -340,7 +345,7 @@ func (msg MsgSwap) ValidateBasic() sdk.Error {
 
 	// Validate from amount
 	if !msg.From.IsValid() {
-		return sdk.ErrInternal("from amount is invalid")
+		return sdk.ErrInvalidCoins("from amount is invalid")
 	}
 
 	// Validate to token

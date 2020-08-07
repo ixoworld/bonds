@@ -193,7 +193,7 @@ func queryCustomPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte
 
 	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bond.Token)
 	if err2 != nil {
-		return nil, sdk.ErrInternal(err2.Error())
+		return nil, sdk.ErrInvalidCoins(err2.Error())
 	}
 
 	reservePrices, err := bond.GetPricesAtSupply(bondCoin.Amount)
@@ -221,7 +221,7 @@ func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, e
 
 	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bondToken)
 	if err2 != nil {
-		return nil, sdk.ErrInternal(err2.Error())
+		return nil, sdk.ErrInvalidCoins(err2.Error())
 	}
 
 	// Max supply cannot be less than supply (max supply >= supply)
@@ -264,7 +264,7 @@ func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 
 	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bondToken)
 	if err2 != nil {
-		return nil, sdk.ErrInternal(err2.Error())
+		return nil, sdk.ErrInvalidCoins(err2.Error())
 	}
 
 	if !bond.AllowSells {
@@ -309,7 +309,7 @@ func querySwapReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 
 	fromCoin, err2 := client.ParseTwoPartCoin(fromAmount, fromToken)
 	if err2 != nil {
-		return nil, sdk.ErrInternal(err2.Error())
+		return nil, sdk.ErrInvalidCoins(err2.Error())
 	}
 
 	bond, found := keeper.GetBond(ctx, bondToken)

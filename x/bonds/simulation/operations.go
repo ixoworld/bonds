@@ -155,9 +155,9 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 			simulation.RandIntBetween(r, 1, 10)))
 
 		msg := types.NewMsgCreateBond(token, name, desc, creator, functionType,
-			functionParameters, reserveTokens, txFeePercentage,
-			exitFeePercentage, feeAddress, maxSupply, blankOrderQuantityLimits,
-			blankSanityRate, blankSanityMarginPercentage, allowSells, signers, batchBlocks)
+			functionParameters, reserveTokens, txFeePercentage, exitFeePercentage,
+			feeAddress, maxSupply, blankOrderQuantityLimits, blankSanityRate,
+			blankSanityMarginPercentage, allowSells, signers, batchBlocks, blankOutcomePayment)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil,
 				fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())

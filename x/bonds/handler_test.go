@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests
-
 func TestInvalidMsgFails(t *testing.T) {
 	_, ctx := createTestApp(false)
 	h := bonds.NewHandler(bonds.Keeper{})
@@ -846,6 +844,93 @@ func TestSwapValidAmountReversed(t *testing.T) {
 	require.Equal(t, sdk.NewInt(9992), reserveBalance.AmountOf(reserveToken))
 	require.Equal(t, sdk.NewInt(10009), reserveBalance.AmountOf(reserveToken2))
 	require.Equal(t, sdk.OneInt(), feeBalance.AmountOf(reserveToken2))
+}
+
+func TestMakeOutcomePayment(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create bond with 100k outcome payment
+	bondMsg := newValidMsgCreateBond()
+	bondMsg.OutcomePayment = sdk.NewCoins(sdk.NewInt64Coin(reserveToken, 100000))
+	h(ctx, bondMsg)
+
+	// Add reserve tokens to user
+	err := addCoinsToUser(app, ctx, sdk.Coins{sdk.NewInt64Coin(reserveToken, 100000)})
+	require.Nil(t, err)
+
+	// Make outcome payment
+	res := h(ctx, newValidMsgMakeOutcomePayment())
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Check that outcome payment is now in the bond reserve
+	userBalance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
+	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
+	require.True(t, res.IsOK())
+	require.Equal(t, sdk.ZeroInt(), userBalance.AmountOf(reserveToken))
+	require.Equal(t, sdk.NewInt(100000), reserveBalance.AmountOf(reserveToken))
+
+	// Check that the bond is now in SETTLE state
+	require.Equal(t, types.SettleState, app.BondsKeeper.MustGetBond(ctx, token).State)
+}
+
+func TestWithdrawShare(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create bond
+	h(ctx, newValidMsgCreateBond())
+
+	// Set bond current supply to 3 and state to SETTLE
+	bond := app.BondsKeeper.MustGetBond(ctx, token)
+	bond.CurrentSupply = sdk.NewCoin(bond.Token, sdk.NewInt(3))
+	bond.State = types.SettleState
+	app.BondsKeeper.SetBond(ctx, token, bond)
+
+	// Mint 3 bond tokens and send [2 to user 1] and [1 to user 2]
+	err := app.SupplyKeeper.MintCoins(ctx, bonds.BondsMintBurnAccount,
+		sdk.NewCoins(sdk.NewInt64Coin(token, 3)))
+	require.Nil(t, err)
+	err = app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, bonds.BondsMintBurnAccount,
+		userAddress, sdk.NewCoins(sdk.NewInt64Coin(token, 2)))
+	require.Nil(t, err)
+	err = app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, bonds.BondsMintBurnAccount,
+		anotherAddress, sdk.NewCoins(sdk.NewInt64Coin(token, 1)))
+	require.Nil(t, err)
+
+	// Simulate outcome payment by setting bond reserve to 100k
+	err = app.BankKeeper.SetCoins(ctx, bond.ReserveAddress,
+		sdk.NewCoins(sdk.NewCoin(reserveToken, sdk.NewInt(100000))))
+	require.Nil(t, err)
+
+	// User 1 withdraws share
+	res := h(ctx, newValidMsgWithdrawShareFrom(userAddress))
+	require.True(t, res.IsOK())
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// User 1 had 2 tokens out of the supply of 3 tokens, so user 1 gets 2/3
+	user1Balance := app.BondsKeeper.BankKeeper.GetCoins(ctx, userAddress)
+	reserveBalance := app.BondsKeeper.GetReserveBalances(ctx, initToken)
+	require.True(t, res.IsOK())
+	require.Equal(t, sdk.NewInt(66666), user1Balance.AmountOf(reserveToken))
+	require.Equal(t, sdk.NewInt(33334), reserveBalance.AmountOf(reserveToken))
+
+	// Note: rounding is rounded to floor, so despite user 1 being owed 66666.67
+	// tokens, user 1 gets 66666 and not 66667 tokens. Then, since user 2 now owns
+	// the entire share of the bond tokens, they will get 100% of the remaining
+	// 33334 tokens, which is more than what was initially owed (33333.33).
+
+	// User 2 withdraws share
+	res = h(ctx, newValidMsgWithdrawShareFrom(anotherAddress))
+	require.True(t, res.IsOK())
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// User 2 had 1 token out of the remaining supply of 1 token, so user 2 gets all remaining
+	user2Balance := app.BondsKeeper.BankKeeper.GetCoins(ctx, anotherAddress)
+	reserveBalance = app.BondsKeeper.GetReserveBalances(ctx, initToken)
+	require.True(t, res.IsOK())
+	require.Equal(t, sdk.NewInt(33334), user2Balance.AmountOf(reserveToken))
+	require.Equal(t, sdk.ZeroInt(), reserveBalance.AmountOf(reserveToken))
 }
 
 func TestDecrementRemainingBlocksCountAfterEndBlock(t *testing.T) {

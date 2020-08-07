@@ -45,6 +45,7 @@ type MsgCreateBond struct {
 	AllowSells             bool
 	Signers                []sdk.AccAddress
 	BatchBlocks            sdk.Uint
+	OutcomePayment         sdk.Coins
 }
 ```
 

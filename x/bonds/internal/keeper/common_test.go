@@ -35,6 +35,7 @@ var (
 	initAllowSell              = true
 	initSigners                = []sdk.AccAddress{initCreator}
 	initBatchBlocks            = sdk.NewUint(10)
+	initOutcomePayment         = sdk.Coins(nil)
 	initState                  = types.OpenState
 
 	buyPrices = sdk.NewDecCoins(sdk.NewCoins(
@@ -101,36 +102,33 @@ func getValidPowerFunctionBond() types.Bond {
 	functionType := types.PowerFunction
 	functionParams := functionParametersPower()
 	reserveTokens := powerReserves()
-	return types.NewBond(initToken, initName, initDescription,
-		initCreator, functionType, functionParams,
-		reserveTokens, initReserveAddress, initTxFeePercentage,
-		initExitFeePercentage, initFeeAddress, initMaxSupply,
+	return types.NewBond(initToken, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initReserveAddress,
+		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks, initState)
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }
 
 func getValidAugmentedFunctionBond() types.Bond {
 	functionType := types.AugmentedFunction
 	functionParams := functionParametersAugmented()
 	reserveTokens := powerReserves()
-	return types.NewBond(initToken, initName, initDescription,
-		initCreator, functionType, functionParams,
-		reserveTokens, initReserveAddress, initTxFeePercentage,
-		initExitFeePercentage, initFeeAddress, initMaxSupply,
+	return types.NewBond(initToken, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initReserveAddress,
+		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks, initState)
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }
 
 func getValidSwapperBond() types.Bond {
 	functionType := types.SwapperFunction
 	functionParams := types.FunctionParams(nil)
 	reserveTokens := swapperReserves()
-	return types.NewBond(initToken, initName, initDescription,
-		initCreator, functionType, functionParams,
-		reserveTokens, initReserveAddress, initTxFeePercentage,
-		initExitFeePercentage, initFeeAddress, initMaxSupply,
+	return types.NewBond(initToken, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initReserveAddress,
+		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks, initState)
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }
 
 func getValidBond() types.Bond {

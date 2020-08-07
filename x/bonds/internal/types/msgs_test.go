@@ -183,7 +183,7 @@ func TestValidateBasicMsgCreateInvalidMaxSupplyGivesError(t *testing.T) {
 	err := message.ValidateBasic()
 
 	require.NotNil(t, err)
-	require.Equal(t, sdk.CodeInternal, err.Code())
+	require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 // MsgCreateBond: Order quantity limits validity
@@ -196,7 +196,7 @@ func TestValidateBasicMsgCreateInvalidOrderQuantityLimitGivesError(t *testing.T)
 	err := message.ValidateBasic()
 
 	require.NotNil(t, err)
-	require.Equal(t, sdk.CodeInternal, err.Code())
+	require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 // MsgCreateBond: Max supply denom matches bond token denom
@@ -450,7 +450,7 @@ func TestValidateBasicMsgBuyInvalidAmountGivesError(t *testing.T) {
 	err := message.ValidateBasic()
 
 	require.NotNil(t, err)
-	require.Equal(t, sdk.CodeInternal, err.Code())
+	require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 func TestValidateBasicMsgBuyZeroAmountGivesError(t *testing.T) {
@@ -470,7 +470,7 @@ func TestValidateBasicMsgBuyMaxPricesInvalidGivesError(t *testing.T) {
 	err := message.ValidateBasic()
 
 	require.NotNil(t, err)
-	require.Equal(t, sdk.CodeInternal, err.Code())
+	require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 // MsgBuy: correct buy
@@ -504,7 +504,7 @@ func TestValidateBasicMsgSellInvalidAmountGivesError(t *testing.T) {
 	err := message.ValidateBasic()
 
 	require.NotNil(t, err)
-	require.Equal(t, sdk.CodeInternal, err.Code())
+	require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 func TestValidateBasicMsgSellZeroAmountGivesError(t *testing.T) {
@@ -568,7 +568,7 @@ func TestValidateBasicMsgSwapInvalidFromAmountGivesError(t *testing.T) {
 	err := message.ValidateBasic()
 
 	require.NotNil(t, err)
-	require.Equal(t, sdk.CodeInternal, err.Code())
+	require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 func TestValidateBasicMsgSwapInvalidToTokenGivesError(t *testing.T) {

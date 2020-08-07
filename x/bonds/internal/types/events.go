@@ -30,6 +30,7 @@ const (
 	AttributeKeyAllowSells             = "allow_sells"
 	AttributeKeySigners                = "signers"
 	AttributeKeyBatchBlocks            = "batch_blocks"
+	AttributeKeyOutcomePayment         = "outcome_payment"
 	AttributeKeyState                  = "state"
 	AttributeKeyMaxPrices              = "max_prices"
 	AttributeKeySwapFromToken          = "from_token"

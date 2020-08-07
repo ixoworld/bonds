@@ -136,7 +136,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		reserveAddress, msg.TxFeePercentage, msg.ExitFeePercentage,
 		msg.FeeAddress, msg.MaxSupply, msg.OrderQuantityLimits, msg.SanityRate,
 		msg.SanityMarginPercentage, msg.AllowSells, msg.Signers,
-		msg.BatchBlocks, state)
+		msg.BatchBlocks, msg.OutcomePayment, state)
 
 	keeper.SetBond(ctx, msg.Token, bond)
 	keeper.SetBatch(ctx, msg.Token, types.NewBatch(bond.Token, msg.BatchBlocks))
@@ -165,6 +165,7 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 			sdk.NewAttribute(types.AttributeKeyAllowSells, strconv.FormatBool(msg.AllowSells)),
 			sdk.NewAttribute(types.AttributeKeySigners, types.AccAddressesToString(msg.Signers)),
 			sdk.NewAttribute(types.AttributeKeyBatchBlocks, msg.BatchBlocks.String()),
+			sdk.NewAttribute(types.AttributeKeyOutcomePayment, msg.OutcomePayment.String()),
 			sdk.NewAttribute(types.AttributeKeyState, state),
 		),
 		sdk.NewEvent(
@@ -186,7 +187,7 @@ func handleMsgEditBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgEditB
 
 	if !bond.SignersEqualTo(msg.Signers) {
 		errMsg := fmt.Sprintf("List of signers does not match the one in the bond")
-		return sdk.ErrInternal(errMsg).Result()
+		return sdk.ErrInvalidAddress(errMsg).Result()
 	}
 
 	if msg.Name != types.DoNotModifyField {
@@ -199,7 +200,7 @@ func handleMsgEditBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgEditB
 	if msg.OrderQuantityLimits != types.DoNotModifyField {
 		orderQuantityLimits, err := sdk.ParseCoins(msg.OrderQuantityLimits)
 		if err != nil {
-			return sdk.ErrInternal(err.Error()).Result()
+			return sdk.ErrInvalidCoins(err.Error()).Result()
 		}
 		bond.OrderQuantityLimits = orderQuantityLimits
 	}
@@ -263,13 +264,12 @@ func handleMsgBuy(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgBuy) sdk.R
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, token).Result()
 	}
 
-	// Check max prices
-	if !bond.ReserveDenomsEqualTo(msg.MaxPrices) {
+	// Check current state is HATCH/OPEN, max prices, order quantity limits
+	if bond.State != types.OpenState && bond.State != types.HatchState {
+		return types.ErrInvalidStateForAction(types.DefaultCodespace).Result()
+	} else if !bond.ReserveDenomsEqualTo(msg.MaxPrices) {
 		return types.ErrReserveDenomsMismatch(types.DefaultCodespace, msg.MaxPrices.String(), bond.ReserveTokens).Result()
-	}
-
-	// Check if order quantity limit exceeded
-	if bond.AnyOrderQuantityLimitsExceeded(sdk.Coins{msg.Amount}) {
+	} else if bond.AnyOrderQuantityLimitsExceeded(sdk.Coins{msg.Amount}) {
 		return types.ErrOrderQuantityLimitExceeded(types.DefaultCodespace).Result()
 	}
 
@@ -382,12 +382,12 @@ func handleMsgSell(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgSell) sdk
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, token).Result()
 	}
 
+	// Check sells allowed, current state is OPEN, and order limits not exceeded
 	if !bond.AllowSells {
 		return types.ErrBondDoesNotAllowSelling(types.DefaultCodespace).Result()
-	}
-
-	// Check if order quantity limit exceeded
-	if bond.AnyOrderQuantityLimitsExceeded(sdk.Coins{msg.Amount}) {
+	} else if bond.State != types.OpenState {
+		return types.ErrInvalidStateForAction(types.DefaultCodespace).Result()
+	} else if bond.AnyOrderQuantityLimitsExceeded(sdk.Coins{msg.Amount}) {
 		return types.ErrOrderQuantityLimitExceeded(types.DefaultCodespace).Result()
 	}
 
@@ -443,9 +443,11 @@ func handleMsgSwap(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgSwap) sdk
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, msg.BondToken).Result()
 	}
 
-	// Confirm that function type is swapper_function
+	// Confirm that function type is swapper_function and state is OPEN
 	if bond.FunctionType != types.SwapperFunction {
 		return types.ErrFunctionNotAvailableForFunctionType(types.DefaultCodespace).Result()
+	} else if bond.State != types.OpenState {
+		return types.ErrInvalidStateForAction(types.DefaultCodespace).Result()
 	}
 
 	// Check that from and to use reserve token names
@@ -501,32 +503,28 @@ func handleMsgMakeOutcomePayment(ctx sdk.Context, keeper keeper.Keeper, msg type
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, msg.BondToken).Result()
 	}
 
-	// Confirm that function type is augmented_function and that state is OPEN
-	if bond.FunctionType != types.AugmentedFunction {
-		return types.ErrFunctionNotAvailableForFunctionType(types.DefaultCodespace).Result()
-	} else if bond.State != types.OpenState {
-		return types.ErrInvalidNextState(types.DefaultCodespace).Result()
+	// Confirm that state is OPEN and that outcome payment is not nil
+	if bond.State != types.OpenState {
+		return types.ErrInvalidStateForAction(types.DefaultCodespace).Result()
+	} else if bond.OutcomePayment.Empty() {
+		return types.ErrCannotMakeZeroOutcomePayment(types.DefaultCodespace).Result()
 	}
 
 	// Send outcome payment to reserve address
-	// TODO: amount should not be hard-coded
-	outcomePayment := sdk.NewCoins(sdk.NewCoin("res", sdk.NewInt(100000)))
 	err := keeper.BankKeeper.SendCoins(
-		ctx, msg.Sender, bond.ReserveAddress, outcomePayment)
+		ctx, msg.Sender, bond.ReserveAddress, bond.OutcomePayment)
 	if err != nil {
 		return err.Result()
 	}
 
-	// Set bond state to SETTLE and save bond
-	bond.State = types.SettleState
-	keeper.SetBond(ctx, bond.Token, bond)
+	// Set bond state to SETTLE
+	keeper.SetBondState(ctx, bond.Token, types.SettleState)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeOutcomePayment,
 			sdk.NewAttribute(types.AttributeKeyBond, msg.BondToken),
 			sdk.NewAttribute(types.AttributeKeyAddress, msg.Sender.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, outcomePayment.String()),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -545,10 +543,8 @@ func handleMsgWithdrawShare(ctx sdk.Context, keeper keeper.Keeper, msg types.Msg
 		return types.ErrBondDoesNotExist(types.DefaultCodespace, msg.BondToken).Result()
 	}
 
-	// Confirm that function type is augmented_function and state is SETTLE
-	if bond.FunctionType != types.AugmentedFunction {
-		return types.ErrFunctionNotAvailableForFunctionType(types.DefaultCodespace).Result()
-	} else if bond.State != types.SettleState {
+	// Check that state is SETTLE
+	if bond.State != types.SettleState {
 		return types.ErrInvalidStateForAction(types.DefaultCodespace).Result()
 	}
 

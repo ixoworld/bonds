@@ -199,6 +199,7 @@ type Bond struct {
 	AllowSells             bool             `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
+	OutcomePayment         sdk.Coins        `json:"outcome_payment" yaml:"outcome_payment"`
 	State                  string           `json:"state" yaml:"state"`
 }
 
@@ -208,7 +209,7 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress,
 	maxSupply sdk.Coin, orderQuantityLimits sdk.Coins, sanityRate,
 	sanityMarginPercentage sdk.Dec, allowSells bool, signers []sdk.AccAddress,
-	batchBlocks sdk.Uint, state string) Bond {
+	batchBlocks sdk.Uint, outcomePayment sdk.Coins, state string) Bond {
 
 	// Ensure tokens and coins are sorted
 	sort.Strings(reserveTokens)
@@ -234,6 +235,7 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 		AllowSells:             allowSells,
 		Signers:                signers,
 		BatchBlocks:            batchBlocks,
+		OutcomePayment:         outcomePayment,
 		State:                  state,
 	}
 }

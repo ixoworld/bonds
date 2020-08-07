@@ -158,7 +158,7 @@ func (k Keeper) GetUpdatedBatchPricesAfterBuy(ctx sdk.Context, token string, bo 
 		bond.State == types.HatchState {
 		args := bond.FunctionParameters.AsMap()
 		if sdk.NewDecFromInt(adjustedSupplyWithBuy.Amount).GT(args["S0"].Ceil()) {
-			return nil, nil, sdk.ErrInternal(
+			return nil, nil, sdk.ErrInvalidCoins(
 				"Buy exceeds initial supply S0. Consider buying less tokens.")
 		}
 	}

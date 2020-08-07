@@ -59,6 +59,7 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			_allowSells := viper.GetBool(FlagAllowSells)
 			_signers := viper.GetString(FlagSigners)
 			_batchBlocks := viper.GetString(FlagBatchBlocks)
+			_outcomePayment := viper.GetString(FlagOutcomePayment)
 
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -127,11 +128,17 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 				return types.ErrArgumentMissingOrNonUInteger(types.DefaultCodespace, "max batch blocks")
 			}
 
+			// Parse order quantity limits
+			outcomePayment, err := sdk.ParseCoins(_outcomePayment)
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgCreateBond(_token, _name, _description,
 				cliCtx.GetFromAddress(), _functionType, functionParams,
 				reserveTokens, txFeePercentage, exitFeePercentage, feeAddress,
-				maxSupply, orderQuantityLimits, sanityRate,
-				sanityMarginPercentage, _allowSells, signers, batchBlocks)
+				maxSupply, orderQuantityLimits, sanityRate, sanityMarginPercentage,
+				_allowSells, signers, batchBlocks, outcomePayment)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
@@ -152,9 +159,9 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagOrderQuantityLimits)
 	_ = cmd.MarkFlagRequired(FlagSanityRate)
 	_ = cmd.MarkFlagRequired(FlagSanityMarginPercentage)
-	_ = cmd.MarkFlagRequired(FlagAllowSells)
 	_ = cmd.MarkFlagRequired(FlagSigners)
 	_ = cmd.MarkFlagRequired(FlagBatchBlocks)
+	_ = cmd.MarkFlagRequired(FlagOutcomePayment)
 
 	return cmd
 }
