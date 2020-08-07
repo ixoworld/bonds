@@ -286,6 +286,8 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               bond_token:
                 type: string
                 example: abc
@@ -312,6 +314,8 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               bond_token:
                 type: string
                 example: abc
@@ -335,6 +339,8 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               from_amount:
                 type: string
                 example: 100
@@ -361,6 +367,8 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               bond_token:
                 type: string
                 example: abc
@@ -381,10 +389,25 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               bond_token:
                 type: string
                 example: abc
 definitions:
+  StakeCoin:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: stake
+      amount:
+        type: string
+        example: 50
+  StakeCoins:
+    type: array
+    items:
+      $ref: "#/definitions/StakeCoin"
   AnyCoin:
     type: object
     properties:
@@ -614,9 +637,42 @@ definitions:
         $ref: "#/definitions/ResCoins"
       total_fees:
         $ref: "#/definitions/ResCoins"
+  BaseReq:
+    type: object
+    properties:
+      from:
+        type: string
+        example: "cosmos1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc"
+        description: Sender address or Keybase name to generate a transaction
+      memo:
+        type: string
+        example: "Sent via Cosmos Voyager 🚀"
+      chain_id:
+        type: string
+        example: "Cosmos-Hub"
+      account_number:
+        type: string
+        example: "0"
+      sequence:
+        type: string
+        example: "1"
+      gas:
+        type: string
+        example: "200000"
+      gas_adjustment:
+        type: string
+        example: "1.2"
+      fees:
+        $ref: "#/definitions/StakeCoins"
+      simulate:
+        type: boolean
+        example: false
+        description: Estimate gas for a transaction (cannot be used in conjunction with generate_only)
   BondCreation:
     type: object
     properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
       token:
         type: string
         example: abc
@@ -670,6 +726,8 @@ definitions:
   BondEdit:
     type: object
     properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
       token:
         type: string
         example: abc
