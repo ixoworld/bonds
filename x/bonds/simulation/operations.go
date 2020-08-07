@@ -290,7 +290,7 @@ func getBuyIntoSwapper(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
 	return types.NewMsgBuy(address, amountToBuy, maxPrices), nil, true
 }
 
-func getBuyIntoPowerOrSigmoid(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
+func getBuyIntoNonSwapper(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
 	bond types.Bond, account exported.Account) (msg types.MsgBuy, err error, ok bool) {
 	address := account.GetAddress()
 	spendable := account.SpendableCoins(ctx.BlockTime())
@@ -317,20 +317,42 @@ func getBuyIntoPowerOrSigmoid(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
 		return types.MsgBuy{}, nil, false
 	}
 
-	toBuyInt, err := simulation.RandPositiveInt(r, maxBuyAmount)
-	if err != nil {
-		return types.MsgBuy{}, err, false
+	// For augmented function in hatch state, flip a coin to decide whether
+	// to just buy all the remaining tokens up to S0 to go to the open state.
+	// This is only possible if the account balance is >= remaining up to S0.
+	// Otherwise, pick a random amount with the remaining to S0 as the max.
+	//
+	// If not an augmented function in hatch state, just pick a random amount.
+	var toBuyInt sdk.Int
+	if bond.FunctionType == types.AugmentedFunction && bond.State == types.HatchState {
+		S0 := bond.FunctionParameters.AsMap()["S0"].Ceil().TruncateInt()
+		remainingForS0 := S0.Sub(bond.CurrentSupply.Amount)
+		if remainingForS0.LTE(maxBuyAmount) && simulation.RandIntBetween(r, 1, 2) == 1 {
+			toBuyInt = remainingForS0
+		} else if remainingForS0.GT(sdk.ZeroInt()) {
+			toBuyInt, err = simulation.RandPositiveInt(r, remainingForS0)
+			if err != nil {
+				return types.MsgBuy{}, err, false
+			}
+		} else {
+			panic("current cannot be equal to S0 in hatch phase")
+		}
+	} else {
+		toBuyInt, err = simulation.RandPositiveInt(r, maxBuyAmount)
+		if err != nil {
+			return types.MsgBuy{}, err, false
+		}
 	}
-	amountToBuy := sdk.NewCoin(bond.Token, toBuyInt)
+	toBuy := sdk.NewCoin(bond.Token, toBuyInt)
 
 	// Create order and check if can afford
 	_, _, err = k.GetUpdatedBatchPricesAfterBuy(ctx, bond.Token,
-		types.NewBuyOrder(address, amountToBuy, maxPrices))
+		types.NewBuyOrder(address, toBuy, maxPrices))
 	if err != nil {
 		return types.MsgBuy{}, err, true
 	}
 
-	return types.NewMsgBuy(address, amountToBuy, maxPrices), nil, true
+	return types.NewMsgBuy(address, toBuy, maxPrices), nil, true
 }
 
 func SimulateMsgBuy(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operation {
@@ -368,7 +390,7 @@ func SimulateMsgBuy(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operation
 		if bond.FunctionType == types.SwapperFunction {
 			msg, err, ok = getBuyIntoSwapper(r, ctx, k, bond, account)
 		} else {
-			msg, err, ok = getBuyIntoPowerOrSigmoid(r, ctx, k, bond, account)
+			msg, err, ok = getBuyIntoNonSwapper(r, ctx, k, bond, account)
 		}
 
 		// If ok, err is not something that should stop the simulation

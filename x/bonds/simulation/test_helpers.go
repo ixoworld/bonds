@@ -91,7 +91,7 @@ func getRandomFunctionParameters(r *rand.Rand, functionType string, genesis bool
 	case types.AugmentedFunction:
 		d0 := sdk.NewDec(int64(simulation.RandIntBetween(r, 1, 1000000)))
 		p0 := simulation.RandomDecAmount(r, sdk.NewDec(10)).Add(sdk.SmallestDec())
-		theta := simulation.RandomDecAmount(r, sdk.OneDec().Sub(sdk.SmallestDec()).Sub(sdk.SmallestDec())).Add(sdk.SmallestDec())
+		theta := simulation.RandomDecAmount(r, sdk.MustNewDecFromStr("0.9")).Add(sdk.SmallestDec())
 		kappa := sdk.NewDec(int64(simulation.RandIntBetween(r, 1, 4)))
 		functionParams := types.FunctionParams{
 			types.NewFunctionParam("d0", d0),
