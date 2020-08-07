@@ -344,6 +344,46 @@ paths:
               to_token:
                 type: string
                 example: res2
+  /bonds/make_outcome_payment:
+    post:
+      description: Make an outcome payment to a bond to progress it to SETTLE state
+      summary: Make outcome payment
+      tags:
+        - Bonds Module
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: make_outcome_payment_body
+          description: The bond token to make the outcome payment to
+          schema:
+            type: object
+            properties:
+              bond_token:
+                type: string
+                example: abc
+  /bonds/withdraw_share:
+    post:
+      description: As a bond token holder, withdraw the reserve tokens share from a bond in SETTLE state
+      summary: Withdraw share from bond
+      tags:
+        - Bonds Module
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: withdraw_share_body
+          description: The bond token to withdraw the share from
+          schema:
+            type: object
+            properties:
+              bond_token:
+                type: string
+                example: abc
 definitions:
   AnyCoin:
     type: object
@@ -525,6 +565,12 @@ definitions:
           batch_blocks:
             type: number
             example: 5
+          outcome_payment:
+            order_quantity_limits:
+              $ref: "#/definitions/AnyCoins"
+          state:
+            type: string
+            example: OPEN
   BatchQueryResult:
     type: object
     properties:
@@ -618,6 +664,9 @@ definitions:
       batch_blocks:
         type: string
         example: "5"
+      outcome_payment:
+        type: string
+        example: 100abc,200xyz,...
   BondEdit:
     type: object
     properties:
@@ -650,7 +699,7 @@ definitions:
         example: "a"
       value:
         type: string
-        example: "1"
+        example: "1.1"
   FunctionParameters:
     type: array
     items:
