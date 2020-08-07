@@ -278,8 +278,13 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 		case OpenState:
 			kappa := args["kappa"].TruncateInt64()
 			res := Reserve(x, kappa, args["V0"])
-			spotPriceDec := SpotPrice(res, kappa, args["V0"])
-			result = bond.GetNewReserveDecCoins(spotPriceDec)
+			// If reserve < 1, default to zero price to avoid calculation issues
+			if res.LT(sdk.OneDec()) {
+				result = bond.GetNewReserveDecCoins(sdk.ZeroDec())
+			} else {
+				spotPriceDec := SpotPrice(res, kappa, args["V0"])
+				result = bond.GetNewReserveDecCoins(spotPriceDec)
+			}
 		default:
 			panic("unrecognized bond state")
 		}
