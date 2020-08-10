@@ -1,8 +1,6 @@
 package bonds_test
 
 import (
-	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/ixoworld/bonds/x/bonds"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	"testing"
@@ -33,11 +31,8 @@ func TestCreateValidBond(t *testing.T) {
 	require.True(t, res.IsOK())
 	require.True(t, app.BondsKeeper.BondExists(ctx, token))
 
-	// Check assigned reserve address and initial state
-	expectedResAddr := supply.NewModuleAddress(
-		fmt.Sprintf("bonds/%s/reserveAddress", token))
+	// Check assigned initial state
 	bond := app.BondsKeeper.MustGetBond(ctx, token)
-	require.Equal(t, expectedResAddr, bond.ReserveAddress)
 	require.Equal(t, types.OpenState, bond.State)
 }
 
@@ -888,19 +883,22 @@ func TestWithdrawShare(t *testing.T) {
 	app.BondsKeeper.SetBond(ctx, token, bond)
 
 	// Mint 3 bond tokens and send [2 to user 1] and [1 to user 2]
-	err := app.SupplyKeeper.MintCoins(ctx, bonds.BondsMintBurnAccount,
+	err := app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount,
 		sdk.NewCoins(sdk.NewInt64Coin(token, 3)))
 	require.Nil(t, err)
-	err = app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, bonds.BondsMintBurnAccount,
+	err = app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.BondsMintBurnAccount,
 		userAddress, sdk.NewCoins(sdk.NewInt64Coin(token, 2)))
 	require.Nil(t, err)
-	err = app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, bonds.BondsMintBurnAccount,
+	err = app.SupplyKeeper.SendCoinsFromModuleToAccount(ctx, types.BondsMintBurnAccount,
 		anotherAddress, sdk.NewCoins(sdk.NewInt64Coin(token, 1)))
 	require.Nil(t, err)
 
-	// Simulate outcome payment by setting bond reserve to 100k
-	err = app.BankKeeper.SetCoins(ctx, bond.ReserveAddress,
-		sdk.NewCoins(sdk.NewCoin(reserveToken, sdk.NewInt(100000))))
+	// Simulate outcome payment by depositing (freshly minted) 100k into reserve
+	hundredK := sdk.NewCoins(sdk.NewCoin(reserveToken, sdk.NewInt(100000)))
+	err = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, hundredK)
+	require.Nil(t, err)
+	err = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, hundredK)
 	require.Nil(t, err)
 
 	// User 1 withdraws share

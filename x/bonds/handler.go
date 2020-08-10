@@ -3,7 +3,6 @@ package bonds
 import (
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/ixoworld/bonds/x/bonds/internal/keeper"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -89,20 +88,8 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 		return types.ErrBondTokenCannotBeStakingToken(DefaultCodespace).Result()
 	}
 
-	// Get reserve address
-	reserveAddress := supply.NewModuleAddress(
-		fmt.Sprintf("bonds/%s/reserveAddress", msg.Token))
-
 	// Set state to open by default (overridden below if augmented function)
 	state := types.OpenState
-
-	// TODO: investigate ways to prevent reserve address from receiving transactions
-
-	// Not critical since as is no tokens can be taken out of the reserve, unless
-	// programmatically. However, increases in balance still affect calculations.
-	// Two possible solutions are (i) add new reserve addresses to the bank module
-	// blacklisted addresses (but no guarantee that this will be sufficient), or
-	// (ii) use a global res. address and store (in the bond) the share of the pool.
 
 	// If augmented, add R0, S0, V0 as parameters for quick access
 	// Also, override AllowSells and set to False if S0 > 0
@@ -133,8 +120,8 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 
 	bond := types.NewBond(msg.Token, msg.Name, msg.Description, msg.Creator,
 		msg.FunctionType, msg.FunctionParameters, msg.ReserveTokens,
-		reserveAddress, msg.TxFeePercentage, msg.ExitFeePercentage,
-		msg.FeeAddress, msg.MaxSupply, msg.OrderQuantityLimits, msg.SanityRate,
+		msg.TxFeePercentage, msg.ExitFeePercentage, msg.FeeAddress,
+		msg.MaxSupply, msg.OrderQuantityLimits, msg.SanityRate,
 		msg.SanityMarginPercentage, msg.AllowSells, msg.Signers,
 		msg.BatchBlocks, msg.OutcomePayment, state)
 
@@ -154,7 +141,6 @@ func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCre
 			sdk.NewAttribute(types.AttributeKeyFunctionType, msg.FunctionType),
 			sdk.NewAttribute(types.AttributeKeyFunctionParameters, msg.FunctionParameters.String()),
 			sdk.NewAttribute(types.AttributeKeyReserveTokens, types.StringsToString(msg.ReserveTokens)),
-			sdk.NewAttribute(types.AttributeKeyReserveAddress, reserveAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyTxFeePercentage, msg.TxFeePercentage.String()),
 			sdk.NewAttribute(types.AttributeKeyExitFeePercentage, msg.ExitFeePercentage.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeAddress, msg.FeeAddress.String()),
@@ -335,7 +321,7 @@ func performFirstSwapperFunctionBuy(ctx sdk.Context, keeper keeper.Keeper, msg t
 	}
 
 	// Use max prices as the amount to send to the liquidity pool (i.e. price)
-	err := keeper.BankKeeper.SendCoins(ctx, msg.Buyer, bond.ReserveAddress, msg.MaxPrices)
+	err := keeper.DepositReserve(ctx, bond.Token, msg.Buyer, msg.MaxPrices)
 	if err != nil {
 		return err.Result()
 	}
@@ -510,9 +496,8 @@ func handleMsgMakeOutcomePayment(ctx sdk.Context, keeper keeper.Keeper, msg type
 		return types.ErrCannotMakeZeroOutcomePayment(types.DefaultCodespace).Result()
 	}
 
-	// Send outcome payment to reserve address
-	err := keeper.BankKeeper.SendCoins(
-		ctx, msg.Sender, bond.ReserveAddress, bond.OutcomePayment)
+	// Send outcome payment to reserve
+	err := keeper.DepositReserve(ctx, bond.Token, msg.Sender, bond.OutcomePayment)
 	if err != nil {
 		return err.Result()
 	}
@@ -576,8 +561,7 @@ func handleMsgWithdrawShare(ctx sdk.Context, keeper keeper.Keeper, msg types.Msg
 	reserveOwed, _ := reserveOwedDec.TruncateDecimal()
 
 	// Send coins owed to recipient
-	err = keeper.BankKeeper.SendCoins(
-		ctx, bond.ReserveAddress, msg.Recipient, reserveOwed)
+	err = keeper.WithdrawReserve(ctx, bond.Token, msg.Recipient, reserveOwed)
 	if err != nil {
 		return err.Result()
 	}

@@ -24,7 +24,6 @@ var (
 	initName                   = "test token"
 	initDescription            = "this is a test token"
 	initCreator                = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	initReserveAddress         = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initFeeAddress             = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initTxFeePercentage        = sdk.MustNewDecFromStr("0.1")
 	initExitFeePercentage      = sdk.MustNewDecFromStr("0.1")
@@ -103,8 +102,8 @@ func getValidPowerFunctionBond() types.Bond {
 	functionParams := functionParametersPower()
 	reserveTokens := powerReserves()
 	return types.NewBond(initToken, initName, initDescription, initCreator,
-		functionType, functionParams, reserveTokens, initReserveAddress,
-		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
 		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }
@@ -114,8 +113,8 @@ func getValidAugmentedFunctionBond() types.Bond {
 	functionParams := functionParametersAugmented()
 	reserveTokens := powerReserves()
 	return types.NewBond(initToken, initName, initDescription, initCreator,
-		functionType, functionParams, reserveTokens, initReserveAddress,
-		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
 		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }
@@ -125,8 +124,8 @@ func getValidSwapperBond() types.Bond {
 	functionParams := types.FunctionParams(nil)
 	reserveTokens := swapperReserves()
 	return types.NewBond(initToken, initName, initDescription, initCreator,
-		functionType, functionParams, reserveTokens, initReserveAddress,
-		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
 		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }

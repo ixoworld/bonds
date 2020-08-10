@@ -24,7 +24,6 @@ var (
 	initName                   = "test token"
 	initDescription            = "this is a test token"
 	initCreator                = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	initReserveAddress         = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initFeeAddress             = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initTxFeePercentage        = sdk.MustNewDecFromStr("0.1")
 	initExitFeePercentage      = sdk.MustNewDecFromStr("0.1")

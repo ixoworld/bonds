@@ -68,6 +68,7 @@ var (
 		gov.ModuleName:                   {supply.Burner},
 		types.BondsMintBurnAccount:       {supply.Minter, supply.Burner},
 		types.BatchesIntermediaryAccount: nil,
+		types.BondsReserveAccount:        nil,
 	}
 )
 

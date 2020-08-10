@@ -187,7 +187,6 @@ type Bond struct {
 	FunctionType           string           `json:"function_type" yaml:"function_type"`
 	FunctionParameters     FunctionParams   `json:"function_parameters" yaml:"function_parameters"`
 	ReserveTokens          []string         `json:"reserve_tokens" yaml:"reserve_tokens"`
-	ReserveAddress         sdk.AccAddress   `json:"reserve_address" yaml:"reserve_address"`
 	TxFeePercentage        sdk.Dec          `json:"tx_fee_percentage" yaml:"tx_fee_percentage"`
 	ExitFeePercentage      sdk.Dec          `json:"exit_fee_percentage" yaml:"exit_fee_percentage"`
 	FeeAddress             sdk.AccAddress   `json:"fee_address" yaml:"fee_address"`
@@ -196,6 +195,7 @@ type Bond struct {
 	SanityRate             sdk.Dec          `json:"sanity_rate" yaml:"sanity_rate"`
 	SanityMarginPercentage sdk.Dec          `json:"sanity_margin_percentage" yaml:"sanity_margin_percentage"`
 	CurrentSupply          sdk.Coin         `json:"current_supply" yaml:"current_supply"`
+	CurrentReserve         sdk.Coins        `json:"current_reserve" yaml:"current_reserve"`
 	AllowSells             bool             `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
@@ -204,8 +204,7 @@ type Bond struct {
 }
 
 func NewBond(token, name, description string, creator sdk.AccAddress,
-	functionType string, functionParameters FunctionParams,
-	reserveTokens []string, reserveAdddress sdk.AccAddress,
+	functionType string, functionParameters FunctionParams, reserveTokens []string,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress,
 	maxSupply sdk.Coin, orderQuantityLimits sdk.Coins, sanityRate,
 	sanityMarginPercentage sdk.Dec, allowSells bool, signers []sdk.AccAddress,
@@ -223,7 +222,6 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 		FunctionType:           functionType,
 		FunctionParameters:     functionParameters,
 		ReserveTokens:          reserveTokens,
-		ReserveAddress:         reserveAdddress,
 		TxFeePercentage:        txFeePercentage,
 		ExitFeePercentage:      exitFeePercentage,
 		FeeAddress:             feeAddress,
@@ -232,6 +230,7 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 		SanityRate:             sanityRate,
 		SanityMarginPercentage: sanityMarginPercentage,
 		CurrentSupply:          sdk.NewCoin(token, sdk.ZeroInt()),
+		CurrentReserve:         nil,
 		AllowSells:             allowSells,
 		Signers:                signers,
 		BatchBlocks:            batchBlocks,

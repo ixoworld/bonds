@@ -84,7 +84,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 		exitFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100).Sub(txFeePercentage))
 
 		// Addresses
-		reserveAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		feeAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 		// Max supply, allow sells, batch blocks
@@ -97,7 +96,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		state := getInitialBondState(functionType)
 
 		bond := types.NewBond(token, name, desc, creator, functionType,
-			functionParameters, reserveTokens, reserveAddress, txFeePercentage,
+			functionParameters, reserveTokens, txFeePercentage,
 			exitFeePercentage, feeAddress, maxSupply, blankOrderQuantityLimits,
 			blankSanityRate, blankSanityMarginPercentage, allowSells, signers,
 			batchBlocks, outcomePayment, state)

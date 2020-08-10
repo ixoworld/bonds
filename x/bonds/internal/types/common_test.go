@@ -18,7 +18,6 @@ var (
 	initName                   = "test token"
 	initDescription            = "this is a test token"
 	initCreator                = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	initReserveAddress         = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initFeeAddress             = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initTxFeePercentage        = sdk.MustNewDecFromStr("0.1")
 	initExitFeePercentage      = sdk.MustNewDecFromStr("0.1")
@@ -96,8 +95,8 @@ func getValidPowerFunctionBond() Bond {
 	functionParams := functionParametersPower()
 	reserveTokens := powerReserves()
 	return NewBond(initToken, initName, initDescription, initCreator,
-		functionType, functionParams, reserveTokens, initReserveAddress,
-		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
 		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }

@@ -19,7 +19,6 @@ const (
 	AttributeKeyFunctionType           = "function_type"
 	AttributeKeyFunctionParameters     = "function_parameters"
 	AttributeKeyReserveTokens          = "reserve_tokens"
-	AttributeKeyReserveAddress         = "reserve_address"
 	AttributeKeyTxFeePercentage        = "tx_fee_percentage"
 	AttributeKeyExitFeePercentage      = "exit_fee_percentage"
 	AttributeKeyFeeAddress             = "fee_address"

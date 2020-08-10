@@ -224,7 +224,7 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 		return types.ErrMaxPriceExceeded(types.DefaultCodespace, totalPrices, bo.MaxPrices)
 	}
 
-	// Add new reserve to reserve address (reservePricesRounded should never be zero)
+	// Add new reserve to reserve (reservePricesRounded should never be zero)
 	// TODO: investigate possibility of zero reservePricesRounded
 	if bond.FunctionType == types.AugmentedFunction &&
 		bond.State == types.HatchState {
@@ -235,8 +235,8 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 		fundingPoolShare, _ := reservePricesRoundedDec.MulDec(theta).TruncateDecimal()
 		toInitialReserve := reservePricesRounded.Sub(fundingPoolShare)
 
-		err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
-			types.BatchesIntermediaryAccount, bond.ReserveAddress, toInitialReserve)
+		err = k.DepositReserveFromModule(
+			ctx, bond.Token, types.BatchesIntermediaryAccount, toInitialReserve)
 		if err != nil {
 			return err
 		}
@@ -251,8 +251,8 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 			sdk.NewAttribute(types.AttributeKeyChargedPricesFunding, fundingPoolShare.String()),
 		)
 	} else {
-		err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
-			types.BatchesIntermediaryAccount, bond.ReserveAddress, reservePricesRounded)
+		err = k.DepositReserveFromModule(
+			ctx, bond.Token, types.BatchesIntermediaryAccount, reservePricesRounded)
 		if err != nil {
 			return err
 		}
@@ -318,14 +318,14 @@ func (k Keeper) PerformSellAtPrice(ctx sdk.Context, token string, so types.SellO
 
 	// Send total returns to seller (totalReturns should never be zero)
 	// TODO: investigate possibility of zero totalReturns
-	err = k.BankKeeper.SendCoins(ctx, bond.ReserveAddress, so.Address, totalReturns)
+	err = k.WithdrawReserve(ctx, bond.Token, so.Address, totalReturns)
 	if err != nil {
 		return err
 	}
 
 	// Send total fee to fee address
 	if !totalFees.IsZero() {
-		err := k.BankKeeper.SendCoins(ctx, bond.ReserveAddress, bond.FeeAddress, totalFees)
+		err = k.WithdrawReserve(ctx, bond.Token, bond.FeeAddress, totalFees)
 		if err != nil {
 			return err
 		}
@@ -374,14 +374,14 @@ func (k Keeper) PerformSwap(ctx sdk.Context, token string, so types.SwapOrder) (
 	}
 
 	// Give resultant tokens to swapper (reserveReturns should never be zero)
-	err = k.BankKeeper.SendCoins(ctx, bond.ReserveAddress, so.Address, reserveReturns)
+	err = k.WithdrawReserve(ctx, bond.Token, so.Address, reserveReturns)
 	if err != nil {
 		return err, false
 	}
 
 	// Add fee-reduced coins to be swapped to reserve (adjustedInput should never be zero)
-	err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
-		types.BatchesIntermediaryAccount, bond.ReserveAddress, sdk.Coins{adjustedInput})
+	err = k.DepositReserveFromModule(
+		ctx, bond.Token, types.BatchesIntermediaryAccount, sdk.Coins{adjustedInput})
 	if err != nil {
 		return err, false
 	}

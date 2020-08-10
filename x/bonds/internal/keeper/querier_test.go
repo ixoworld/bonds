@@ -237,7 +237,9 @@ func TestQueryCurrentPriceForSwapper(t *testing.T) {
 		sdk.NewInt64Coin(reserveToken, 200),
 		sdk.NewInt64Coin(reserveToken2, 300),
 	)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, newReserve)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, newReserve)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, newReserve)
 
 	// Get current price directly
 	reserveBalances = app.BondsKeeper.GetReserveBalances(ctx, token)
@@ -287,7 +289,9 @@ func TestQueryCurrentReserve(t *testing.T) {
 		sdk.NewInt64Coin(reserveToken, 200),
 		sdk.NewInt64Coin(reserveToken2, 300),
 	)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, newReserve)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, newReserve)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, newReserve)
 
 	// Get current reserve (now 200token2,300token3)
 	reserveBalances := app.BondsKeeper.GetReserveBalances(ctx, token)
@@ -406,7 +410,9 @@ func TestQueryBuyPrice(t *testing.T) {
 	require.Equal(t, queryResult.TotalPrices, roundedTotalPrices)
 
 	// Simulate the above buy taking place
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, queryResult.Prices)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, queryResult.Prices)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, queryResult.Prices)
 	_, _ = app.BankKeeper.AddCoins(ctx, bond.FeeAddress, queryResult.TotalFees)
 	app.BondsKeeper.SetCurrentSupply(ctx, token, sdk.NewCoin(token, buyAmount))
 
@@ -476,7 +482,9 @@ func TestQuerySellPrice(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &buyQueryResult)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, buyQueryResult.Prices)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, buyQueryResult.Prices)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, buyQueryResult.Prices)
 	_, _ = app.BankKeeper.AddCoins(ctx, bond.FeeAddress, buyQueryResult.TotalFees)
 	app.BondsKeeper.SetCurrentSupply(ctx, token, sdk.NewCoin(token, buyAmount))
 
@@ -546,7 +554,9 @@ func TestQuerySwapReturn(t *testing.T) {
 		sdk.NewInt64Coin(reserveToken, 200),
 		sdk.NewInt64Coin(reserveToken2, 300),
 	)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, newReserve)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, newReserve)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, newReserve)
 
 	// Get swap return directly
 	fromCoin := sdk.NewInt64Coin(reserveToken, 100)

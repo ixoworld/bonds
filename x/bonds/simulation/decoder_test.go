@@ -34,7 +34,6 @@ func TestDecodeStore(t *testing.T) {
 		types.NewFunctionParam("n", sdk.NewDec(2)),
 		types.NewFunctionParam("c", sdk.NewDec(100))}
 	reserveTokens := []string{"reservetoken"}
-	reserveAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	txFeePercentage := sdk.MustNewDecFromStr("0.1")
 	exitFeePercentage := sdk.MustNewDecFromStr("0.2")
 	feeAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -57,9 +56,9 @@ func TestDecodeStore(t *testing.T) {
 	state := "dummy_state"
 
 	bond := types.NewBond(token, name, description, creator, functionType,
-		functionParameters, reserveTokens, reserveAddress, txFeePercentage,
-		exitFeePercentage, feeAddress, maxSupply, orderQuantityLimits, sanityRate,
-		sanityMarginPercentage, allowSell, signers, batchBlocks, outcomePayment, state)
+		functionParameters, reserveTokens, txFeePercentage, exitFeePercentage,
+		feeAddress, maxSupply, orderQuantityLimits, sanityRate, sanityMarginPercentage,
+		allowSell, signers, batchBlocks, outcomePayment, state)
 	batch := types.NewBatch(bond.Token, bond.BatchBlocks)
 	lastBatch := types.NewBatch(bond.Token, bond.BatchBlocks)
 

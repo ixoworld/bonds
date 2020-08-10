@@ -130,11 +130,14 @@ func TestGetBatchBuySellPrices(t *testing.T) {
 	fiveTokens := sdk.NewInt64Coin(bond.Token, 5)
 	fiveDec := sdk.NewDec(5)
 
-	// Add appropriate amount of reserve tokens to reserve
+	// Add appropriate amount of reserve tokens (freshly minted) to reserve
 	expectedReserve := bond.ReserveAtSupply(bond.CurrentSupply.Amount)
 	expectedRounded := expectedReserve.Ceil().TruncateInt()
 	reserveBalance := sdk.NewCoins(sdk.NewCoin(bond.ReserveTokens[0], expectedRounded))
-	_, err := app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, reserveBalance)
+	err := app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, reserveBalance)
+	require.Nil(t, err)
+	err = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, reserveBalance)
 	require.Nil(t, err)
 
 	// Create empty batch
@@ -295,7 +298,10 @@ func TestGetUpdatedBatchPricesAfterSell(t *testing.T) {
 	bond.CurrentSupply = sellAmount
 	app.BondsKeeper.SetBond(ctx, bond.Token, bond)
 	reserveBalance := sdk.NewCoins(sdk.NewInt64Coin(bond.ReserveTokens[0], 10000000))
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, reserveBalance)
+	err = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, reserveBalance)
+	require.Nil(t, err)
+	err = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, reserveBalance)
 
 	// Check sell prices for fulfillable sell order
 	so = types.NewSellOrder(sellerAddress, sellAmount)
@@ -367,7 +373,7 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		prevModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
 		prevFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
 		prevBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
-		prevReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
+		prevReserveBal := app.BondsKeeper.GetReserveBalances(ctx, bond.Token)
 
 		// Perform buy
 		err = app.BondsKeeper.PerformBuyAtPrice(ctx, bond.Token, bo, buyPrices)
@@ -391,7 +397,7 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		newModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
 		newFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
 		newBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
-		newReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
+		newReserveBal := app.BondsKeeper.GetReserveBalances(ctx, bond.Token)
 
 		require.Equal(t, prevSupplySDK.Add(tc.amount), newSupplySDK)
 		require.Equal(t, prevSupplyBonds.Add(tokensBought), newSupplyBonds)
@@ -472,7 +478,7 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		prevModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
 		prevFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
 		prevBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
-		prevReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
+		prevReserveBal := app.BondsKeeper.GetReserveBalances(ctx, bond.Token)
 
 		// Perform buy
 		err = app.BondsKeeper.PerformBuyAtPrice(ctx, bond.Token, bo, buyPrices)
@@ -496,7 +502,7 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		newModuleAccBal := app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress())
 		newFeeAddrBal := app.BankKeeper.GetCoins(ctx, bond.FeeAddress)
 		newBuyerBal := app.BankKeeper.GetCoins(ctx, buyerAddress)
-		newReserveBal := app.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
+		newReserveBal := app.BondsKeeper.GetReserveBalances(ctx, bond.Token)
 
 		require.Equal(t, prevSupplySDK.Add(tc.amount), newSupplySDK)
 		require.Equal(t, prevSupplyBonds.Add(tokensBought), newSupplyBonds)
@@ -569,8 +575,11 @@ func TestPerformSellAtPrice(t *testing.T) {
 		// Check expected returns
 		require.Equal(t, totalReturns.AmountOf(reserveToken), tc.expectedReturns)
 
-		// Add reserve tokens paid by seller when buying to reserve address
-		err := app.BankKeeper.SetCoins(ctx, bond.ReserveAddress, reserveReturnsRounded)
+		// Add reserve tokens (freshly minted) paid by seller when buying to reserve
+		err := app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, reserveReturnsRounded)
+		require.Nil(t, err)
+		err = app.BondsKeeper.DepositReserveFromModule(
+			ctx, bond.Token, types.BondsMintBurnAccount, reserveReturnsRounded)
 		require.NoError(t, err)
 
 		// Previous values
@@ -669,7 +678,10 @@ func TestPerformSwap(t *testing.T) {
 		bond.SanityMarginPercentage = tc.sanityMarginPercentage
 		app.BondsKeeper.SetBond(ctx, bond.Token, bond)
 		startingReserves := sdk.NewCoins(tc.inReserve, tc.outReserve)
-		err := app.BankKeeper.SetCoins(ctx, bond.ReserveAddress, startingReserves)
+		err := app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, startingReserves)
+		require.Nil(t, err)
+		err = app.BondsKeeper.DepositReserveFromModule(
+			ctx, bond.Token, types.BondsMintBurnAccount, startingReserves)
 		require.NoError(t, err)
 
 		// Add reserve tokens sent by swapper to module account address
@@ -834,8 +846,11 @@ func TestPerformSells(t *testing.T) {
 		reserveReturnsRounded := types.RoundReserveReturns(reserveReturns)
 		globalTotalReturns = globalTotalReturns.Add(reserveReturnsRounded)
 
-		// Add reserve tokens paid by seller when buying to reserve address
-		_, err := app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, reserveReturnsRounded)
+		// Add reserve tokens (freshly minted) paid by seller when buying to reserve
+		err := app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, reserveReturnsRounded)
+		require.Nil(t, err)
+		err = app.BondsKeeper.DepositReserveFromModule(
+			ctx, bond.Token, types.BondsMintBurnAccount, reserveReturnsRounded)
 		require.NoError(t, err)
 
 		// Add increase in current supply due to a (simulated) buy
@@ -874,7 +889,10 @@ func TestPerformSwaps(t *testing.T) {
 	initialInReserve := sdk.NewInt64Coin(reserveToken, 200)
 	initialOutReserve := sdk.NewInt64Coin(reserveToken2, 300)
 	initialReserves := sdk.NewCoins(initialInReserve, initialOutReserve)
-	err := app.BankKeeper.SetCoins(ctx, bond.ReserveAddress, initialReserves)
+	err := app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, initialReserves)
+	require.Nil(t, err)
+	err = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, initialReserves)
 	require.NoError(t, err)
 
 	testCases := []struct {

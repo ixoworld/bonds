@@ -162,10 +162,9 @@ func TestNewBondDefaultValuesAndSorting(t *testing.T) {
 	sortedReserveTokens := []string{"a", "b"}
 	sortedOrderQuantityLimits, _ := sdk.ParseCoins("100aaa,100bbb")
 
-	bond := NewBond(initToken, initName, initDescription,
-		initCreator, PowerFunction, functionParametersPower(),
-		customReserveTokens, initReserveAddress, initTxFeePercentage,
-		initExitFeePercentage, initFeeAddress, initMaxSupply,
+	bond := NewBond(initToken, initName, initDescription, initCreator,
+		PowerFunction, functionParametersPower(), customReserveTokens,
+		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
 		customOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
 		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 

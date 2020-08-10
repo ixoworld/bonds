@@ -84,7 +84,7 @@ This message is expected to fail if:
 - signers is not one or more valid comma-separated account addresses
 - any field is empty, except for order quantity limits, sanity rate, sanity margin percentage, and function parameters for `swapper_function`
 
-This message creates and stores the `Bond` object at appropriate indexes. A reserve address is generated for the bond by taking the hash of `"bond/<TOKEN>/reserveAddress"`, where `<TOKEN>` is the unique bond token. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
+This message creates and stores the `Bond` object at appropriate indexes. Note that the sanity rate and sanity margin percentage are only used in the case of the `swapper_function`, but no error is raised if these are set for other function types.
 
 ## MsgEditBond
 
@@ -232,7 +232,7 @@ This message adds the swap order to the current batch.
 
 ## MsgMakeOutcomePayment
 
-If a bond was created with an outcome payment field, then any token holder can make an outcome payment to the bond. If the token holder has enough tokens to pay the outcome payment, the tokens are sent to the bond's reserve address and the bond's state gets set to SETTLE. The only action possible by bond token holders after the outcome payment has been made is a share withdrawal (using [MsgWithdrawShare](#MsgWithdrawShare)).
+If a bond was created with an outcome payment field, then any token holder can make an outcome payment to the bond. If the token holder has enough tokens to pay the outcome payment, the tokens are sent to the bond's reserve and the bond's state gets set to SETTLE. The only action possible by bond token holders after the outcome payment has been made is a share withdrawal (using [MsgWithdrawShare](#MsgWithdrawShare)).
 
 | **Field** | **Type**         | **Description**                                                                                               |
 |:----------|:-----------------|:--------------------------------------------------------------------------------------------------------------|

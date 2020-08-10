@@ -172,8 +172,7 @@ func queryCurrentReserve(ctx sdk.Context, path []string, keeper Keeper) (res []b
 		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
 	}
 
-	reserveBalances := keeper.BankKeeper.GetCoins(ctx, bond.ReserveAddress)
-	reserveBalances = zeroReserveTokensIfEmpty(reserveBalances, bond)
+	reserveBalances := zeroReserveTokensIfEmpty(bond.CurrentReserve, bond)
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, reserveBalances)
 	if err2 != nil {
 		panic("could not marshal result to JSON")
