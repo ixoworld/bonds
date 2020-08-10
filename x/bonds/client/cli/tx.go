@@ -161,7 +161,7 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagSanityMarginPercentage)
 	_ = cmd.MarkFlagRequired(FlagSigners)
 	_ = cmd.MarkFlagRequired(FlagBatchBlocks)
-	_ = cmd.MarkFlagRequired(FlagOutcomePayment)
+	// _ = cmd.MarkFlagRequired(FlagOutcomePayment) // Optional
 
 	return cmd
 }
