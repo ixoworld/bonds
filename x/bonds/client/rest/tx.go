@@ -13,30 +13,13 @@ import (
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc(
-		"/bonds/create_bond",
-		createBondHandler(cliCtx),
-	).Methods("POST")
-
-	r.HandleFunc(
-		"/bonds/edit_bond",
-		editBondHandler(cliCtx),
-	).Methods("POST")
-
-	r.HandleFunc(
-		"/bonds/buy",
-		buyHandler(cliCtx),
-	).Methods("POST")
-
-	r.HandleFunc(
-		"/bonds/sell",
-		sellHandler(cliCtx),
-	).Methods("POST")
-
-	r.HandleFunc(
-		"/bonds/swap",
-		swapHandler(cliCtx),
-	).Methods("POST")
+	r.HandleFunc("/bonds/create_bond", createBondHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/edit_bond", editBondHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/buy", buyHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/sell", sellHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/swap", swapHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/make_outcome_payment", makeOutcomePaymentHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/withdraw_share", withdrawShareHandler(cliCtx)).Methods("POST")
 }
 
 type createBondReq struct {
@@ -57,6 +40,7 @@ type createBondReq struct {
 	AllowSells             string       `json:"allow_sells" yaml:"allow_sells"`
 	Signers                string       `json:"signers" yaml:"signers"`
 	BatchBlocks            string       `json:"batch_blocks" yaml:"batch_blocks"`
+	OutcomePayment         string       `json:"outcome_payment" yaml:"outcome_payment"`
 }
 
 func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -140,6 +124,19 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Parse allowSells
+		var allowSells bool
+		allowSellsStrLower := strings.ToLower(req.AllowSells)
+		if allowSellsStrLower == "true" {
+			allowSells = true
+		} else if allowSellsStrLower == "false" {
+			allowSells = false
+		} else {
+			err := types.ErrArgumentMissingOrNonBoolean(types.DefaultCodespace, "allow_sells")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		// Parse signers
 		signers, err := client.ParseSigners(req.Signers)
 		if err != nil {
@@ -155,11 +152,18 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// Parse outcome payment
+		outcomePayment, err2 := sdk.ParseCoins(req.OutcomePayment)
+		if err2 != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
+			return
+		}
+
 		msg := types.NewMsgCreateBond(req.Token, req.Name, req.Description,
 			creator, req.FunctionType, functionParams, reserveTokens,
 			txFeePercentageDec, exitFeePercentageDec, feeAddress, maxSupply,
 			orderQuantityLimits, sanityRate, sanityMarginPercentage,
-			req.AllowSells, signers, batchBlocks)
+			allowSells, signers, batchBlocks, outcomePayment)
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
@@ -328,6 +332,66 @@ func swapHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		msg := types.NewMsgSwap(swapper, req.BondToken, fromCoin, req.ToToken)
+		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+	}
+}
+
+type makeOutcomePaymentReq struct {
+	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
+	BondToken string       `json:"bond_token" yaml:"bond_token"`
+}
+
+func makeOutcomePaymentHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req makeOutcomePaymentReq
+
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
+			return
+		}
+
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		sender, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgMakeOutcomePayment(sender, req.BondToken)
+		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+	}
+}
+
+type withdrawShareReq struct {
+	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
+	BondToken string       `json:"bond_token" yaml:"bond_token"`
+}
+
+func withdrawShareHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req withdrawShareReq
+
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
+			return
+		}
+
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		recipient, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgWithdrawShare(recipient, req.BondToken)
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }

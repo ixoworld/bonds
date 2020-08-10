@@ -8,6 +8,7 @@ var (
 	defaultReserveTokens = []string{sdk.DefaultBondDenom}
 
 	blankOrderQuantityLimits    = sdk.Coins{}
+	blankOutcomePayment         = sdk.Coins{}
 	blankSanityRate             = sdk.MustNewDecFromStr("0")
 	blankSanityMarginPercentage = sdk.MustNewDecFromStr("0")
 

@@ -17,6 +17,9 @@ The bonds module emits the following events:
 | order_fulfill | chargedPrices            | {chargedPrices}       |
 | order_fulfill | chargedFees              | {chargedFees}         |
 | order_fulfill | returnedToAddress        | {returnedToAddress}   |
+| state_change  | bond                     | {token}               |
+| state_change  | old_state                | {oldState}            |
+| state_change  | new_state                | {newState}            |
 
 ## Handlers
 
@@ -40,6 +43,7 @@ The bonds module emits the following events:
 | create_bond | allow_sells              | {allowSells}             |
 | create_bond | signers [2]              | {signers}                |
 | create_bond | batch_blocks             | {batchBlocks}            |
+| create_bond | state                    | {state}                  |
 | message     | module                   | bonds                    |
 | message     | action                   | create_bond              |
 | message     | sender                   | {senderAddress}          |

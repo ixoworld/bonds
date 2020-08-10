@@ -6,11 +6,13 @@ import (
 )
 
 const (
-	TypeMsgCreateBond = "create_bond"
-	TypeMsgEditBond   = "edit_bond"
-	TypeMsgBuy        = "buy"
-	TypeMsgSell       = "sell"
-	TypeMsgSwap       = "swap"
+	TypeMsgCreateBond         = "create_bond"
+	TypeMsgEditBond           = "edit_bond"
+	TypeMsgBuy                = "buy"
+	TypeMsgSell               = "sell"
+	TypeMsgSwap               = "swap"
+	TypeMsgMakeOutcomePayment = "make_outcome_payment"
+	TypeMsgWithdrawShare      = "withdraw_share"
 )
 
 type MsgCreateBond struct {
@@ -28,16 +30,18 @@ type MsgCreateBond struct {
 	OrderQuantityLimits    sdk.Coins        `json:"order_quantity_limits" yaml:"order_quantity_limits"`
 	SanityRate             sdk.Dec          `json:"sanity_rate" yaml:"sanity_rate"`
 	SanityMarginPercentage sdk.Dec          `json:"sanity_margin_percentage" yaml:"sanity_margin_percentage"`
-	AllowSells             string           `json:"allow_sells" yaml:"allow_sells"`
+	AllowSells             bool             `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
+	OutcomePayment         sdk.Coins        `json:"outcome_payment" yaml:"outcome_payment"`
 }
 
 func NewMsgCreateBond(token, name, description string, creator sdk.AccAddress,
 	functionType string, functionParameters FunctionParams, reserveTokens []string,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress, maxSupply sdk.Coin,
 	orderQuantityLimits sdk.Coins, sanityRate, sanityMarginPercentage sdk.Dec,
-	allowSell string, signers []sdk.AccAddress, batchBlocks sdk.Uint) MsgCreateBond {
+	allowSell bool, signers []sdk.AccAddress, batchBlocks sdk.Uint,
+	outcomePayment sdk.Coins) MsgCreateBond {
 	return MsgCreateBond{
 		Token:                  token,
 		Name:                   name,
@@ -53,9 +57,10 @@ func NewMsgCreateBond(token, name, description string, creator sdk.AccAddress,
 		OrderQuantityLimits:    orderQuantityLimits,
 		SanityRate:             sanityRate,
 		SanityMarginPercentage: sanityMarginPercentage,
-		AllowSells:             strings.ToLower(allowSell),
+		AllowSells:             allowSell,
 		Signers:                signers,
 		BatchBlocks:            batchBlocks,
+		OutcomePayment:         outcomePayment,
 	}
 }
 
@@ -75,8 +80,6 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Fee address")
 	} else if strings.TrimSpace(msg.FunctionType) == "" {
 		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Function type")
-	} else if strings.TrimSpace(msg.AllowSells) == "" {
-		return ErrArgumentCannotBeEmpty(DefaultCodespace, "AllowSells")
 	}
 	// Note: FunctionParameters can be empty
 
@@ -100,9 +103,11 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 
 	// Validate coins
 	if !msg.MaxSupply.IsValid() {
-		return sdk.ErrInternal("max supply is invalid")
+		return sdk.ErrInvalidCoins("max supply is invalid")
 	} else if !msg.OrderQuantityLimits.IsValid() {
-		return sdk.ErrInternal("order quantity limits are invalid")
+		return sdk.ErrInvalidCoins("order quantity limits are invalid")
+	} else if !msg.OutcomePayment.IsValid() {
+		return sdk.ErrInvalidCoins("outcome payment is invalid")
 	}
 
 	// Check that max supply denom matches token denom
@@ -115,11 +120,6 @@ func (msg MsgCreateBond) ValidateBasic() sdk.Error {
 		return ErrArgumentCannotBeNegative(DefaultCodespace, "SanityRate")
 	} else if msg.SanityMarginPercentage.IsNegative() {
 		return ErrArgumentCannotBeNegative(DefaultCodespace, "SanityMarginPercentage")
-	}
-
-	// Check that true or false
-	if msg.AllowSells != TRUE && msg.AllowSells != FALSE {
-		return ErrArgumentMissingOrNonBoolean(DefaultCodespace, "AllowSells")
 	}
 
 	// Check FeePercentages not negative and don't add up to 100
@@ -252,14 +252,14 @@ func (msg MsgBuy) ValidateBasic() sdk.Error {
 
 	// Check that amount valid and non zero
 	if !msg.Amount.IsValid() {
-		return sdk.ErrInternal("amount is invalid")
+		return sdk.ErrInvalidCoins("amount is invalid")
 	} else if msg.Amount.Amount.IsZero() {
 		return ErrArgumentMustBePositive(DefaultCodespace, "Amount")
 	}
 
 	// Check that maxPrices valid
 	if !msg.MaxPrices.IsValid() {
-		return sdk.ErrInternal("maxprices is invalid")
+		return sdk.ErrInvalidCoins("maxprices is invalid")
 	}
 
 	return nil
@@ -297,7 +297,7 @@ func (msg MsgSell) ValidateBasic() sdk.Error {
 
 	// Check that amount valid and non zero
 	if !msg.Amount.IsValid() {
-		return sdk.ErrInternal("amount is invalid")
+		return sdk.ErrInvalidCoins("amount is invalid")
 	} else if msg.Amount.Amount.IsZero() {
 		return ErrArgumentMustBePositive(DefaultCodespace, "Amount")
 	}
@@ -345,7 +345,7 @@ func (msg MsgSwap) ValidateBasic() sdk.Error {
 
 	// Validate from amount
 	if !msg.From.IsValid() {
-		return sdk.ErrInternal("from amount is invalid")
+		return sdk.ErrInvalidCoins("from amount is invalid")
 	}
 
 	// Validate to token
@@ -379,3 +379,85 @@ func (msg MsgSwap) GetSigners() []sdk.AccAddress {
 func (msg MsgSwap) Route() string { return RouterKey }
 
 func (msg MsgSwap) Type() string { return TypeMsgSwap }
+
+type MsgMakeOutcomePayment struct {
+	Sender    sdk.AccAddress `json:"recipient" yaml:"recipient"`
+	BondToken string         `json:"bond_token" yaml:"bond_token"`
+}
+
+func NewMsgMakeOutcomePayment(sender sdk.AccAddress, bondToken string) MsgMakeOutcomePayment {
+	return MsgMakeOutcomePayment{
+		Sender:    sender,
+		BondToken: bondToken,
+	}
+}
+
+func (msg MsgMakeOutcomePayment) ValidateBasic() sdk.Error {
+	// Check if empty
+	if msg.Sender.Empty() {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Sender")
+	} else if strings.TrimSpace(msg.BondToken) == "" {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "BondToken")
+	}
+
+	// Validate bond token
+	err := CheckCoinDenom(msg.BondToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (msg MsgMakeOutcomePayment) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgMakeOutcomePayment) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+func (msg MsgMakeOutcomePayment) Route() string { return RouterKey }
+
+func (msg MsgMakeOutcomePayment) Type() string { return TypeMsgMakeOutcomePayment }
+
+type MsgWithdrawShare struct {
+	Recipient sdk.AccAddress `json:"recipient" yaml:"recipient"`
+	BondToken string         `json:"bond_token" yaml:"bond_token"`
+}
+
+func NewMsgWithdrawShare(recipient sdk.AccAddress, bondToken string) MsgWithdrawShare {
+	return MsgWithdrawShare{
+		Recipient: recipient,
+		BondToken: bondToken,
+	}
+}
+
+func (msg MsgWithdrawShare) ValidateBasic() sdk.Error {
+	// Check if empty
+	if msg.Recipient.Empty() {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "Recipient")
+	} else if strings.TrimSpace(msg.BondToken) == "" {
+		return ErrArgumentCannotBeEmpty(DefaultCodespace, "BondToken")
+	}
+
+	// Validate bond token
+	err := CheckCoinDenom(msg.BondToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (msg MsgWithdrawShare) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgWithdrawShare) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Recipient}
+}
+
+func (msg MsgWithdrawShare) Route() string { return RouterKey }
+
+func (msg MsgWithdrawShare) Type() string { return TypeMsgWithdrawShare }

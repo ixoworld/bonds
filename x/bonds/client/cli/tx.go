@@ -31,6 +31,8 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdBuy(cdc),
 		GetCmdSell(cdc),
 		GetCmdSwap(cdc),
+		GetCmdOutcomePayment(cdc),
+		GetCmdWithdrawShare(cdc),
 	)...)
 
 	return bondsTxCmd
@@ -54,9 +56,10 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			_orderQuantityLimits := viper.GetString(FlagOrderQuantityLimits)
 			_sanityRate := viper.GetString(FlagSanityRate)
 			_sanityMarginPercentage := viper.GetString(FlagSanityMarginPercentage)
-			_allowSells := viper.GetString(FlagAllowSells)
+			_allowSells := viper.GetBool(FlagAllowSells)
 			_signers := viper.GetString(FlagSigners)
 			_batchBlocks := viper.GetString(FlagBatchBlocks)
+			_outcomePayment := viper.GetString(FlagOutcomePayment)
 
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -125,11 +128,17 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 				return types.ErrArgumentMissingOrNonUInteger(types.DefaultCodespace, "max batch blocks")
 			}
 
+			// Parse order quantity limits
+			outcomePayment, err := sdk.ParseCoins(_outcomePayment)
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgCreateBond(_token, _name, _description,
 				cliCtx.GetFromAddress(), _functionType, functionParams,
 				reserveTokens, txFeePercentage, exitFeePercentage, feeAddress,
-				maxSupply, orderQuantityLimits, sanityRate,
-				sanityMarginPercentage, _allowSells, signers, batchBlocks)
+				maxSupply, orderQuantityLimits, sanityRate, sanityMarginPercentage,
+				_allowSells, signers, batchBlocks, outcomePayment)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
@@ -150,9 +159,9 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagOrderQuantityLimits)
 	_ = cmd.MarkFlagRequired(FlagSanityRate)
 	_ = cmd.MarkFlagRequired(FlagSanityMarginPercentage)
-	_ = cmd.MarkFlagRequired(FlagAllowSells)
 	_ = cmd.MarkFlagRequired(FlagSigners)
 	_ = cmd.MarkFlagRequired(FlagBatchBlocks)
+	// _ = cmd.MarkFlagRequired(FlagOutcomePayment) // Optional
 
 	return cmd
 }
@@ -270,12 +279,52 @@ func GetCmdSwap(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// Check that from amount and token can be parsed to a coin
-			from, err := client2.ParseTwoPartCoin(args[0], args[1])
+			from, err := client2.ParseTwoPartCoin(args[1], args[2])
 			if err != nil {
 				return err
 			}
 
 			msg := types.NewMsgSwap(cliCtx.GetFromAddress(), args[0], from, args[3])
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	return cmd
+}
+
+func GetCmdOutcomePayment(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "make-outcome-payment [bond-token]",
+		Example: "make-outcome-payment abc",
+		Short:   "Make an outcome payment to a bond",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			msg := types.NewMsgMakeOutcomePayment(cliCtx.GetFromAddress(), args[0])
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	return cmd
+}
+
+func GetCmdWithdrawShare(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "withdraw-share [bond-token]",
+		Example: "withdraw-share abc",
+		Short:   "Withdraw share from a bond that is in settlement state",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			msg := types.NewMsgWithdrawShare(cliCtx.GetFromAddress(), args[0])
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

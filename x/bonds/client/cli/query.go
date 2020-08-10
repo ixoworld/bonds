@@ -148,7 +148,7 @@ func GetCmdCurrentPrice(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			var out sdk.Coins
+			var out sdk.DecCoins
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
@@ -205,7 +205,7 @@ func GetCmdCustomPrice(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			var out sdk.Coins
+			var out sdk.DecCoins
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},

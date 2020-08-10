@@ -17,8 +17,8 @@ go test -mod=readonly github.com/ixoworld/bonds/x/bonds/app \
   -Period=5 \
   -Verbose \
   -Params="$SCRIPTPATH"/../input/SimulationParamsFile.json \
-  -ExportStatePath="$SCRIPTPATH"/../ExportState"$1".json \
-  -ExportStatsPath="$SCRIPTPATH"/../ExportStats"$1".json \
-  -PrintAllInvariants >"$SCRIPTPATH"/../ExportLog"$1".txt
+  -ExportStatePath="$SCRIPTPATH"/../ExportState"$1$2".json \
+  -ExportStatsPath="$SCRIPTPATH"/../ExportStats"$1$2".json \
+  -PrintAllInvariants >"$SCRIPTPATH"/../ExportLog"$1$2".txt
 
 echo "...$1 DONE."

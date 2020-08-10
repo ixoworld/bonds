@@ -286,6 +286,8 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               bond_token:
                 type: string
                 example: abc
@@ -312,6 +314,8 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               bond_token:
                 type: string
                 example: abc
@@ -335,6 +339,8 @@ paths:
           schema:
             type: object
             properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
               from_amount:
                 type: string
                 example: 100
@@ -344,7 +350,64 @@ paths:
               to_token:
                 type: string
                 example: res2
+  /bonds/make_outcome_payment:
+    post:
+      description: Make an outcome payment to a bond to progress it to SETTLE state
+      summary: Make outcome payment
+      tags:
+        - Bonds Module
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: make_outcome_payment_body
+          description: The bond token to make the outcome payment to
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              bond_token:
+                type: string
+                example: abc
+  /bonds/withdraw_share:
+    post:
+      description: As a bond token holder, withdraw the reserve tokens share from a bond in SETTLE state
+      summary: Withdraw share from bond
+      tags:
+        - Bonds Module
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: withdraw_share_body
+          description: The bond token to withdraw the share from
+          schema:
+            type: object
+            properties:
+              base_req:
+                $ref: "#/definitions/BaseReq"
+              bond_token:
+                type: string
+                example: abc
 definitions:
+  StakeCoin:
+    type: object
+    properties:
+      denom:
+        type: string
+        example: stake
+      amount:
+        type: string
+        example: 50
+  StakeCoins:
+    type: array
+    items:
+      $ref: "#/definitions/StakeCoin"
   AnyCoin:
     type: object
     properties:
@@ -525,6 +588,12 @@ definitions:
           batch_blocks:
             type: number
             example: 5
+          outcome_payment:
+            order_quantity_limits:
+              $ref: "#/definitions/AnyCoins"
+          state:
+            type: string
+            example: OPEN
   BatchQueryResult:
     type: object
     properties:
@@ -568,9 +637,42 @@ definitions:
         $ref: "#/definitions/ResCoins"
       total_fees:
         $ref: "#/definitions/ResCoins"
+  BaseReq:
+    type: object
+    properties:
+      from:
+        type: string
+        example: "cosmos1g9ahr6xhht5rmqven628nklxluzyv8z9jqjcmc"
+        description: Sender address or Keybase name to generate a transaction
+      memo:
+        type: string
+        example: "Sent via Cosmos Voyager 🚀"
+      chain_id:
+        type: string
+        example: "Cosmos-Hub"
+      account_number:
+        type: string
+        example: "0"
+      sequence:
+        type: string
+        example: "1"
+      gas:
+        type: string
+        example: "200000"
+      gas_adjustment:
+        type: string
+        example: "1.2"
+      fees:
+        $ref: "#/definitions/StakeCoins"
+      simulate:
+        type: boolean
+        example: false
+        description: Estimate gas for a transaction (cannot be used in conjunction with generate_only)
   BondCreation:
     type: object
     properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
       token:
         type: string
         example: abc
@@ -618,9 +720,14 @@ definitions:
       batch_blocks:
         type: string
         example: "5"
+      outcome_payment:
+        type: string
+        example: 100abc,200xyz,...
   BondEdit:
     type: object
     properties:
+      base_req:
+        $ref: "#/definitions/BaseReq"
       token:
         type: string
         example: abc
@@ -650,7 +757,7 @@ definitions:
         example: "a"
       value:
         type: string
-        example: "1"
+        example: "1.1"
   FunctionParameters:
     type: array
     items:

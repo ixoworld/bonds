@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/ixoworld/bonds/x/bonds/app"
@@ -25,13 +24,12 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
+// bondsd custom flags
 const flagInvCheckPeriod = "inv-check-period"
 
 var invCheckPeriod uint
 
 func main() {
-	cobra.EnableCommandSorting = false
-
 	cdc := simapp.MakeCodec()
 
 	config := sdk.GetConfig()
@@ -42,12 +40,13 @@ func main() {
 	config.Seal()
 
 	ctx := server.NewDefaultContext()
-
+	cobra.EnableCommandSorting = false
 	rootCmd := &cobra.Command{
 		Use:               "bondsd",
-		Short:             "Bonds Module App Daemon (server)",
+		Short:             "Bonds Daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
+
 	// CLI commands to initialize the chain
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(ctx, cdc, simapp.ModuleBasics, simapp.DefaultNodeHome),
@@ -61,7 +60,6 @@ func main() {
 		client.NewCompletionCmd(rootCmd, true),
 		testnetCmd(ctx, cdc, simapp.ModuleBasics, auth.GenesisAccountIterator{}),
 		replayCmd(),
-		debug.Cmd(cdc),
 	)
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
