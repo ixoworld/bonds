@@ -94,14 +94,14 @@ The owner of a bond can edit some of the bond's parameters using `MsgEditBond`.
 | **Field**              | **Type**           | **Description**                                                                                               |
 |:-----------------------|:-------------------|:--------------------------------------------------------------------------------------------------------------|
 | Token                  | `string`           | The bond to be edited |
-| Name                   | `string`           | |
-| Description            | `string`           | |
-| FunctionType           | `string`           | |
-| OrderQuantityLimits    | `sdk.Coins`        | |
-| SanityRate             | `sdk.Dec`          | |
-| SanityMarginPercentage | `sdk.Dec`          | |
+| Name                   | `string`           | Refer to MsgCreateBond |
+| Description            | `string`           | Refer to MsgCreateBond |
+| FunctionType           | `string`           | Refer to MsgCreateBond |
+| OrderQuantityLimits    | `sdk.Coins`        | Refer to MsgCreateBond |
+| SanityRate             | `sdk.Dec`          | Refer to MsgCreateBond |
+| SanityMarginPercentage | `sdk.Dec`          | Refer to MsgCreateBond |
 | Editor                 | `sdk.AccAddress`   | The account address of the user editing the bond |
-| Signers                | `[]sdk.AccAddress` | |
+| Signers                | `[]sdk.AccAddress` | Refer to MsgCreateBond |
 
 This message is expected to fail if:
 - any editable field violates the restrictions set for the same field in `MsgCreateBond`
