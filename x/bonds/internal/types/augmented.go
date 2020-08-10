@@ -32,7 +32,7 @@ func Reserve(S sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
 // and an invariant coeficient V0
 // return a spot price P as a function of reserve R
 func SpotPrice(R sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
-	kappaDec := sdk.NewDecFromInt(sdk.NewInt(kappa))
+	kappaDec := sdk.NewInt(kappa).ToDec()
 
 	temp1, err := ApproxRoot(V0, uint64(kappa))
 	if err != nil {

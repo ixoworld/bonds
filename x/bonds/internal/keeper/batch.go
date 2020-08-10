@@ -88,8 +88,8 @@ func (k Keeper) AddSwapOrder(ctx sdk.Context, token string, so types.SwapOrder) 
 func (k Keeper) GetBatchBuySellPrices(ctx sdk.Context, token string, batch types.Batch) (buyPricesPT, sellPricesPT sdk.DecCoins, err sdk.Error) {
 	bond := k.MustGetBond(ctx, token)
 
-	buyAmountDec := sdk.NewDecFromInt(batch.TotalBuyAmount.Amount)
-	sellAmountDec := sdk.NewDecFromInt(batch.TotalSellAmount.Amount)
+	buyAmountDec := batch.TotalBuyAmount.Amount.ToDec()
+	sellAmountDec := batch.TotalSellAmount.Amount.ToDec()
 
 	reserveBalances := k.GetReserveBalances(ctx, token)
 	currentPricesPT, err := bond.GetCurrentPricesPT(reserveBalances)
@@ -157,7 +157,7 @@ func (k Keeper) GetUpdatedBatchPricesAfterBuy(ctx sdk.Context, token string, bo 
 	if bond.FunctionType == types.AugmentedFunction &&
 		bond.State == types.HatchState {
 		args := bond.FunctionParameters.AsMap()
-		if sdk.NewDecFromInt(adjustedSupplyWithBuy.Amount).GT(args["S0"].Ceil()) {
+		if adjustedSupplyWithBuy.Amount.ToDec().GT(args["S0"].Ceil()) {
 			return nil, nil, sdk.ErrInvalidCoins(
 				"Buy exceeds initial supply S0. Consider buying less tokens.")
 		}
@@ -230,25 +230,53 @@ func (k Keeper) PerformBuyAtPrice(ctx sdk.Context, token string, bo types.BuyOrd
 		bond.State == types.HatchState {
 		args := bond.FunctionParameters.AsMap()
 		theta := args["theta"]
-		reservePricesRoundedDec := sdk.NewDecCoins(reservePricesRounded)
 
-		fundingPoolShare, _ := reservePricesRoundedDec.MulDec(theta).TruncateDecimal()
-		toInitialReserve := reservePricesRounded.Sub(fundingPoolShare)
+		// Get current reserve
+		var currentReserve sdk.Int
+		if bond.CurrentReserve.Empty() {
+			currentReserve = sdk.ZeroInt()
+		} else {
+			// Reserve balances should all be equal given that we are always
+			// applying the same additions/subtractions to all reserve balances.
+			// Thus we can pick the first reserve balance as the global balance.
+			currentReserve = k.GetReserveBalances(ctx, token)[0].Amount
+		}
 
-		err = k.DepositReserveFromModule(
-			ctx, bond.Token, types.BatchesIntermediaryAccount, toInitialReserve)
+		// Calculate expected new reserve (as fraction 1-theta of new total raise)
+		newSupply := bond.CurrentSupply.Add(bo.Amount).Amount
+		newTotalRaise := args["p0"].Mul(newSupply.ToDec())
+		newReserve := newTotalRaise.Mul(
+			sdk.OneDec().Sub(theta)).Ceil().TruncateInt()
+
+		// Calculate amount that should go into initial reserve
+		toInitialReserve := newReserve.Sub(currentReserve)
+		if reservePricesRounded[0].Amount.LT(toInitialReserve) {
+			// Reserve supplied by buyer is insufficient
+			return types.ErrInsufficientReserveToBuy(types.DefaultCodespace)
+		}
+		coinsToInitialReserve, _ := bond.GetNewReserveDecCoins(
+			toInitialReserve.ToDec()).TruncateDecimal()
+
+		// Calculate amount that should go into funding pool
+		coinsToFundingPool := reservePricesRounded.Sub(coinsToInitialReserve)
+
+		// Send reserve tokens to initial reserve
+		err = k.DepositReserveFromModule(ctx, bond.Token,
+			types.BatchesIntermediaryAccount, coinsToInitialReserve)
 		if err != nil {
 			return err
 		}
+
+		// Send reserve tokens to funding pool
 		err = k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
-			types.BatchesIntermediaryAccount, bond.FeeAddress, fundingPoolShare)
+			types.BatchesIntermediaryAccount, bond.FeeAddress, coinsToFundingPool)
 		if err != nil {
 			return err
 		}
 
 		extraEventAttributes = append(extraEventAttributes,
 			sdk.NewAttribute(types.AttributeKeyChargedPricesReserve, toInitialReserve.String()),
-			sdk.NewAttribute(types.AttributeKeyChargedPricesFunding, fundingPoolShare.String()),
+			sdk.NewAttribute(types.AttributeKeyChargedPricesFunding, coinsToFundingPool.String()),
 		)
 	} else {
 		err = k.DepositReserveFromModule(

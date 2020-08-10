@@ -1098,3 +1098,50 @@ func TestEndBlockerAugmentedFunctionDecimalS0(t *testing.T) {
 	require.True(t, bond.AllowSells)
 	require.Equal(t, types.OpenState, bond.State)
 }
+
+func TestEndBlockerAugmentedFunctionSmallBuys(t *testing.T) {
+	app, ctx := createTestApp(false)
+	h := bonds.NewHandler(app.BondsKeeper)
+
+	// Create bond with augmented function type, small params, and zero fees
+	createMsg := newValidMsgCreateAugmentedBond()
+	createMsg.FunctionParameters = types.FunctionParams{
+		types.NewFunctionParam("d0", sdk.MustNewDecFromStr("10.0")),
+		types.NewFunctionParam("p0", sdk.MustNewDecFromStr("1.0")),
+		types.NewFunctionParam("theta", sdk.MustNewDecFromStr("0.9")),
+		types.NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0"))}
+	createMsg.TxFeePercentage = sdk.ZeroDec()
+	createMsg.ExitFeePercentage = sdk.ZeroDec()
+	h(ctx, createMsg)
+
+	// Add reserve tokens to user
+	err := addCoinsToUser(app, ctx, sdk.Coins{sdk.NewInt64Coin(reserveToken, 1000000)})
+	require.Nil(t, err)
+
+	// Get bond to confirm allowSells==false, S0==10, R0==1 state==hatch
+	bond := app.BondsKeeper.MustGetBond(ctx, token)
+	require.False(t, bond.AllowSells)
+	require.Equal(t, sdk.NewDec(10), bond.FunctionParameters.AsMap()["S0"])
+	require.Equal(t, sdk.NewDec(1), bond.FunctionParameters.AsMap()["R0"])
+	require.Equal(t, types.HatchState, bond.State)
+
+	// Perform 10 buys of 1 token each
+	for i := 0; i < 10; i++ {
+		res := h(ctx, newValidMsgBuy(1, 1))
+		require.True(t, res.IsOK())
+	}
+	bonds.EndBlocker(ctx, app.BondsKeeper)
+
+	// Confirm allowSells==true, state==open
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	require.True(t, bond.AllowSells)
+	require.Equal(t, types.OpenState, bond.State)
+
+	// Confirm reserve balance is R0 [i.e. d0*(1-theta)] = 1
+	require.Equal(t, int64(1), bond.CurrentReserve[0].Amount.Int64())
+
+	// Confirm fee address balance is d0*theta = 9
+	feeAddressBalance := app.BankKeeper.GetCoins(
+		ctx, bond.FeeAddress).AmountOf(reserveToken).Int64()
+	require.Equal(t, int64(9), feeAddressBalance)
+}

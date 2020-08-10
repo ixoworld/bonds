@@ -253,7 +253,7 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 	}
 
 	args := bond.FunctionParameters.AsMap()
-	x := sdk.NewDecFromInt(supply)
+	x := supply.ToDec()
 	switch bond.FunctionType {
 	case PowerFunction:
 		m := args["m"]
@@ -324,7 +324,7 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 	}
 
 	args := bond.FunctionParameters.AsMap()
-	x := sdk.NewDecFromInt(supply)
+	x := supply.ToDec()
 	switch bond.FunctionType {
 	case PowerFunction:
 		m := args["m"]
@@ -379,15 +379,14 @@ func (bond Bond) GetReserveDeltaForLiquidityDelta(mintOrBurn sdk.Int, reserveBal
 	case SwapperFunction:
 		resToken1 := bond.ReserveTokens[0]
 		resToken2 := bond.ReserveTokens[1]
-		resBalance1 := sdk.NewDecFromInt(reserveBalances.AmountOf(resToken1))
-		resBalance2 := sdk.NewDecFromInt(reserveBalances.AmountOf(resToken2))
-		mintOrBurnDec := sdk.NewDecFromInt(mintOrBurn)
+		resBalance1 := reserveBalances.AmountOf(resToken1).ToDec()
+		resBalance2 := reserveBalances.AmountOf(resToken2).ToDec()
 
 		// Using Uniswap formulae: x' = (1+-α)x = x +- Δx, where α = Δx/x
 		// Where x is any of the two reserve balances or the current supply
 		// and x' is any of the updated reserve balances or the updated supply
 		// By making Δx subject of the formula: Δx = αx
-		alpha := mintOrBurnDec.Quo(sdk.NewDecFromInt(bond.CurrentSupply.Amount))
+		alpha := mintOrBurn.ToDec().Quo(bond.CurrentSupply.Amount.ToDec())
 
 		result := sdk.DecCoins{
 			sdk.NewDecCoinFromDec(resToken1, alpha.Mul(resBalance1)),
@@ -413,7 +412,7 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 	if bond.FunctionType == AugmentedFunction && bond.State == HatchState {
 		args := bond.FunctionParameters.AsMap()
 		if bond.State == HatchState {
-			price := args["p0"].Mul(sdk.NewDecFromInt(mint))
+			price := args["p0"].Mul(mint.ToDec())
 			return bond.GetNewReserveDecCoins(price), nil
 		}
 	}
@@ -430,8 +429,9 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 			priceToMint = result
 		} else {
 			// Reserve balances should all be equal given that we are always
-			// applying the same additions/subtractions to all reserve balances
-			commonReserveBalance := sdk.NewDecFromInt(reserveBalances[0].Amount)
+			// applying the same additions/subtractions to all reserve balances.
+			// Thus we can pick the first reserve balance as the global balance.
+			commonReserveBalance := reserveBalances[0].Amount.ToDec()
 			priceToMint = result.Sub(commonReserveBalance)
 		}
 		if priceToMint.IsNegative() {
@@ -474,7 +474,7 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 			// Reserve balances should all be equal given that we are always
 			// applying the same additions/subtractions to all reserve balances.
 			// Thus we can pick the first reserve balance as the global balance.
-			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
+			reserveBalance = reserveBalances[0].Amount.ToDec()
 		}
 
 		if result.GT(reserveBalance) {
@@ -617,8 +617,8 @@ func (bond Bond) ReservesViolateSanityRate(newReserves sdk.Coins) bool {
 	// Get new rate from new balances
 	resToken1 := bond.ReserveTokens[0]
 	resToken2 := bond.ReserveTokens[1]
-	resBalance1 := sdk.NewDecFromInt(newReserves.AmountOf(resToken1))
-	resBalance2 := sdk.NewDecFromInt(newReserves.AmountOf(resToken2))
+	resBalance1 := newReserves.AmountOf(resToken1).ToDec()
+	resBalance2 := newReserves.AmountOf(resToken2).ToDec()
 	exchangeRate := resBalance1.Quo(resBalance2)
 
 	// Get max and min acceptable rates

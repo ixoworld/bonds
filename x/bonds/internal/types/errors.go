@@ -48,6 +48,7 @@ const (
 	CodeSanityRateViolated         CodeType = 325
 	CodeFeeTooLarge                CodeType = 326
 	CodeNoBondTokensOwned          CodeType = 327
+	CodeInsufficientReserveToBuy   CodeType = 328
 )
 
 func ErrArgumentCannotBeEmpty(codespace sdk.CodespaceType, argument string) sdk.Error {
@@ -238,4 +239,9 @@ func ErrFeesCannotBeOrExceed100Percent(codespace sdk.CodespaceType) sdk.Error {
 func ErrNoBondTokensOwned(codespace sdk.CodespaceType) sdk.Error {
 	errMsg := "No bond tokens of this bond are owned"
 	return sdk.NewError(codespace, CodeNoBondTokensOwned, errMsg)
+}
+
+func ErrInsufficientReserveToBuy(codespace sdk.CodespaceType) sdk.Error {
+	errMsg := "Insufficient reserve was supplied to perform buy order"
+	return sdk.NewError(codespace, CodeInsufficientReserveToBuy, errMsg)
 }

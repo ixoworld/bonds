@@ -62,7 +62,7 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 		if bond.FunctionType == types.AugmentedFunction &&
 			bond.State == types.HatchState {
 			args := bond.FunctionParameters.AsMap()
-			if sdk.NewDecFromInt(bond.CurrentSupply.Amount).GTE(args["S0"]) {
+			if bond.CurrentSupply.Amount.ToDec().GTE(args["S0"]) {
 				keeper.SetBondState(ctx, bond.Token, types.OpenState)
 				bond = keeper.MustGetBond(ctx, bond.Token) // get bond again
 				bond.AllowSells = true                     // enable sells
@@ -556,7 +556,7 @@ func handleMsgWithdrawShare(ctx sdk.Context, keeper keeper.Keeper, msg types.Msg
 
 	// Calculate amount owned
 	remainingReserve := keeper.GetReserveBalances(ctx, bond.Token)
-	bondTokensShare := sdk.NewDecFromInt(bondTokensOwnedAmount).QuoInt(bond.CurrentSupply.Amount)
+	bondTokensShare := bondTokensOwnedAmount.ToDec().QuoInt(bond.CurrentSupply.Amount)
 	reserveOwedDec := sdk.NewDecCoins(remainingReserve).MulDec(bondTokensShare)
 	reserveOwed, _ := reserveOwedDec.TruncateDecimal()
 

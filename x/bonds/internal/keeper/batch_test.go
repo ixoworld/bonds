@@ -325,21 +325,22 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		maxPrices      sdk.Coins
 		txFee          sdk.Dec
 		expectedPrices sdk.Int
+		fulfillable    bool
 	}{
 		{
-			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), sdk.NewInt(1000),
+			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), sdk.NewInt(1000), true,
 		}, // (10 * 100) + (10 * FEE) = 1000 <= 1100, where FEE=0
 		{
-			sdk.NewInt(11), maxPrices, sdk.ZeroDec(), sdk.NewInt(1100),
+			sdk.NewInt(11), maxPrices, sdk.ZeroDec(), sdk.NewInt(1100), true,
 		}, // (11 * 100) + (11 * FEE) = 1100 <= 1100, where FEE=0
 		{
-			sdk.NewInt(12), maxPrices, sdk.ZeroDec(), sdk.NewInt(1200),
+			sdk.NewInt(12), maxPrices, sdk.ZeroDec(), sdk.NewInt(1200), false,
 		}, // (12 * 100) + (12 * FEE) = 1200 > 1100, where FEE=0 [not fulfillable]
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(10), sdk.NewInt(1100),
+			sdk.NewInt(10), maxPrices, sdk.NewDec(10), sdk.NewInt(1100), true,
 		}, // (10 * 100) + (10 * FEE) = 1100 <= 1100, where FEE=10
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(20), sdk.NewInt(1200),
+			sdk.NewInt(10), maxPrices, sdk.NewDec(20), sdk.NewInt(1200), false,
 		}, // (10 * 100) + (10 * FEE) = 1200 > 1100, where FEE=20 [not fulfillable]
 	}
 
@@ -378,12 +379,12 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		// Perform buy
 		err = app.BondsKeeper.PerformBuyAtPrice(ctx, bond.Token, bo, buyPrices)
 
-		// Check if error due to max price exceeded
-		if totalPrices.IsAnyGT(tc.maxPrices) {
+		// Check if buy is fulfillable (i.e. if maxPrices >= totalPrices)
+		if tc.fulfillable {
+			require.NoError(t, err)
+		} else {
 			require.Error(t, err)
 			continue // app would panic at this stage
-		} else {
-			require.NoError(t, err)
 		}
 
 		// Calculate increase in buyer balance
@@ -412,13 +413,16 @@ func TestPerformBuyAtPrice(t *testing.T) {
 func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 	app, ctx := createTestApp(false)
 	bond := getValidAugmentedFunctionBond()
+	bond.FunctionParameters = types.FunctionParams{
+		types.NewFunctionParam("d0", sdk.MustNewDecFromStr("500.0")),
+		types.NewFunctionParam("p0", sdk.MustNewDecFromStr("100.0")),
+		types.NewFunctionParam("theta", sdk.MustNewDecFromStr("0.4")),
+		types.NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0"))}
+	args := bond.FunctionParameters.AsMap()
+	// price p0 set to 100 so that this test matches other TestPerformBuyAtPrice
 
-	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
+	buyPrices := sdk.DecCoins{sdk.NewDecCoinFromDec(reserveToken, args["p0"])}
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
-
-	theta := bond.FunctionParameters.AsMap()["theta"]
-	require.True(t, theta.GT(sdk.ZeroDec()) && theta.LT(sdk.OneDec()))
-	// above check just to make sure that this is a meaningful test
 
 	testCases := []struct {
 		amount         sdk.Int
@@ -426,24 +430,25 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		txFee          sdk.Dec
 		state          string
 		expectedPrices sdk.Int
+		fulfillable    bool
 	}{
 		{
-			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), types.HatchState, sdk.NewInt(1000),
+			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), types.HatchState, sdk.NewInt(1000), true,
 		}, // (10 * 100) + (10 * FEE) = 1000 <= 1100, where FEE=0
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(10), types.HatchState, sdk.NewInt(1100),
+			sdk.NewInt(10), maxPrices, sdk.NewDec(10), types.HatchState, sdk.NewInt(1100), true,
 		}, // (10 * 100) + (10 * FEE) = 1100 <= 1100, where FEE=10
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(20), types.HatchState, sdk.NewInt(1200),
+			sdk.NewInt(10), maxPrices, sdk.NewDec(20), types.HatchState, sdk.NewInt(1200), false,
 		}, // (10 * 100) + (10 * FEE) = 1200 > 1100, where FEE=20 [not fulfillable]
 		{
-			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), types.OpenState, sdk.NewInt(1000),
+			sdk.NewInt(10), maxPrices, sdk.ZeroDec(), types.OpenState, sdk.NewInt(1000), true,
 		}, // (10 * 100) + (10 * FEE) = 1000 <= 1100, where FEE=0
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(10), types.OpenState, sdk.NewInt(1100),
+			sdk.NewInt(10), maxPrices, sdk.NewDec(10), types.OpenState, sdk.NewInt(1100), true,
 		}, // (10 * 100) + (10 * FEE) = 1100 <= 1100, where FEE=10
 		{
-			sdk.NewInt(10), maxPrices, sdk.NewDec(20), types.OpenState, sdk.NewInt(1200),
+			sdk.NewInt(10), maxPrices, sdk.NewDec(20), types.OpenState, sdk.NewInt(1200), false,
 		}, // (10 * 100) + (10 * FEE) = 1200 > 1100, where FEE=20 [not fulfillable]
 	}
 
@@ -483,12 +488,12 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		// Perform buy
 		err = app.BondsKeeper.PerformBuyAtPrice(ctx, bond.Token, bo, buyPrices)
 
-		// Check if error due to max price exceeded
-		if totalPrices.IsAnyGT(tc.maxPrices) {
+		// Check if buy is fulfillable (i.e. if maxPrices >= totalPrices)
+		if tc.fulfillable {
+			require.NoError(t, err)
+		} else {
 			require.Error(t, err)
 			continue // app would panic at this stage
-		} else {
-			require.NoError(t, err)
 		}
 
 		// Calculate increase in buyer balance
@@ -510,11 +515,11 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		require.Equal(t, txFees.IsZero(), tc.txFee.IsZero())
 		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal), newBuyerBal)
 		if tc.state == types.HatchState {
-			pricesFundingPoolShare, _ := sdk.NewDecCoins(reservePricesRounded).MulDec(theta).TruncateDecimal()
-			actualFeeAddrChange := txFees.Add(pricesFundingPoolShare)
-			actualResAddrChange := reservePricesRounded.Sub(pricesFundingPoolShare)
-			require.Equal(t, prevFeeAddrBal.Add(actualFeeAddrChange), newFeeAddrBal)
-			require.Equal(t, prevReserveBal.Add(actualResAddrChange), newReserveBal)
+			toInitialReserve, _ := sdk.NewDecCoins(reservePricesRounded).MulDec(
+				sdk.OneDec().Sub(args["theta"])).TruncateDecimal()
+			toFundingPool := txFees.Add(reservePricesRounded.Sub(toInitialReserve))
+			require.Equal(t, prevReserveBal.Add(toInitialReserve), newReserveBal)
+			require.Equal(t, prevFeeAddrBal.Add(toFundingPool), newFeeAddrBal)
 		} else {
 			require.Equal(t, prevFeeAddrBal.Add(txFees), newFeeAddrBal)
 			require.Equal(t, prevReserveBal.Add(reservePricesRounded), newReserveBal)
@@ -664,7 +669,7 @@ func TestPerformSwap(t *testing.T) {
 
 	for _, tc := range testCases {
 		// Constant product
-		cp := sdk.NewDecFromInt(tc.inReserve.Amount.Mul(tc.outReserve.Amount))
+		cp := tc.inReserve.Amount.Mul(tc.outReserve.Amount).ToDec()
 
 		// Create swap order
 		fromAmount := sdk.NewCoin(tc.fromToken, swapAmount)
@@ -692,7 +697,7 @@ func TestPerformSwap(t *testing.T) {
 		// Calculations
 		txFees := bond.GetTxFees(fromAmountsDec)
 		totalIns := fromAmounts.Sub(txFees) // into reserves
-		newInReserveDec := sdk.NewDecFromInt(tc.inReserve.Amount.Add(totalIns.AmountOf(tc.fromToken)))
+		newInReserveDec := tc.inReserve.Amount.Add(totalIns.AmountOf(tc.fromToken)).ToDec()
 		newOutReserveDec := sdk.NewDecCoinFromDec(tc.toToken, cp.Quo(newInReserveDec))
 		totalOuts := sdk.Coins{types.RoundReserveReturn(sdk.NewDecCoinFromCoin(tc.outReserve).Sub(newOutReserveDec))} // out of reserves (i.e. returns)
 
@@ -931,7 +936,7 @@ func TestPerformSwaps(t *testing.T) {
 		// Constant product
 		inReserve := sdk.NewCoin(tc.fromToken, globalReserveBal.AmountOf(tc.fromToken))
 		outReserve := sdk.NewCoin(tc.toToken, globalReserveBal.AmountOf(tc.toToken))
-		cp := sdk.NewDecFromInt(inReserve.Amount.Mul(outReserve.Amount))
+		cp := inReserve.Amount.Mul(outReserve.Amount).ToDec()
 
 		// Create and add swap order
 		fromAmount := sdk.NewCoin(tc.fromToken, tc.amount)
@@ -948,7 +953,7 @@ func TestPerformSwaps(t *testing.T) {
 			globalIncreaseInSwapperBal = globalIncreaseInSwapperBal.Add(fromAmounts)
 		} else {
 			// Calculations
-			newInReserveDec := sdk.NewDecFromInt(inReserve.Amount.Add(fromAmount.Amount))
+			newInReserveDec := inReserve.Amount.Add(fromAmount.Amount).ToDec()
 			newOutReserveDec := sdk.NewDecCoinFromDec(tc.toToken, cp.Quo(newInReserveDec))
 			totalOuts := sdk.Coins{types.RoundReserveReturn(sdk.NewDecCoinFromCoin(outReserve).Sub(newOutReserveDec))} // out of reserves (i.e. returns)
 			globalIncreaseInSwapperBal = globalIncreaseInSwapperBal.Add(totalOuts)

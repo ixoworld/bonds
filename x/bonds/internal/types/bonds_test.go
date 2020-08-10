@@ -543,10 +543,10 @@ func TestGetReturnsForSwap(t *testing.T) {
 
 	zeroPoint1Percent := sdk.MustNewDecFromStr("0.001")
 	largeInput := maxInt64
-	largeFee := sdk.NewDecFromInt(largeInput).Mul(
+	largeFee := largeInput.ToDec().Mul(
 		zeroPoint1Percent).Ceil().TruncateInt()
 	smallInput := sdk.NewInt(3) // but not too small
-	smallFee := sdk.NewDecFromInt(smallInput).Mul(
+	smallFee := smallInput.ToDec().Mul(
 		zeroPoint1Percent).Ceil().TruncateInt()
 
 	testCases := []struct {
