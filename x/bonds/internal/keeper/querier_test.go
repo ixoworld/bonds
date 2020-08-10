@@ -118,7 +118,7 @@ func TestQueryCurrentPrice(t *testing.T) {
 	app, ctx := createTestApp(false)
 	querier := keeper.NewQuerier(app.BondsKeeper)
 	req := abci.RequestQuery{}
-	var queryResult sdk.Coins
+	var queryResult sdk.DecCoins
 
 	// Initially error since no bond
 	res, err := querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
@@ -132,18 +132,17 @@ func TestQueryCurrentPrice(t *testing.T) {
 	// Get current price directly
 	reserveBalances := app.BondsKeeper.GetReserveBalances(ctx, token)
 	currentPrices, _ := bond.GetCurrentPricesPT(reserveBalances)
-	roundedPrices := types.RoundReservePrices(currentPrices)
 
 	// Calculate current price manually
 	// y = mx^n + c = 12(0^2) + 100 = 0 + 100 = 100
-	manualPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 100)}
+	manualPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 
 	// Check that prices are correct
 	res, err = querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
-	require.Equal(t, queryResult, roundedPrices)
+	require.Equal(t, queryResult, currentPrices)
 	require.Equal(t, queryResult, manualPrices)
 
 	// Change current supply to 10 for increased price
@@ -153,26 +152,60 @@ func TestQueryCurrentPrice(t *testing.T) {
 	// Get current price directly
 	reserveBalances = app.BondsKeeper.GetReserveBalances(ctx, token)
 	currentPrices, _ = bond.GetCurrentPricesPT(reserveBalances)
-	roundedPrices = types.RoundReservePrices(currentPrices)
 
 	// Calculate current price manually
 	// y = mx^n + c = 12(10^2) + 100 = 1200 + 100 = 1300
-	manualPrices = sdk.Coins{sdk.NewInt64Coin(reserveToken, 1300)}
+	manualPrices = sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 1300)}
 
 	// Check that prices are correct
 	res, err = querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
-	require.Equal(t, queryResult, roundedPrices)
+	require.Equal(t, queryResult, currentPrices)
 	require.Equal(t, queryResult, manualPrices)
+}
+
+func TestQueryCurrentPriceWithZeroPrice(t *testing.T) {
+	app, ctx := createTestApp(false)
+	querier := keeper.NewQuerier(app.BondsKeeper)
+	req := abci.RequestQuery{}
+	var queryResult sdk.DecCoins
+
+	// Initially error since no bond
+	res, err := querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	// Add bond
+	bond := getValidBond()
+	bond.FunctionParameters = types.FunctionParams{
+		types.NewFunctionParam("m", sdk.NewDec(12)),
+		types.NewFunctionParam("n", sdk.NewDec(2)),
+		types.NewFunctionParam("c", sdk.NewDec(0))} // set to 0 for P(R=0)=0
+	app.BondsKeeper.SetBond(ctx, token, bond)
+
+	// Calculate current price manually
+	// y = mx^n + c = 12(0^2) + 0 = 0 + 0 = 0
+	manualPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 0)}
+
+	// Check that prices are correct
+	res, err = querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
+	require.Equal(t, manualPrices, queryResult)
+	require.Equal(t, "0.000000000000000000res", queryResult.String())
+
+	// Important note: the fact that queryResult is "0.000000000000000000res"
+	// rather than the default "" (for empty coins) is intentional
 }
 
 func TestQueryCurrentPriceForSwapper(t *testing.T) {
 	app, ctx := createTestApp(false)
 	querier := keeper.NewQuerier(app.BondsKeeper)
 	req := abci.RequestQuery{}
-	var queryResult sdk.Coins
+	var queryResult sdk.DecCoins
 
 	// Initially error since no bond
 	res, err := querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
@@ -204,27 +237,28 @@ func TestQueryCurrentPriceForSwapper(t *testing.T) {
 		sdk.NewInt64Coin(reserveToken, 200),
 		sdk.NewInt64Coin(reserveToken2, 300),
 	)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, newReserve)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, newReserve)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, newReserve)
 
 	// Get current price directly
 	reserveBalances = app.BondsKeeper.GetReserveBalances(ctx, token)
 	currentPrices, _ := bond.GetCurrentPricesPT(reserveBalances)
-	roundedPrices := types.RoundReservePrices(currentPrices)
 
 	// Calculate current price manually
 	// (since 2 tokens (current supply) => 200res,300rez then by the
 	//  constant product formula, another 1 token => 100res,150rez)
-	manualPrices := sdk.NewCoins(
-		sdk.NewInt64Coin(reserveToken, 100),
-		sdk.NewInt64Coin(reserveToken2, 150),
-	)
+	manualPrices := sdk.DecCoins([]sdk.DecCoin{
+		sdk.NewInt64DecCoin(reserveToken, 100),
+		sdk.NewInt64DecCoin(reserveToken2, 150),
+	})
 
 	// Check that prices are correct
 	res, err = querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
-	require.Equal(t, queryResult, roundedPrices)
+	require.Equal(t, queryResult, currentPrices)
 	require.Equal(t, queryResult, manualPrices)
 }
 
@@ -248,14 +282,16 @@ func TestQueryCurrentReserve(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
-	require.Nil(t, queryResult)
+	require.Equal(t, "0res", queryResult.String())
 
 	// Send 200res,300rez to reserve
 	newReserve := sdk.NewCoins(
 		sdk.NewInt64Coin(reserveToken, 200),
 		sdk.NewInt64Coin(reserveToken2, 300),
 	)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, newReserve)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, newReserve)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, newReserve)
 
 	// Get current reserve (now 200token2,300token3)
 	reserveBalances := app.BondsKeeper.GetReserveBalances(ctx, token)
@@ -273,7 +309,7 @@ func TestQueryCustomPrice(t *testing.T) {
 	app, ctx := createTestApp(false)
 	querier := keeper.NewQuerier(app.BondsKeeper)
 	req := abci.RequestQuery{}
-	var queryResult sdk.Coins
+	var queryResult sdk.DecCoins
 
 	// Initially error since no bond
 	dummySupply := sdk.ZeroInt()
@@ -290,11 +326,10 @@ func TestQueryCustomPrice(t *testing.T) {
 	bond, _ = app.BondsKeeper.GetBond(ctx, token)
 	customSupply := sdk.ZeroInt()
 	customPrices, _ := bond.GetPricesAtSupply(customSupply)
-	roundedPrices := types.RoundReservePrices(customPrices)
 
 	// Calculate current price manually
 	// y = mx^n + c = 12(0^2) + 100 = 0 + 100 = 100
-	manualPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 100)}
+	manualPrices := sdk.DecCoins([]sdk.DecCoin{sdk.NewInt64DecCoin(reserveToken, 100)})
 
 	// Check that prices are correct
 	res, err = querier(ctx,
@@ -302,18 +337,17 @@ func TestQueryCustomPrice(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
-	require.Equal(t, queryResult, roundedPrices)
+	require.Equal(t, queryResult, customPrices)
 	require.Equal(t, queryResult, manualPrices)
 
 	// Get custom price directly with supply=10
 	bond, _ = app.BondsKeeper.GetBond(ctx, token)
 	customSupply = sdk.NewInt(10)
 	customPrices, _ = bond.GetPricesAtSupply(customSupply)
-	roundedPrices = types.RoundReservePrices(customPrices)
 
 	// Calculate current price manually
 	// y = mx^n + c = 12(10^2) + 100 = 1200 + 100 = 1300
-	manualPrices = sdk.Coins{sdk.NewInt64Coin(reserveToken, 1300)}
+	manualPrices = sdk.DecCoins([]sdk.DecCoin{sdk.NewInt64DecCoin(reserveToken, 1300)})
 
 	// Check that prices are correct
 	res, err = querier(ctx,
@@ -321,7 +355,7 @@ func TestQueryCustomPrice(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &queryResult)
-	require.Equal(t, queryResult, roundedPrices)
+	require.Equal(t, queryResult, customPrices)
 	require.Equal(t, queryResult, manualPrices)
 }
 
@@ -376,7 +410,9 @@ func TestQueryBuyPrice(t *testing.T) {
 	require.Equal(t, queryResult.TotalPrices, roundedTotalPrices)
 
 	// Simulate the above buy taking place
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, queryResult.Prices)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, queryResult.Prices)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, queryResult.Prices)
 	_, _ = app.BankKeeper.AddCoins(ctx, bond.FeeAddress, queryResult.TotalFees)
 	app.BondsKeeper.SetCurrentSupply(ctx, token, sdk.NewCoin(token, buyAmount))
 
@@ -446,7 +482,9 @@ func TestQuerySellPrice(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	types.ModuleCdc.MustUnmarshalJSON(res, &buyQueryResult)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, buyQueryResult.Prices)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, buyQueryResult.Prices)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, buyQueryResult.Prices)
 	_, _ = app.BankKeeper.AddCoins(ctx, bond.FeeAddress, buyQueryResult.TotalFees)
 	app.BondsKeeper.SetCurrentSupply(ctx, token, sdk.NewCoin(token, buyAmount))
 
@@ -516,7 +554,9 @@ func TestQuerySwapReturn(t *testing.T) {
 		sdk.NewInt64Coin(reserveToken, 200),
 		sdk.NewInt64Coin(reserveToken2, 300),
 	)
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, newReserve)
+	_ = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, newReserve)
+	_ = app.BondsKeeper.DepositReserveFromModule(
+		ctx, bond.Token, types.BondsMintBurnAccount, newReserve)
 
 	// Get swap return directly
 	fromCoin := sdk.NewInt64Coin(reserveToken, 100)

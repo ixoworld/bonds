@@ -14,33 +14,10 @@ var (
 	reserveToken2               = "rez"
 	reserveToken3               = "rec"
 
-	functionParametersPower = FunctionParams{
-		NewFunctionParam("m", sdk.NewInt(12)),
-		NewFunctionParam("n", sdk.NewInt(2)),
-		NewFunctionParam("c", sdk.NewInt(100))}
-	functionParametersSigmoid = FunctionParams{
-		NewFunctionParam("a", sdk.NewInt(3)),
-		NewFunctionParam("b", sdk.NewInt(5)),
-		NewFunctionParam("c", sdk.NewInt(1))}
-
-	functionParametersPowerHuge = FunctionParams{
-		NewFunctionParam("m", sdk.NewInt(1)),
-		NewFunctionParam("n", sdk.NewInt(100)),
-		NewFunctionParam("c", sdk.NewInt(0))}
-	functionParametersSigmoidHuge = FunctionParams{
-		NewFunctionParam("a", sdk.NewInt(int64(^uint64(0)>>1))),
-		NewFunctionParam("b", sdk.NewInt(0)),
-		NewFunctionParam("c", sdk.NewInt(1))}
-
-	powerReserves     = []string{reserveToken}
-	multitokenReserve = []string{reserveToken, reserveToken2}
-	swapperReserves   = []string{reserveToken, reserveToken2}
-
 	initToken                  = token
 	initName                   = "test token"
 	initDescription            = "this is a test token"
 	initCreator                = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	initReserveAddress         = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initFeeAddress             = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initTxFeePercentage        = sdk.MustNewDecFromStr("0.1")
 	initExitFeePercentage      = sdk.MustNewDecFromStr("0.1")
@@ -48,23 +25,80 @@ var (
 	initOrderQuantityLimits    = sdk.Coins(nil)
 	initSanityRate             = sdk.MustNewDecFromStr(blankSanityRate)
 	initSanityMarginPercentage = sdk.MustNewDecFromStr(blankSanityMarginPercentage)
-	initAllowSell              = "true"
+	initAllowSell              = true
 	initSigners                = []sdk.AccAddress{initCreator}
 	initBatchBlocks            = sdk.NewUint(10)
+	initOutcomePayment         = sdk.Coins(nil)
+	initState                  = OpenState
 
+	// 9223372036854775807
 	maxInt64 = sdk.NewInt(int64(^uint64(0) >> 1))
 )
 
+func functionParametersPower() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("m", sdk.NewDec(12)),
+		NewFunctionParam("n", sdk.NewDec(2)),
+		NewFunctionParam("c", sdk.NewDec(100))}
+}
+
+func functionParametersSigmoid() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("a", sdk.NewDec(3)),
+		NewFunctionParam("b", sdk.NewDec(5)),
+		NewFunctionParam("c", sdk.NewDec(1))}
+}
+
+func functionParametersAugmented() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("d0", sdk.MustNewDecFromStr("500.0")),
+		NewFunctionParam("p0", sdk.MustNewDecFromStr("0.01")),
+		NewFunctionParam("theta", sdk.MustNewDecFromStr("0.4")),
+		NewFunctionParam("kappa", sdk.MustNewDecFromStr("3.0"))}
+}
+
+func functionParametersAugmentedFull() FunctionParams {
+	base := functionParametersAugmented()
+	baseMap := base.AsMap()
+
+	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
+	S0 := baseMap["d0"].Quo(baseMap["p0"])
+	V0 := Invariant(R0, S0, baseMap["kappa"].TruncateInt64())
+	extras := FunctionParams{
+		NewFunctionParam("R0", R0),
+		NewFunctionParam("S0", S0),
+		NewFunctionParam("V0", V0)}
+
+	return append(base, extras...)
+}
+
+func functionParametersPowerHuge() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("m", sdk.NewDec(1)),
+		NewFunctionParam("n", sdk.NewDec(100)),
+		NewFunctionParam("c", sdk.NewDec(0))}
+}
+
+func functionParametersSigmoidHuge() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("a", sdk.NewDec(int64(^uint64(0)>>1))),
+		NewFunctionParam("b", sdk.NewDec(0)),
+		NewFunctionParam("c", sdk.NewDec(1))}
+}
+
+func powerReserves() []string     { return []string{reserveToken} }
+func multitokenReserve() []string { return []string{reserveToken, reserveToken2} }
+func swapperReserves() []string   { return []string{reserveToken, reserveToken2} }
+
 func getValidPowerFunctionBond() Bond {
 	functionType := PowerFunction
-	functionParams := functionParametersPower
-	reserveTokens := powerReserves
-	return NewBond(initToken, initName, initDescription,
-		initCreator, functionType, functionParams,
-		reserveTokens, initReserveAddress, initTxFeePercentage,
+	functionParams := functionParametersPower()
+	reserveTokens := powerReserves()
+	return NewBond(initToken, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
 		initExitFeePercentage, initFeeAddress, initMaxSupply,
 		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks)
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 }
 
 func getValidBond() Bond {
@@ -73,14 +107,14 @@ func getValidBond() Bond {
 
 // New Reserve Balances
 
-func NewDecMultitokenReserveFromDec(value sdk.Dec) sdk.DecCoins {
+func newDecMultitokenReserveFromDec(value sdk.Dec) sdk.DecCoins {
 	return sdk.DecCoins{
 		sdk.NewDecCoinFromDec(reserveToken, value),
 		sdk.NewDecCoinFromDec(reserveToken2, value),
 	}.Sort()
 }
 
-func NewDecMultitokenReserveFromInt(value int64) sdk.DecCoins {
+func newDecMultitokenReserveFromInt(value int64) sdk.DecCoins {
 	return sdk.NewDecCoins(sdk.NewCoins(
 		sdk.NewInt64Coin(reserveToken, value),
 		sdk.NewInt64Coin(reserveToken2, value),
@@ -89,41 +123,49 @@ func NewDecMultitokenReserveFromInt(value int64) sdk.DecCoins {
 
 // Messages
 
-func NewValidMsgCreateBond() MsgCreateBond {
+func newValidMsgCreateBond() MsgCreateBond {
 	functionType := PowerFunction
-	functionParams := functionParametersPower
-	reserveTokens := powerReserves
-	return NewMsgCreateBond(initToken, initName, initDescription,
-		initCreator, functionType, functionParams,
-		reserveTokens, initTxFeePercentage, initExitFeePercentage,
-		initFeeAddress, initMaxSupply, initOrderQuantityLimits, initSanityRate,
-		initSanityMarginPercentage, initAllowSell, initSigners, initBatchBlocks)
+	functionParams := functionParametersPower()
+	reserveTokens := powerReserves()
+	return NewMsgCreateBond(initToken, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
+		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment)
 }
 
-func NewEmptyStringsMsgEditBond() MsgEditBond {
+func newValidMsgCreateSwapperBond() MsgCreateBond {
+	validMsg := newValidMsgCreateBond()
+	validMsg.FunctionType = SwapperFunction
+	validMsg.FunctionParameters = nil
+	validMsg.ReserveTokens = swapperReserves()
+	return validMsg
+}
+
+func newEmptyStringsMsgEditBond() MsgEditBond {
 	return NewMsgEditBond(initToken, "", "", "", "", "",
 		initCreator, initSigners)
 }
 
-func NewValidMsgEditBond() MsgEditBond {
+func newValidMsgEditBond() MsgEditBond {
 	return NewMsgEditBond(initToken, "newName", "newDescription", "", "0", "0",
 		initCreator, initSigners)
 }
 
-func NewValidMsgBuy() MsgBuy {
+func newValidMsgBuy() MsgBuy {
 	buyer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	amount, _ := sdk.ParseCoin("10" + initToken)
 	maxPrices, _ := sdk.ParseCoins("50" + initToken)
 	return NewMsgBuy(buyer, amount, maxPrices)
 }
 
-func NewValidMsgSell() MsgSell {
+func newValidMsgSell() MsgSell {
 	seller := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	amount, _ := sdk.ParseCoin("10" + initToken)
 	return NewMsgSell(seller, amount)
 }
 
-func NewValidMsgSwap() MsgSwap {
+func newValidMsgSwap() MsgSwap {
 	swapper := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	from := sdk.NewInt64Coin(reserveToken, 10)
 	return NewMsgSwap(swapper, initToken, from, reserveToken2)

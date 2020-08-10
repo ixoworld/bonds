@@ -115,31 +115,34 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 		creator := address
 		signers := []sdk.AccAddress{creator}
 
-		var functionType string
+		functionType := getRandomFunctionType(r)
+
 		var reserveTokens []string
-		randFunctionType := simulation.RandIntBetween(r, 0, 3)
-		if randFunctionType == 0 {
-			functionType = types.PowerFunction
-			reserveTokens = defaultReserveTokens
-		} else if randFunctionType == 1 {
-			functionType = types.SigmoidFunction
-			reserveTokens = defaultReserveTokens
-		} else if randFunctionType == 2 {
-			functionType = types.SwapperFunction
+		switch functionType {
+		case types.SwapperFunction:
 			reserveToken1, ok1 := getRandomBondName(r)
 			reserveToken2, ok2 := getRandomBondNameExcept(r, reserveToken1)
 			if !ok1 || !ok2 {
 				return simulation.NoOpMsg(types.ModuleName), nil, nil
 			}
 			reserveTokens = []string{reserveToken1, reserveToken2}
-		} else {
-			panic("unexpected randFunctionType")
+		default:
+			reserveTokens = defaultReserveTokens
 		}
-		functionParameters := getRandomFunctionParameters(r, functionType)
+		functionParameters := getRandomFunctionParameters(r, functionType, false)
 
 		// Max fee is 100, so exit fee uses 100-txFee as max
 		txFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100))
 		exitFeePercentage := simulation.RandomDecAmount(r, sdk.NewDec(100).Sub(txFeePercentage))
+
+		// Since 100 is not allowed, a small number is subtracted from one of the fees
+		if txFeePercentage.Add(exitFeePercentage).Equal(sdk.NewDec(100)) {
+			if txFeePercentage.GT(sdk.ZeroDec()) {
+				txFeePercentage = txFeePercentage.Sub(sdk.MustNewDecFromStr("0.000000000000000001"))
+			} else {
+				exitFeePercentage = exitFeePercentage.Sub(sdk.MustNewDecFromStr("0.000000000000000001"))
+			}
+		}
 
 		// Addresses
 		feeAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -152,9 +155,9 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 			simulation.RandIntBetween(r, 1, 10)))
 
 		msg := types.NewMsgCreateBond(token, name, desc, creator, functionType,
-			functionParameters, reserveTokens, txFeePercentage,
-			exitFeePercentage, feeAddress, maxSupply, blankOrderQuantityLimits,
-			blankSanityRate, blankSanityMarginPercentage, allowSells, signers, batchBlocks)
+			functionParameters, reserveTokens, txFeePercentage, exitFeePercentage,
+			feeAddress, maxSupply, blankOrderQuantityLimits, blankSanityRate,
+			blankSanityMarginPercentage, allowSells, signers, batchBlocks, blankOutcomePayment)
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil,
 				fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())
@@ -287,7 +290,7 @@ func getBuyIntoSwapper(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
 	return types.NewMsgBuy(address, amountToBuy, maxPrices), nil, true
 }
 
-func getBuyIntoPowerOrSigmoid(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
+func getBuyIntoNonSwapper(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
 	bond types.Bond, account exported.Account) (msg types.MsgBuy, err error, ok bool) {
 	address := account.GetAddress()
 	spendable := account.SpendableCoins(ctx.BlockTime())
@@ -314,20 +317,42 @@ func getBuyIntoPowerOrSigmoid(r *rand.Rand, ctx sdk.Context, k keeper.Keeper,
 		return types.MsgBuy{}, nil, false
 	}
 
-	toBuyInt, err := simulation.RandPositiveInt(r, maxBuyAmount)
-	if err != nil {
-		return types.MsgBuy{}, err, false
+	// For augmented function in hatch state, flip a coin to decide whether
+	// to just buy all the remaining tokens up to S0 to go to the open state.
+	// This is only possible if the account balance is >= remaining up to S0.
+	// Otherwise, pick a random amount with the remaining to S0 as the max.
+	//
+	// If not an augmented function in hatch state, just pick a random amount.
+	var toBuyInt sdk.Int
+	if bond.FunctionType == types.AugmentedFunction && bond.State == types.HatchState {
+		S0 := bond.FunctionParameters.AsMap()["S0"].Ceil().TruncateInt()
+		remainingForS0 := S0.Sub(bond.CurrentSupply.Amount)
+		if remainingForS0.LTE(maxBuyAmount) && simulation.RandIntBetween(r, 1, 2) == 1 {
+			toBuyInt = remainingForS0
+		} else if remainingForS0.GT(sdk.ZeroInt()) {
+			toBuyInt, err = simulation.RandPositiveInt(r, remainingForS0)
+			if err != nil {
+				return types.MsgBuy{}, err, false
+			}
+		} else {
+			panic("current cannot be equal to S0 in hatch phase")
+		}
+	} else {
+		toBuyInt, err = simulation.RandPositiveInt(r, maxBuyAmount)
+		if err != nil {
+			return types.MsgBuy{}, err, false
+		}
 	}
-	amountToBuy := sdk.NewCoin(bond.Token, toBuyInt)
+	toBuy := sdk.NewCoin(bond.Token, toBuyInt)
 
 	// Create order and check if can afford
 	_, _, err = k.GetUpdatedBatchPricesAfterBuy(ctx, bond.Token,
-		types.NewBuyOrder(address, amountToBuy, maxPrices))
+		types.NewBuyOrder(address, toBuy, maxPrices))
 	if err != nil {
 		return types.MsgBuy{}, err, true
 	}
 
-	return types.NewMsgBuy(address, amountToBuy, maxPrices), nil, true
+	return types.NewMsgBuy(address, toBuy, maxPrices), nil, true
 }
 
 func SimulateMsgBuy(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operation {
@@ -365,7 +390,7 @@ func SimulateMsgBuy(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operation
 		if bond.FunctionType == types.SwapperFunction {
 			msg, err, ok = getBuyIntoSwapper(r, ctx, k, bond, account)
 		} else {
-			msg, err, ok = getBuyIntoPowerOrSigmoid(r, ctx, k, bond, account)
+			msg, err, ok = getBuyIntoNonSwapper(r, ctx, k, bond, account)
 		}
 
 		// If ok, err is not something that should stop the simulation
@@ -406,7 +431,9 @@ func SimulateMsgSell(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operatio
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 		bond, found := k.GetBond(ctx, token)
-		if !found || bond.AllowSells == types.FALSE || bond.CurrentSupply.IsZero() {
+		if !found || !bond.AllowSells ||
+			bond.CurrentSupply.IsZero() ||
+			bond.State == types.HatchState {
 			return simulation.NoOpMsg(types.ModuleName), nil, nil
 		}
 

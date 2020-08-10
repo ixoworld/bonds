@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"testing"
 )
 
@@ -32,78 +33,118 @@ func TestBondExistsSetGet(t *testing.T) {
 	bondFetched3 := app.BondsKeeper.MustGetBondByKey(ctx, types.GetBondKey(token))
 
 	// Batch fetched is equal to added batch
-	require.Equal(t, bondAdded, bondFetched1)
-	require.Equal(t, bondAdded, bondFetched2)
-	require.Equal(t, bondAdded, bondFetched3)
+	require.EqualValues(t, bondAdded, bondFetched1)
+	require.EqualValues(t, bondAdded, bondFetched2)
+	require.EqualValues(t, bondAdded, bondFetched3)
 	require.True(t, found)
 }
 
-func TestGetNumberOfBonds(t *testing.T) {
+func TestDepositReserve(t *testing.T) {
 	app, ctx := createTestApp(false)
 
-	// No bond exists yet
-	require.Equal(t, sdk.ZeroInt(), app.BondsKeeper.GetNumberOfBonds(ctx))
+	// Add bond
+	bond := getValidBond()
+	app.BondsKeeper.SetBond(ctx, token, bond)
 
-	// Add bond 1/3
-	app.BondsKeeper.SetBond(ctx, token1, getValidBondWithToken(token1))
-	require.Equal(t, sdk.NewInt(1), app.BondsKeeper.GetNumberOfBonds(ctx))
+	// Reserve is initially empty
+	require.True(t, app.BondsKeeper.GetReserveBalances(ctx, token).IsZero())
 
-	// Add bond 2/3
-	app.BondsKeeper.SetBond(ctx, token2, getValidBondWithToken(token2))
-	require.Equal(t, sdk.NewInt(2), app.BondsKeeper.GetNumberOfBonds(ctx))
+	// Add tokens to an account
+	amount, err := sdk.ParseCoins("12res1,34res2")
+	require.Nil(t, err)
+	address := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = app.BankKeeper.SetCoins(ctx, address, amount)
+	require.Nil(t, err)
 
-	// Add bond 3/3
-	app.BondsKeeper.SetBond(ctx, token3, getValidBondWithToken(token3))
-	require.Equal(t, sdk.NewInt(3), app.BondsKeeper.GetNumberOfBonds(ctx))
+	// Deposit reserve
+	err = app.BondsKeeper.DepositReserve(ctx, token, address, amount)
+	require.Nil(t, err)
+
+	// Reserve now equal to amount sent and address balance is zero
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	reserveBalances := app.BondsKeeper.GetReserveBalances(ctx, token)
+	require.Equal(t, amount, reserveBalances)
+	addressBalance := app.BankKeeper.GetCoins(ctx, address)
+	require.Empty(t, addressBalance)
+
+	// Also confirm that reserve module account has the actual amount
+	moduleAddr := app.SupplyKeeper.GetModuleAddress(types.BondsReserveAccount)
+	addressBalance = app.BankKeeper.GetCoins(ctx, moduleAddr)
+	require.Equal(t, amount, addressBalance)
 }
 
-func TestGetReserveAddressByBondCount(t *testing.T) {
-	app, _ := createTestApp(false)
-	const maxInt64 = int64(^uint64(0) >> 1) // 9223372036854775807
-
-	testCases := []struct {
-		input        sdk.Int
-		truncatedHex string
-	}{
-		{sdk.NewInt(0), "7B2E13A94AF4A1D3EC729DC422C6341BAEEDC9A0"},
-		{sdk.NewInt(5), "7B2E13A94AF4A1D3EC729DC422C6341BAEEDC9A5"},
-		{sdk.NewInt(10), "B2E13A94AF4A1D3EC729DC422C6341BAEEDC9A10"},
-		{sdk.NewInt(50), "B2E13A94AF4A1D3EC729DC422C6341BAEEDC9A50"},
-		{sdk.NewInt(1000000000), "AF4A1D3EC729DC422C6341BAEEDC9A1000000000"},
-		{sdk.NewInt(5000000000), "AF4A1D3EC729DC422C6341BAEEDC9A5000000000"},
-		{sdk.NewInt(maxInt64), "729DC422C6341BAEEDC9A9223372036854775807"},
-	}
-
-	for _, tc := range testCases {
-		expectedAddr, err := sdk.AccAddressFromHex(tc.truncatedHex)
-		require.Nil(t, err)
-
-		addr := app.BondsKeeper.GetReserveAddressByBondCount(tc.input)
-		require.Equal(t, expectedAddr, addr)
-	}
-}
-
-func TestGetNextUnusedReserveAddress(t *testing.T) {
+func TestDepositReserveFromModule(t *testing.T) {
 	app, ctx := createTestApp(false)
 
-	testCases := []struct {
-		truncatedHex  string
-		nextBondToken string
-	}{
-		{"7B2E13A94AF4A1D3EC729DC422C6341BAEEDC9A0", token1},
-		{"7B2E13A94AF4A1D3EC729DC422C6341BAEEDC9A1", token2},
-		{"7B2E13A94AF4A1D3EC729DC422C6341BAEEDC9A2", token3},
-	}
+	// Add bond
+	bond := getValidBond()
+	app.BondsKeeper.SetBond(ctx, token, bond)
 
-	for _, tc := range testCases {
-		expectedAddr, err := sdk.AccAddressFromHex(tc.truncatedHex)
-		require.Nil(t, err)
+	// Reserve is initially empty
+	require.True(t, app.BondsKeeper.GetReserveBalances(ctx, token).IsZero())
 
-		addr := app.BondsKeeper.GetNextUnusedReserveAddress(ctx)
-		require.Equal(t, expectedAddr, addr)
+	// Mint tokens to a module
+	amount, err := sdk.ParseCoins("12res1,34res2")
+	require.Nil(t, err)
+	err = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, amount)
+	require.Nil(t, err)
 
-		app.BondsKeeper.SetBond(ctx, tc.nextBondToken, getValidBondWithToken(tc.nextBondToken))
-	}
+	// Deposit reserve
+	err = app.BondsKeeper.DepositReserveFromModule(
+		ctx, token, types.BondsMintBurnAccount, amount)
+	require.Nil(t, err)
+
+	// Reserve now equal to amount sent and module address balance is zero
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	reserveBalances := app.BondsKeeper.GetReserveBalances(ctx, token)
+	require.Equal(t, amount, reserveBalances)
+	moduleAddr := app.SupplyKeeper.GetModuleAddress(types.BondsMintBurnAccount)
+	addressBalance := app.BankKeeper.GetCoins(ctx, moduleAddr)
+	require.Empty(t, addressBalance)
+
+	// Also confirm that reserve module account has the actual amount
+	moduleAddr = app.SupplyKeeper.GetModuleAddress(types.BondsReserveAccount)
+	addressBalance = app.BankKeeper.GetCoins(ctx, moduleAddr)
+	require.Equal(t, amount, addressBalance)
+}
+
+func TestWithdrawReserve(t *testing.T) {
+	app, ctx := createTestApp(false)
+
+	// Add bond
+	bond := getValidBond()
+	app.BondsKeeper.SetBond(ctx, token, bond)
+
+	// Reserve is initially empty
+	require.True(t, app.BondsKeeper.GetReserveBalances(ctx, token).IsZero())
+
+	// Simulate depositing reserve
+	amount, err := sdk.ParseCoins("12res1,34res2")
+	require.Nil(t, err)
+	err = app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, amount)
+	require.Nil(t, err)
+	err = app.SupplyKeeper.SendCoinsFromModuleToModule(
+		ctx, types.BondsMintBurnAccount, types.BondsReserveAccount, amount)
+	require.Nil(t, err)
+	bond.CurrentReserve = amount
+	app.BondsKeeper.SetBond(ctx, token, bond)
+
+	// Withdraw reserve
+	address := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = app.BondsKeeper.WithdrawReserve(ctx, token, address, amount)
+	require.Nil(t, err)
+
+	// Reserve now zero sent and address balance is equal to amount
+	bond = app.BondsKeeper.MustGetBond(ctx, token)
+	reserveBalances := app.BondsKeeper.GetReserveBalances(ctx, token)
+	require.Empty(t, reserveBalances)
+	addressBalance := app.BankKeeper.GetCoins(ctx, address)
+	require.Equal(t, amount, addressBalance)
+
+	// Also confirm that reserve module account is now empty
+	moduleAddr := app.SupplyKeeper.GetModuleAddress(types.BondsReserveAccount)
+	addressBalance = app.BankKeeper.GetCoins(ctx, moduleAddr)
+	require.Empty(t, addressBalance)
 }
 
 func TestGetReserveBalances(t *testing.T) {
@@ -116,13 +157,15 @@ func TestGetReserveBalances(t *testing.T) {
 	// Reserve is initially empty
 	require.True(t, app.BondsKeeper.GetReserveBalances(ctx, token).IsZero())
 
-	// Send coins to reserve address
-	reserveCoins, _ := sdk.ParseCoins("12.34res1,56.78res2")
-	_, _ = app.BankKeeper.AddCoins(ctx, bond.ReserveAddress, reserveCoins)
+	// Set bond reserve
+	var err error
+	bond.CurrentReserve, err = sdk.ParseCoins("12res1,34res2")
+	require.Nil(t, err)
+	app.BondsKeeper.SetBond(ctx, token, bond)
 
 	// Reserve now equal to amount sent
 	reserveBalances := app.BondsKeeper.GetReserveBalances(ctx, token)
-	require.Equal(t, reserveCoins, reserveBalances)
+	require.Equal(t, bond.CurrentReserve, reserveBalances)
 }
 
 func TestGetSupplyAdjustedForBuy(t *testing.T) {
@@ -248,4 +291,31 @@ func TestSetCurrentSupply(t *testing.T) {
 	// Check that supply changed
 	supplyFetched = app.BondsKeeper.MustGetBond(ctx, token).CurrentSupply
 	require.Equal(t, newSupply, supplyFetched)
+}
+
+func TestSetBondState(t *testing.T) {
+	app, ctx := createTestApp(false)
+
+	// Add bond
+	bond := getValidBond()
+	app.BondsKeeper.SetBond(ctx, token, bond)
+
+	// State is initially "initState"
+	require.Equal(t, initState, app.BondsKeeper.MustGetBond(ctx, token).State)
+
+	// Change state
+	newState := "some_other_state"
+	app.BondsKeeper.SetBondState(ctx, token, newState)
+
+	// Check that state changed
+	stateFetched := app.BondsKeeper.MustGetBond(ctx, token).State
+	require.Equal(t, newState, stateFetched)
+
+	// Change supply again
+	newState = "yet another state"
+	app.BondsKeeper.SetBondState(ctx, token, newState)
+
+	// Check that supply changed
+	stateFetched = app.BondsKeeper.MustGetBond(ctx, token).State
+	require.Equal(t, newState, stateFetched)
 }

@@ -17,13 +17,13 @@ wait() {
 tx_from_m() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 tx_from_f() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 create_bond_multisig() {
@@ -39,9 +39,9 @@ create_bond_multisig() {
     --fee-address="$FEE" \
     --max-supply=1000000abc \
     --order-quantity-limits="" \
-    --sanity-rate="" \
-    --sanity-margin-percentage="" \
-    --allow-sells=true \
+    --sanity-rate="0" \
+    --sanity-margin-percentage="0" \
+    --allow-sells \
     --signers="$(bondscli keys show francesco -a),$(bondscli keys show shaun -a)" \
     --batch-blocks=1 \
     --from="$MIGUEL" -y --broadcast-mode block --generate-only >multisig.json
@@ -57,6 +57,7 @@ if [[ ($RET == ERROR*) || ($RET == *'"latest_block_height": "0"'*) ]]; then
 fi
 
 PASSWORD="12345678"
+GAS_PRICES="0.025stake"
 MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
 FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
 SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)

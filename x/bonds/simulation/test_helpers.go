@@ -55,24 +55,62 @@ func getRandomNonEmptyString(r *rand.Rand) string {
 	return simulation.RandStringOfLength(r, simulation.RandIntBetween(r, 1, 100))
 }
 
-func getRandomFunctionParameters(r *rand.Rand, functionType string) types.FunctionParams {
+func getRandomFunctionType(r *rand.Rand) string {
+	switch simulation.RandIntBetween(r, 0, 4) {
+	case 0:
+		return types.PowerFunction
+	case 1:
+		return types.SigmoidFunction
+	case 2:
+		return types.SwapperFunction
+	case 3:
+		return types.AugmentedFunction
+	default:
+		panic("function type integer out of bounds")
+	}
+}
+
+func getRandomFunctionParameters(r *rand.Rand, functionType string, genesis bool) types.FunctionParams {
 	switch functionType {
 	case types.PowerFunction:
-		m := simulation.RandIntBetween(r, 1, 100)  // 12
-		n := simulation.RandIntBetween(r, 1, 5)    // 5
-		c := simulation.RandIntBetween(r, 1, 1000) // 100
+		m := simulation.RandIntBetween(r, 1, 100)
+		n := simulation.RandIntBetween(r, 1, 5)
+		c := simulation.RandIntBetween(r, 1, 1000)
 		return types.FunctionParams{
-			types.NewFunctionParam("m", sdk.NewInt(int64(m))),
-			types.NewFunctionParam("n", sdk.NewInt(int64(n))),
-			types.NewFunctionParam("c", sdk.NewInt(int64(c)))}
+			types.NewFunctionParam("m", sdk.NewDec(int64(m))),
+			types.NewFunctionParam("n", sdk.NewDec(int64(n))),
+			types.NewFunctionParam("c", sdk.NewDec(int64(c)))}
 	case types.SigmoidFunction:
-		a := simulation.RandIntBetween(r, 1, 10) // 3
-		b := simulation.RandIntBetween(r, 1, 10) // 5
-		c := simulation.RandIntBetween(r, 1, 10) // 1
+		a := simulation.RandIntBetween(r, 1, 10)
+		b := simulation.RandIntBetween(r, 1, 10)
+		c := simulation.RandIntBetween(r, 1, 10)
 		return types.FunctionParams{
-			types.NewFunctionParam("a", sdk.NewInt(int64(a))),
-			types.NewFunctionParam("b", sdk.NewInt(int64(b))),
-			types.NewFunctionParam("c", sdk.NewInt(int64(c)))}
+			types.NewFunctionParam("a", sdk.NewDec(int64(a))),
+			types.NewFunctionParam("b", sdk.NewDec(int64(b))),
+			types.NewFunctionParam("c", sdk.NewDec(int64(c)))}
+	case types.AugmentedFunction:
+		d0 := sdk.NewDec(int64(simulation.RandIntBetween(r, 1, 1000000)))
+		p0 := simulation.RandomDecAmount(r, sdk.NewDec(10)).Add(sdk.SmallestDec())
+		theta := simulation.RandomDecAmount(r, sdk.MustNewDecFromStr("0.9")).Add(sdk.SmallestDec())
+		kappa := sdk.NewDec(int64(simulation.RandIntBetween(r, 1, 4)))
+		functionParams := types.FunctionParams{
+			types.NewFunctionParam("d0", d0),
+			types.NewFunctionParam("p0", p0),
+			types.NewFunctionParam("theta", theta),
+			types.NewFunctionParam("kappa", kappa)}
+		if genesis {
+			R0 := d0.Mul(sdk.OneDec().Sub(theta))
+			S0 := d0.Quo(p0)
+			V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
+
+			functionParams = append(functionParams,
+				types.FunctionParams{
+					types.NewFunctionParam("R0", R0),
+					types.NewFunctionParam("S0", S0),
+					types.NewFunctionParam("V0", V0),
+				}...)
+		}
+		return functionParams
 	case types.SwapperFunction:
 		return nil
 	default:
@@ -80,11 +118,20 @@ func getRandomFunctionParameters(r *rand.Rand, functionType string) types.Functi
 	}
 }
 
-func getRandomAllowSellsValue(r *rand.Rand) string {
+func getRandomAllowSellsValue(r *rand.Rand) bool {
 	if simulation.RandIntBetween(r, 1, 11) == 1 {
-		return types.FALSE
+		return false
 	} else { // 9 times out of 10, sells are allowed
-		return types.TRUE
+		return true
+	}
+}
+
+func getInitialBondState(functionType string) string {
+	switch functionType {
+	case types.AugmentedFunction:
+		return types.HatchState
+	default:
+		return types.OpenState
 	}
 }
 
