@@ -24,7 +24,6 @@ var (
 	initName                   = "test token"
 	initDescription            = "this is a test token"
 	initCreator                = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	initReserveAddress         = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initFeeAddress             = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	initTxFeePercentage        = sdk.MustNewDecFromStr("0.1")
 	initExitFeePercentage      = sdk.MustNewDecFromStr("0.1")
@@ -35,6 +34,7 @@ var (
 	initAllowSell              = true
 	initSigners                = []sdk.AccAddress{initCreator}
 	initBatchBlocks            = sdk.OneUint()
+	initOutcomePayment         = sdk.Coins(nil)
 
 	amountLTMaxSupply = initMaxSupply.Amount.Sub(sdk.OneInt()).Int64()
 	amountGTMaxSupply = initMaxSupply.Amount.Add(sdk.OneInt()).Int64()
@@ -98,11 +98,11 @@ func newValidMsgCreateBond() types.MsgCreateBond {
 	functionType := types.PowerFunction
 	functionParams := functionParametersPower()
 	reserveTokens := powerReserves()
-	return types.NewMsgCreateBond(token, initName, initDescription,
-		initCreator, functionType, functionParams, reserveTokens,
-		initTxFeePercentage, initExitFeePercentage, initFeeAddress,
-		initMaxSupply, initOrderQuantityLimits, initSanityRate,
-		initSanityMarginPercentage, initAllowSell, initSigners, initBatchBlocks)
+	return types.NewMsgCreateBond(token, initName, initDescription, initCreator,
+		functionType, functionParams, reserveTokens, initTxFeePercentage,
+		initExitFeePercentage, initFeeAddress, initMaxSupply,
+		initOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment)
 }
 
 func newValidMsgBuy(amount int64, maxPrice int64) types.MsgBuy {
@@ -121,7 +121,20 @@ func newValidMsgSwap(fromToken, toToken string, amount int64) types.MsgSwap {
 	return types.NewMsgSwap(userAddress, token, fromAmount, toToken)
 }
 
+func newValidMsgMakeOutcomePayment() types.MsgMakeOutcomePayment {
+	return types.NewMsgMakeOutcomePayment(userAddress, token)
+}
+
+func newValidMsgWithdrawShareFrom(from sdk.AccAddress) types.MsgWithdrawShare {
+	return types.NewMsgWithdrawShare(from, token)
+}
+
 func addCoinsToUser(app *simapp.SimApp, ctx sdk.Context, coins sdk.Coins) sdk.Error {
 	_, err := app.BondsKeeper.BankKeeper.AddCoins(ctx, userAddress, coins)
+	return err
+}
+
+func addCoinsToUser2(app *simapp.SimApp, ctx sdk.Context, coins sdk.Coins) sdk.Error {
+	_, err := app.BondsKeeper.BankKeeper.AddCoins(ctx, anotherAddress, coins)
 	return err
 }

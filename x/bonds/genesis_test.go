@@ -25,7 +25,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 		types.NewFunctionParam("n", sdk.NewDec(2)),
 		types.NewFunctionParam("c", sdk.NewDec(100))}
 	reserveTokens := []string{"reservetoken"}
-	reserveAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	txFeePercentage := sdk.MustNewDecFromStr("0.1")
 	exitFeePercentage := sdk.MustNewDecFromStr("0.2")
 	feeAddress := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -40,13 +39,17 @@ func TestInitAndExportGenesis(t *testing.T) {
 	allowSell := true
 	signers := []sdk.AccAddress{creator}
 	batchBlocks := sdk.NewUint(10)
+	outcomePayment := sdk.NewCoins(
+		sdk.NewInt64Coin("token1", 1),
+		sdk.NewInt64Coin("token2", 2),
+		sdk.NewInt64Coin("token3", 3),
+	)
 	state := "dummy_state"
 
-	bond := types.NewBond(token, name, description, creator,
-		functionType, functionParameters, reserveTokens,
-		reserveAddress, txFeePercentage, exitFeePercentage,
-		feeAddress, maxSupply, orderQuantityLimits, sanityRate,
-		sanityMarginPercentage, allowSell, signers, batchBlocks, state)
+	bond := types.NewBond(token, name, description, creator, functionType,
+		functionParameters, reserveTokens, txFeePercentage, exitFeePercentage,
+		feeAddress, maxSupply, orderQuantityLimits, sanityRate, sanityMarginPercentage,
+		allowSell, signers, batchBlocks, outcomePayment, state)
 	batch := types.NewBatch(bond.Token, bond.BatchBlocks)
 
 	genesisState = bonds.NewGenesisState(
@@ -55,7 +58,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	bonds.InitGenesis(ctx, app.BondsKeeper, genesisState)
 
 	returnedBond := app.BondsKeeper.MustGetBond(ctx, token)
-	require.Equal(t, bond, returnedBond)
+	require.EqualValues(t, bond, returnedBond)
 
 	returnedBatch := app.BondsKeeper.MustGetBatch(ctx, token)
 	require.Equal(t, batch, returnedBatch)

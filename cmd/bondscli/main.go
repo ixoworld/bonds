@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/ixoworld/bonds/x/bonds/app"
 	"os"
 	"path"
@@ -22,8 +25,10 @@ import (
 )
 
 func main() {
+	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
 
+	// Instantiate the codec for the command line application
 	cdc := simapp.MakeCodec()
 
 	// Read in the configuration file for the sdk
@@ -36,7 +41,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "bondscli",
-		Short: "Bonds Module Client",
+		Short: "Command line interface for interacting with bondsd",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
@@ -55,21 +60,19 @@ func main() {
 		lcd.ServeCommand(cdc, registerRoutes),
 		client.LineBreak,
 		keys.Commands(),
+		client.LineBreak,
 		version.Cmd,
 		client.NewCompletionCmd(rootCmd, true),
 	)
 
+	// Add flags and prefix all env exposed with BONDS
 	executor := cli.PrepareMainCmd(rootCmd, "BONDS", simapp.DefaultCLIHome)
+
 	err := executor.Execute()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
+		os.Exit(1)
 	}
-}
-
-func registerRoutes(rs *lcd.RestServer) {
-	client.RegisterRoutes(rs.CliCtx, rs.Mux)
-	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
-	simapp.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 }
 
 func queryCmd(cdc *codec.Codec) *cobra.Command {
@@ -80,6 +83,8 @@ func queryCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	queryCmd.AddCommand(
+		authcmd.GetAccountCmd(cdc),
+		client.LineBreak,
 		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(cdc),
@@ -107,15 +112,31 @@ func txCmd(cdc *codec.Codec) *cobra.Command {
 		client.LineBreak,
 		authcmd.GetBroadcastCommand(cdc),
 		authcmd.GetEncodeCommand(cdc),
-		authcmd.GetDecodeCommand(cdc),
-		authcmd.GetDecodeTxCmd(cdc),
 		client.LineBreak,
 	)
 
 	// add modules' tx commands
 	simapp.ModuleBasics.AddTxCommands(txCmd, cdc)
 
+	// remove auth and bank commands as they're mounted under the root tx command
+	var cmdsToRemove []*cobra.Command
+
+	for _, cmd := range txCmd.Commands() {
+		if cmd.Use == auth.ModuleName || cmd.Use == bank.ModuleName {
+			cmdsToRemove = append(cmdsToRemove, cmd)
+		}
+	}
+
+	txCmd.RemoveCommand(cmdsToRemove...)
+
 	return txCmd
+}
+
+// registerRoutes registers the routes from the different modules for the LCD.
+func registerRoutes(rs *lcd.RestServer) {
+	client.RegisterRoutes(rs.CliCtx, rs.Mux)
+	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
+	simapp.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 }
 
 func initConfig(cmd *cobra.Command) error {

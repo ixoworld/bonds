@@ -162,12 +162,11 @@ func TestNewBondDefaultValuesAndSorting(t *testing.T) {
 	sortedReserveTokens := []string{"a", "b"}
 	sortedOrderQuantityLimits, _ := sdk.ParseCoins("100aaa,100bbb")
 
-	bond := NewBond(initToken, initName, initDescription,
-		initCreator, PowerFunction, functionParametersPower(),
-		customReserveTokens, initReserveAddress, initTxFeePercentage,
-		initExitFeePercentage, initFeeAddress, initMaxSupply,
+	bond := NewBond(initToken, initName, initDescription, initCreator,
+		PowerFunction, functionParametersPower(), customReserveTokens,
+		initTxFeePercentage, initExitFeePercentage, initFeeAddress, initMaxSupply,
 		customOrderQuantityLimits, initSanityRate, initSanityMarginPercentage,
-		initAllowSell, initSigners, initBatchBlocks, initState)
+		initAllowSell, initSigners, initBatchBlocks, initOutcomePayment, initState)
 
 	expectedCurrentSupply := sdk.NewInt64Coin(bond.Token, 0)
 
@@ -544,10 +543,10 @@ func TestGetReturnsForSwap(t *testing.T) {
 
 	zeroPoint1Percent := sdk.MustNewDecFromStr("0.001")
 	largeInput := maxInt64
-	largeFee := sdk.NewDecFromInt(largeInput).Mul(
+	largeFee := largeInput.ToDec().Mul(
 		zeroPoint1Percent).Ceil().TruncateInt()
 	smallInput := sdk.NewInt(3) // but not too small
-	smallFee := sdk.NewDecFromInt(smallInput).Mul(
+	smallFee := smallInput.ToDec().Mul(
 		zeroPoint1Percent).Ceil().TruncateInt()
 
 	testCases := []struct {

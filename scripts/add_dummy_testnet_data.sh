@@ -60,7 +60,8 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=1 \
   --from miguel -y \
-  --broadcast-mode block
+  --broadcast-mode block \
+  --gas-prices="$GAS_PRICES"
 
 # Power function with m:10,n:3,c:0, res reserve, zero fees, and batch_blocks=3
 yes $PASSWORD | bondscli tx bonds create-bond \
@@ -81,7 +82,8 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=3 \
   --from miguel -y \
-  --broadcast-mode block
+  --broadcast-mode block \
+  --gas-prices="$GAS_PRICES"
 
 # Swapper function between res and rez with zero fees, and batch_blocks=2
 yes $PASSWORD | bondscli tx bonds create-bond \
@@ -102,7 +104,8 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=2 \
   --from miguel -y \
-  --broadcast-mode block
+  --broadcast-mode block \
+  --gas-prices="$GAS_PRICES"
 
 # Swapper function between token1 and token2 with non-zero fees, and batch_blocks=1
 yes $PASSWORD | bondscli tx bonds create-bond \
@@ -123,20 +126,21 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=1 \
   --from miguel -y \
-  --broadcast-mode block
+  --broadcast-mode block \
+  --gas-prices="$GAS_PRICES"
 
 # Buy 5token1, 5token2 from Miguel
 echo "Buying 5token1 from Miguel"
-yes $PASSWORD | bondscli tx bonds buy 5token1 "100000res" --from miguel -y --broadcast-mode block
+yes $PASSWORD | bondscli tx bonds buy 5token1 "100000res" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 echo "Buying 5token2 from Miguel"
-yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from miguel -y --broadcast-mode block
+yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 
 # Buy token2 and token3 from Francesco and Shaun
 echo "Buying 5token2 from Francesco"
-yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from francesco -y --broadcast-mode block
+yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 echo "Buying 5token3 from Shaun"
-yes $PASSWORD | bondscli tx bonds buy 5token3 "100res,100rez" --from shaun -y --broadcast-mode block
+yes $PASSWORD | bondscli tx bonds buy 5token3 "100res,100rez" --from shaun -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 
 # Buy 5token4 from Miguel (using token1 and token2)
 echo "Buying 5token4 from Miguel"
-yes $PASSWORD | bondscli tx bonds buy 5token4 "2token1,2token2" --from miguel -y --broadcast-mode block
+yes $PASSWORD | bondscli tx bonds buy 5token4 "2token1,2token2" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES"

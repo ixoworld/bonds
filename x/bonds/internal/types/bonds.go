@@ -13,8 +13,9 @@ const (
 	SwapperFunction   = "swapper_function"
 	AugmentedFunction = "augmented_function"
 
-	HatchState = "HATCH"
-	OpenState  = "OPEN"
+	HatchState  = "HATCH"
+	OpenState   = "OPEN"
+	SettleState = "SETTLE"
 
 	DoNotModifyField = "[do-not-modify]"
 
@@ -186,7 +187,6 @@ type Bond struct {
 	FunctionType           string           `json:"function_type" yaml:"function_type"`
 	FunctionParameters     FunctionParams   `json:"function_parameters" yaml:"function_parameters"`
 	ReserveTokens          []string         `json:"reserve_tokens" yaml:"reserve_tokens"`
-	ReserveAddress         sdk.AccAddress   `json:"reserve_address" yaml:"reserve_address"`
 	TxFeePercentage        sdk.Dec          `json:"tx_fee_percentage" yaml:"tx_fee_percentage"`
 	ExitFeePercentage      sdk.Dec          `json:"exit_fee_percentage" yaml:"exit_fee_percentage"`
 	FeeAddress             sdk.AccAddress   `json:"fee_address" yaml:"fee_address"`
@@ -195,19 +195,20 @@ type Bond struct {
 	SanityRate             sdk.Dec          `json:"sanity_rate" yaml:"sanity_rate"`
 	SanityMarginPercentage sdk.Dec          `json:"sanity_margin_percentage" yaml:"sanity_margin_percentage"`
 	CurrentSupply          sdk.Coin         `json:"current_supply" yaml:"current_supply"`
+	CurrentReserve         sdk.Coins        `json:"current_reserve" yaml:"current_reserve"`
 	AllowSells             bool             `json:"allow_sells" yaml:"allow_sells"`
 	Signers                []sdk.AccAddress `json:"signers" yaml:"signers"`
 	BatchBlocks            sdk.Uint         `json:"batch_blocks" yaml:"batch_blocks"`
+	OutcomePayment         sdk.Coins        `json:"outcome_payment" yaml:"outcome_payment"`
 	State                  string           `json:"state" yaml:"state"`
 }
 
 func NewBond(token, name, description string, creator sdk.AccAddress,
-	functionType string, functionParameters FunctionParams,
-	reserveTokens []string, reserveAdddress sdk.AccAddress,
+	functionType string, functionParameters FunctionParams, reserveTokens []string,
 	txFeePercentage, exitFeePercentage sdk.Dec, feeAddress sdk.AccAddress,
 	maxSupply sdk.Coin, orderQuantityLimits sdk.Coins, sanityRate,
 	sanityMarginPercentage sdk.Dec, allowSells bool, signers []sdk.AccAddress,
-	batchBlocks sdk.Uint, state string) Bond {
+	batchBlocks sdk.Uint, outcomePayment sdk.Coins, state string) Bond {
 
 	// Ensure tokens and coins are sorted
 	sort.Strings(reserveTokens)
@@ -221,7 +222,6 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 		FunctionType:           functionType,
 		FunctionParameters:     functionParameters,
 		ReserveTokens:          reserveTokens,
-		ReserveAddress:         reserveAdddress,
 		TxFeePercentage:        txFeePercentage,
 		ExitFeePercentage:      exitFeePercentage,
 		FeeAddress:             feeAddress,
@@ -230,9 +230,11 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 		SanityRate:             sanityRate,
 		SanityMarginPercentage: sanityMarginPercentage,
 		CurrentSupply:          sdk.NewCoin(token, sdk.ZeroInt()),
+		CurrentReserve:         nil,
 		AllowSells:             allowSells,
 		Signers:                signers,
 		BatchBlocks:            batchBlocks,
+		OutcomePayment:         outcomePayment,
 		State:                  state,
 	}
 }
@@ -251,7 +253,7 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 	}
 
 	args := bond.FunctionParameters.AsMap()
-	x := sdk.NewDecFromInt(supply)
+	x := supply.ToDec()
 	switch bond.FunctionType {
 	case PowerFunction:
 		m := args["m"]
@@ -277,8 +279,13 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err sdk
 		case OpenState:
 			kappa := args["kappa"].TruncateInt64()
 			res := Reserve(x, kappa, args["V0"])
-			spotPriceDec := SpotPrice(res, kappa, args["V0"])
-			result = bond.GetNewReserveDecCoins(spotPriceDec)
+			// If reserve < 1, default to zero price to avoid calculation issues
+			if res.LT(sdk.OneDec()) {
+				result = bond.GetNewReserveDecCoins(sdk.ZeroDec())
+			} else {
+				spotPriceDec := SpotPrice(res, kappa, args["V0"])
+				result = bond.GetNewReserveDecCoins(spotPriceDec)
+			}
 		default:
 			panic("unrecognized bond state")
 		}
@@ -317,7 +324,7 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 	}
 
 	args := bond.FunctionParameters.AsMap()
-	x := sdk.NewDecFromInt(supply)
+	x := supply.ToDec()
 	switch bond.FunctionType {
 	case PowerFunction:
 		m := args["m"]
@@ -348,8 +355,9 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 	}
 
 	if result.IsNegative() {
-		// assumes that the curve is above the x-axis and does not intersect it
-		panic(fmt.Sprintf("negative integral result for bond %s", bond.Token))
+		// For vanilla bonding curves, we assume that the curve does not
+		// intersect the x-axis and is greater than zero throughout
+		panic(fmt.Sprintf("negative reserve result for bond %s", bond.Token))
 	}
 	return result
 }
@@ -371,15 +379,14 @@ func (bond Bond) GetReserveDeltaForLiquidityDelta(mintOrBurn sdk.Int, reserveBal
 	case SwapperFunction:
 		resToken1 := bond.ReserveTokens[0]
 		resToken2 := bond.ReserveTokens[1]
-		resBalance1 := sdk.NewDecFromInt(reserveBalances.AmountOf(resToken1))
-		resBalance2 := sdk.NewDecFromInt(reserveBalances.AmountOf(resToken2))
-		mintOrBurnDec := sdk.NewDecFromInt(mintOrBurn)
+		resBalance1 := reserveBalances.AmountOf(resToken1).ToDec()
+		resBalance2 := reserveBalances.AmountOf(resToken2).ToDec()
 
 		// Using Uniswap formulae: x' = (1+-α)x = x +- Δx, where α = Δx/x
 		// Where x is any of the two reserve balances or the current supply
 		// and x' is any of the updated reserve balances or the updated supply
 		// By making Δx subject of the formula: Δx = αx
-		alpha := mintOrBurnDec.Quo(sdk.NewDecFromInt(bond.CurrentSupply.Amount))
+		alpha := mintOrBurn.ToDec().Quo(bond.CurrentSupply.Amount.ToDec())
 
 		result := sdk.DecCoins{
 			sdk.NewDecCoinFromDec(resToken1, alpha.Mul(resBalance1)),
@@ -405,7 +412,7 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 	if bond.FunctionType == AugmentedFunction && bond.State == HatchState {
 		args := bond.FunctionParameters.AsMap()
 		if bond.State == HatchState {
-			price := args["p0"].Mul(sdk.NewDecFromInt(mint))
+			price := args["p0"].Mul(mint.ToDec())
 			return bond.GetNewReserveDecCoins(price), nil
 		}
 	}
@@ -422,8 +429,9 @@ func (bond Bond) GetPricesToMint(mint sdk.Int, reserveBalances sdk.Coins) (sdk.D
 			priceToMint = result
 		} else {
 			// Reserve balances should all be equal given that we are always
-			// applying the same additions/subtractions to all reserve balances
-			commonReserveBalance := sdk.NewDecFromInt(reserveBalances[0].Amount)
+			// applying the same additions/subtractions to all reserve balances.
+			// Thus we can pick the first reserve balance as the global balance.
+			commonReserveBalance := reserveBalances[0].Amount.ToDec()
 			priceToMint = result.Sub(commonReserveBalance)
 		}
 		if priceToMint.IsNegative() {
@@ -466,7 +474,7 @@ func (bond Bond) GetReturnsForBurn(burn sdk.Int, reserveBalances sdk.Coins) sdk.
 			// Reserve balances should all be equal given that we are always
 			// applying the same additions/subtractions to all reserve balances.
 			// Thus we can pick the first reserve balance as the global balance.
-			reserveBalance = sdk.NewDecFromInt(reserveBalances[0].Amount)
+			reserveBalance = reserveBalances[0].Amount.ToDec()
 		}
 
 		if result.GT(reserveBalance) {
@@ -609,8 +617,8 @@ func (bond Bond) ReservesViolateSanityRate(newReserves sdk.Coins) bool {
 	// Get new rate from new balances
 	resToken1 := bond.ReserveTokens[0]
 	resToken2 := bond.ReserveTokens[1]
-	resBalance1 := sdk.NewDecFromInt(newReserves.AmountOf(resToken1))
-	resBalance2 := sdk.NewDecFromInt(newReserves.AmountOf(resToken2))
+	resBalance1 := newReserves.AmountOf(resToken1).ToDec()
+	resBalance2 := newReserves.AmountOf(resToken2).ToDec()
 	exchangeRate := resBalance1.Quo(resBalance2)
 
 	// Get max and min acceptable rates
