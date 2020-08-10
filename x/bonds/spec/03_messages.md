@@ -25,6 +25,7 @@ Bonds can be created by any address using `MsgCreateBond`.
 | AllowSells             | `bool`             | Whether or not selling is allowed |
 | Signers                | `[]sdk.AccAddress` | The addresses of the accounts that must sign this message and any future message that edits the bond's parameters. |
 | BatchBlocks            | `sdk.Uint`         | The lifespan of each orders batch in blocks. |
+| OutcomePayment         | `sdk.Coins`        | The payment required to be made in order to transition a bond from OPEN to SETTLE. |
 
 ```go
 type MsgCreateBond struct {
