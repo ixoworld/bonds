@@ -70,7 +70,8 @@ tx_from_m create-bond \
   --sanity-margin-percentage="0" \
   --allow-sells \
   --signers="$MIGUEL" \
-  --batch-blocks=1
+  --batch-blocks=1 \
+  --outcome-payment="100000res"
 echo "Created bond..."
 bondscli q bonds bond abc
 
