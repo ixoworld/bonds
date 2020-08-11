@@ -17,7 +17,7 @@ In an Alpha-Bond, tokens can give holders the rights to future outcomes payments
 
 ## Token Bonds Module
 
-The Token Bonds Cosmos SDK Module enables applications that use token bondong curves to be created on-the-fly. 
+The Token Bonds Cosmos SDK Module enables applications that use token bonding curves to be created on-the-fly. 
 Each new Token B instance declares a new token denomination in the application, with a set of parameters.
 The module stores the current state of all tokens that have been created using this module.
 Changes in state occur through transactions that are instructed by valid *buy, sell, and swap* messages.
