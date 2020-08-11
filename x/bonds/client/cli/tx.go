@@ -31,7 +31,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdBuy(cdc),
 		GetCmdSell(cdc),
 		GetCmdSwap(cdc),
-		GetCmdOutcomePayment(cdc),
+		GetCmdMakeOutcomePayment(cdc),
 		GetCmdWithdrawShare(cdc),
 	)...)
 
@@ -292,7 +292,7 @@ func GetCmdSwap(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func GetCmdOutcomePayment(cdc *codec.Codec) *cobra.Command {
+func GetCmdMakeOutcomePayment(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "make-outcome-payment [bond-token]",
 		Example: "make-outcome-payment abc",

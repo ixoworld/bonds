@@ -68,24 +68,24 @@ create_bond_multisig
 echo "Waiting a bit..."
 sleep 5
 echo "Created bond..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Miguel buys 10abc..."
 tx_from_m buy 10abc 1000000res
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco buys 10abc..."
 tx_from_f buy 10abc 1000000res
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"
 
 echo "Miguel sells 10abc..."
 tx_from_m sell 10abc
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco sells 10abc..."
 tx_from_f sell 10abc
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"

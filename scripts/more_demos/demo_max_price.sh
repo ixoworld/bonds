@@ -57,14 +57,14 @@ tx_from_m create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=1
 echo "Created bond..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Miguel buys 10abc..."
 tx_from_m buy 10abc 5000
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco buys 10abc..."
 tx_from_f buy 10abc 6000
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"

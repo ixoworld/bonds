@@ -141,7 +141,7 @@ rest_from_m bonds/swap '{
                         "to_token":"rez"
                       }'
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco swap 5000 rez to res..."
 # shellcheck disable=SC2046
@@ -157,7 +157,7 @@ rest_from_f bonds/swap '{
                           "to_token":"res"
                         }'
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"
 
 echo "Miguel sells 1abc..."
 # shellcheck disable=SC2046
