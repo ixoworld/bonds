@@ -57,7 +57,7 @@ tx_from_m create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=1
 echo "Created bond..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Editing name..."
 tx_from_m edit-bond \
@@ -65,7 +65,7 @@ tx_from_m edit-bond \
   --name="New A B C" \
   --signers="$MIGUEL"
 echo "Edited name..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Editing description..."
 tx_from_m edit-bond \
@@ -73,7 +73,7 @@ tx_from_m edit-bond \
   --description="New description about A B C" \
   --signers="$MIGUEL"
 echo "Edited description..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Editing order quantity limits..."
 tx_from_m edit-bond \
@@ -81,7 +81,7 @@ tx_from_m edit-bond \
   --order-quantity-limits=100abc,200res1,300res2 \
   --signers="$MIGUEL"
 echo "Edited description..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Editing sanity rate and margin..."
 tx_from_m edit-bond \
@@ -90,7 +90,7 @@ tx_from_m edit-bond \
   --sanity-margin-percentage=10 \
   --signers="$MIGUEL"
 echo "Edited description..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Editing nothing..."
 tx_from_m edit-bond \

@@ -106,25 +106,25 @@ create_bond_multisig
 echo "Waiting a bit..."
 sleep 5
 echo "Created bond..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Editing bond with incorrect signers..."
 edit_bond_multisig_incorrect_signers_1
 echo "Waiting a bit..."
 sleep 5
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 echo "Bond was NOT edited!"
 
 echo "Editing bond with incorrect signers again..."
 edit_bond_multisig_incorrect_signers_2
 echo "Waiting a bit..."
 sleep 5
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 echo "Bond was NOT edited!"
 
 echo "Editing bond with correct..."
 edit_bond_multisig_correct_signers
 echo "Waiting a bit..."
 sleep 5
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 echo "Bond was edited!"
