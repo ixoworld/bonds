@@ -381,7 +381,7 @@ func (msg MsgSwap) Route() string { return RouterKey }
 func (msg MsgSwap) Type() string { return TypeMsgSwap }
 
 type MsgMakeOutcomePayment struct {
-	Sender    sdk.AccAddress `json:"recipient" yaml:"recipient"`
+	Sender    sdk.AccAddress `json:"sender" yaml:"sender"`
 	BondToken string         `json:"bond_token" yaml:"bond_token"`
 }
 
