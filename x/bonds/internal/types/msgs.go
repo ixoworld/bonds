@@ -87,7 +87,7 @@ func (msg MsgCreateBond) ValidateBasic() error {
 	// Check that bond token is a valid token name
 	err := CheckCoinDenom(msg.Token)
 	if err != nil {
-		return ErrInvalidCoinDenomination(DefaultCodespace, msg.Token)
+		return sdkerrors.Wrap(ErrInvalidCoinDenomination, msg.Token)
 	}
 
 	// Validate function parameters
@@ -113,7 +113,7 @@ func (msg MsgCreateBond) ValidateBasic() error {
 
 	// Check that max supply denom matches token denom
 	if msg.MaxSupply.Denom != msg.Token {
-		return ErrMaxSupplyDenomDoesNotMatchTokenDenom(DefaultCodespace)
+		return sdkerrors.Wrap(ErrMaxSupplyDenomDoesNotMatchTokenDenom, msg.Token)
 	}
 
 	// Check that Sanity values not negative
@@ -213,7 +213,7 @@ func (msg MsgEditBond) ValidateBasic() error {
 		}
 	}
 	if !atLeaseOneEdit {
-		return ErrDidNotEditAnything(DefaultCodespace)
+		return sdkerrors.Wrap(ErrDidNotEditAnything, "")
 	}
 
 	return nil

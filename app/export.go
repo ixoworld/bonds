@@ -30,7 +30,7 @@ func (app *BondsApp) ExportAppStateAndValidators(
 	if err != nil {
 		return nil, nil, err
 	}
-	validators = staking.WriteValidators(ctx, app.stakingKeeper)
+	validators = staking.WriteValidators(ctx, app.StakingKeeper)
 	return appState, validators, nil
 }
 
@@ -56,12 +56,12 @@ func (app *BondsApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	}
 
 	/* Just to be safe, assert the invariants on current state. */
-	app.crisisKeeper.AssertInvariants(ctx)
+	app.CrisisKeeper.AssertInvariants(ctx)
 
 	/* Handle fee distribution state. */
 
 	// withdraw all validator commission
-	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val staking.ValidatorI) (stop bool) {
+	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val staking.ValidatorI) (stop bool) {
 		_, err := app.distrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
 		// we don't care if the error is telling us there are no commissions, as currently we have no inflation
 		// TODO: remove this once we add inflation (if ever)
@@ -72,7 +72,7 @@ func (app *BondsApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	})
 
 	// withdraw all delegator rewards
-	dels := app.stakingKeeper.GetAllDelegations(ctx)
+	dels := app.StakingKeeper.GetAllDelegations(ctx)
 	for _, delegation := range dels {
 		_, err := app.distrKeeper.WithdrawDelegationRewards(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress)
 		if err != nil {
@@ -91,7 +91,7 @@ func (app *BondsApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	ctx = ctx.WithBlockHeight(0)
 
 	// reinitialize all validators
-	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val staking.ValidatorI) (stop bool) {
+	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val staking.ValidatorI) (stop bool) {
 
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
 		scraps := app.distrKeeper.GetValidatorOutstandingRewards(ctx, val.GetOperator())
@@ -115,20 +115,20 @@ func (app *BondsApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 	/* Handle staking state. */
 
 	// iterate through redelegations, reset creation height
-	app.stakingKeeper.IterateRedelegations(ctx, func(_ int64, red staking.Redelegation) (stop bool) {
+	app.StakingKeeper.IterateRedelegations(ctx, func(_ int64, red staking.Redelegation) (stop bool) {
 		for i := range red.Entries {
 			red.Entries[i].CreationHeight = 0
 		}
-		app.stakingKeeper.SetRedelegation(ctx, red)
+		app.StakingKeeper.SetRedelegation(ctx, red)
 		return false
 	})
 
 	// iterate through unbonding delegations, reset creation height
-	app.stakingKeeper.IterateUnbondingDelegations(ctx, func(_ int64, ubd staking.UnbondingDelegation) (stop bool) {
+	app.StakingKeeper.IterateUnbondingDelegations(ctx, func(_ int64, ubd staking.UnbondingDelegation) (stop bool) {
 		for i := range ubd.Entries {
 			ubd.Entries[i].CreationHeight = 0
 		}
-		app.stakingKeeper.SetUnbondingDelegation(ctx, ubd)
+		app.StakingKeeper.SetUnbondingDelegation(ctx, ubd)
 		return false
 	})
 
@@ -140,7 +140,7 @@ func (app *BondsApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 
 	for ; iter.Valid(); iter.Next() {
 		addr := sdk.ValAddress(iter.Key()[1:])
-		validator, found := app.stakingKeeper.GetValidator(ctx, addr)
+		validator, found := app.StakingKeeper.GetValidator(ctx, addr)
 		if !found {
 			panic("expected validator, not found")
 		}
@@ -150,13 +150,13 @@ func (app *BondsApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []s
 			validator.Jailed = true
 		}
 
-		app.stakingKeeper.SetValidator(ctx, validator)
+		app.StakingKeeper.SetValidator(ctx, validator)
 		counter++
 	}
 
 	iter.Close()
 
-	_ = app.stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	_ = app.StakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 
 	/* Handle slashing state. */
 

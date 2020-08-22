@@ -8,7 +8,7 @@ const (
 	DefaultCodespace = ModuleName
 
 	// General
-	CodeArgumentInvalid                = 301
+	/*CodeArgumentInvalid                = 301
 	CodeArgumentMissingOrIncorrectType = 302
 	CodeIncorrectNumberOfValues        = 303
 	CodeActionInvalid                  = 304
@@ -43,89 +43,47 @@ const (
 	CodeSanityRateViolated         = 325
 	CodeFeeTooLarge                = 326
 	CodeNoBondTokensOwned          = 327
-	CodeInsufficientReserveToBuy   = 328
+	CodeInsufficientReserveToBuy   = 328*/
 )
 
 var (
-	ErrArgumentMustBePositive               = sdkerrors.Register(ModuleName, CodeArgumentInvalid, "argument must be a positive value")
-	ErrArgumentMustBeInteger                = sdkerrors.Register(ModuleName, CodeArgumentInvalid, "argument must be an integer value")
-	ErrArgumentMustBeBetween                = sdkerrors.Register(ModuleName, CodeArgumentInvalid, "argument must be between")
-	ErrArgumentCannotBeEmpty                = sdkerrors.Register(ModuleName, CodeArgumentInvalid, "argument cannot be empty")
-	ErrArgumentCannotBeNegative             = sdkerrors.Register(ModuleName, CodeArgumentInvalid, "argument cannot be negative")
-	ErrArgumentMissingOrNonFloat            = sdkerrors.Register(ModuleName, CodeArgumentMissingOrIncorrectType, "Argument is missing or is not a float")
-	ErrBondDoesNotExist                     = sdkerrors.Register(ModuleName, CodeBondDoesNotExist, "Bond does not exist")
-	ErrBondAlreadyExists                    = sdkerrors.Register(ModuleName, CodeBondAlreadyExists, "Bond already exists")
-	ErrBondTokenCannotBeStakingToken        = sdkerrors.Register(ModuleName, CodeBondTokenInvalid, "Bond token cannot be staking token")
-	ErrInvalidStateForAction                = sdkerrors.Register(ModuleName, CodeInvalidState, "Cannot perform that action at the current state")
-	ErrReserveDenomsMismatch                = sdkerrors.Register(ModuleName, CodeReserveDenomsMismatch, "Denom do not match reserve")
-	ErrOrderQuantityLimitExceeded           = sdkerrors.Register(ModuleName, CodeOrderQuantityLimitExceeded, "Order quantity limits exceeded")
-	ErrValuesViolateSanityRate              = sdkerrors.Register(ModuleName, CodeSanityRateViolated, "Values violate sanity rate")
-	ErrBondDoesNotAllowSelling              = sdkerrors.Register(ModuleName, CodeBondDoesNotAllowSelling, "Bond does not allow selling at the moment")
-	ErrFunctionNotAvailableForFunctionType  = sdkerrors.Register(ModuleName, CodeFunctionNotAvailableForFunctionType, "Function is not available for the function type")
-	ErrCannotMakeZeroOutcomePayment         = sdkerrors.Register(ModuleName, CodeActionInvalid, "Cannot make outcome payment because outcome payment is set to nil")
-	ErrNoBondTokensOwned                    = sdkerrors.Register(ModuleName, CodeNoBondTokensOwned, "No bond tokens of this bond are owned")
-	ErrCannotBurnMoreThanSupply             = sdkerrors.Register(ModuleName, CodeInvalidResultantSupply, "Cannot burn more tokens than the current supply")
-	ErrFeesCannotBeOrExceed100Percent       = sdkerrors.Register(ModuleName, CodeFeeTooLarge, "Sum of fees is or exceeds 100 percent")
-	ErrFromAndToCannotBeTheSameToken        = sdkerrors.Register(ModuleName, CodeInvalidSwapper, "From and To tokens cannot be the same token")
-	ErrCannotMintMoreThanMaxSupply          = sdkerrors.Register(ModuleName, CodeInvalidResultantSupply, "Cannot mint more tokens than the max supply")
-	ErrMaxPriceExceeded                     = sdkerrors.Register(ModuleName, CodeMaxPriceExceeded, "Max price exceeded")
-	ErrInsufficientReserveToBuy             = sdkerrors.Register(ModuleName, CodeInsufficientReserveToBuy, "Insufficient reserve was supplied to perform buy order")
-	ErrIncorrectNumberOfFunctionParameters  = sdkerrors.Register(ModuleName, CodeIncorrectNumberOfValues, "Incorrect number of function parameters")
-	ErrFunctionParameterMissingOrNonFloat   = sdkerrors.Register(ModuleName, CodeArgumentMissingOrIncorrectType, "Parameter is missing or is not a float")
-	ErrFunctionRequiresNonZeroCurrentSupply = sdkerrors.Register(ModuleName, CodeFunctionRequiresNonZeroCurrentSupply, "Function requires the current supply to be non zero")
-	ErrTokenIsNotAValidReserveToken         = sdkerrors.Register(ModuleName, CodeReserveTokenInvalid, "Token is not a valid reserve token")
-	ErrSwapAmountTooSmallToGiveAnyReturn    = sdkerrors.Register(ModuleName, CodeSwapAmountInvalid, "Swap amount too small to give any return")
-	ErrSwapAmountCausesReserveDepletion     = sdkerrors.Register(ModuleName, CodeSwapAmountInvalid, "Swap amount too large and causes reserve to be depleted")
+	ErrArgumentMustBePositive               = sdkerrors.Register(ModuleName, 301, "argument must be a positive value")
+	ErrArgumentMustBeInteger                = sdkerrors.Register(ModuleName, 302, "argument must be an integer value")
+	ErrArgumentMustBeBetween                = sdkerrors.Register(ModuleName, 303, "argument must be between")
+	ErrArgumentCannotBeEmpty                = sdkerrors.Register(ModuleName, 304, "argument cannot be empty")
+	ErrArgumentCannotBeNegative             = sdkerrors.Register(ModuleName, 305, "argument cannot be negative")
+	ErrArgumentMissingOrNonFloat            = sdkerrors.Register(ModuleName, 306, "Argument is missing or is not a float")
+	ErrBondDoesNotExist                     = sdkerrors.Register(ModuleName, 307, "Bond does not exist")
+	ErrBondAlreadyExists                    = sdkerrors.Register(ModuleName, 308, "Bond already exists")
+	ErrBondTokenCannotBeStakingToken        = sdkerrors.Register(ModuleName, 309, "Bond token cannot be staking token")
+	ErrInvalidStateForAction                = sdkerrors.Register(ModuleName, 310, "Cannot perform that action at the current state")
+	ErrReserveDenomsMismatch                = sdkerrors.Register(ModuleName, 311, "Denom do not match reserve")
+	ErrOrderQuantityLimitExceeded           = sdkerrors.Register(ModuleName, 312, "Order quantity limits exceeded")
+	ErrValuesViolateSanityRate              = sdkerrors.Register(ModuleName, 313, "Values violate sanity rate")
+	ErrBondDoesNotAllowSelling              = sdkerrors.Register(ModuleName, 314, "Bond does not allow selling at the moment")
+	ErrFunctionNotAvailableForFunctionType  = sdkerrors.Register(ModuleName, 315, "Function is not available for the function type")
+	ErrCannotMakeZeroOutcomePayment         = sdkerrors.Register(ModuleName, 316, "Cannot make outcome payment because outcome payment is set to nil")
+	ErrNoBondTokensOwned                    = sdkerrors.Register(ModuleName, 317, "No bond tokens of this bond are owned")
+	ErrCannotBurnMoreThanSupply             = sdkerrors.Register(ModuleName, 318, "Cannot burn more tokens than the current supply")
+	ErrFeesCannotBeOrExceed100Percent       = sdkerrors.Register(ModuleName, 319, "Sum of fees is or exceeds 100 percent")
+	ErrFromAndToCannotBeTheSameToken        = sdkerrors.Register(ModuleName, 320, "From and To tokens cannot be the same token")
+	ErrCannotMintMoreThanMaxSupply          = sdkerrors.Register(ModuleName, 321, "Cannot mint more tokens than the max supply")
+	ErrMaxPriceExceeded                     = sdkerrors.Register(ModuleName, 322, "Max price exceeded")
+	ErrInsufficientReserveToBuy             = sdkerrors.Register(ModuleName, 323, "Insufficient reserve was supplied to perform buy order")
+	ErrIncorrectNumberOfFunctionParameters  = sdkerrors.Register(ModuleName, 324, "Incorrect number of function parameters")
+	ErrFunctionParameterMissingOrNonFloat   = sdkerrors.Register(ModuleName, 325, "Parameter is missing or is not a float")
+	ErrFunctionRequiresNonZeroCurrentSupply = sdkerrors.Register(ModuleName, 326, "Function requires the current supply to be non zero")
+	ErrTokenIsNotAValidReserveToken         = sdkerrors.Register(ModuleName, 327, "Token is not a valid reserve token")
+	ErrSwapAmountTooSmallToGiveAnyReturn    = sdkerrors.Register(ModuleName, 328, "Swap amount too small to give any return")
+	ErrSwapAmountCausesReserveDepletion     = sdkerrors.Register(ModuleName, 329, "Swap amount too large and causes reserve to be depleted")
+	ErrInvalidCoinDenomination              = sdkerrors.Register(ModuleName, 330, "Invalid coin denomination")
+	ErrMaxSupplyDenomDoesNotMatchTokenDenom = sdkerrors.Register(ModuleName, 331, "Max supply denom does not match token denom")
+	ErrDidNotEditAnything                   = sdkerrors.Register(ModuleName, 332, "Did not edit anything from the bond")
+	ErrBondTokenCannotAlsoBeReserveToken    = sdkerrors.Register(ModuleName, 333, "Token cannot also be a reserve token")
+	ErrDuplicateReserveToken                = sdkerrors.Register(ModuleName, 334, "Cannot have duplicate tokens in reserve tokens")
+	ErrUnrecognizedFunctionType             = sdkerrors.Register(ModuleName, 335, "Unrecognized function type")
+	ErrIncorrectNumberOfReserveTokens       = sdkerrors.Register(ModuleName, 336, "Incorrect number of reserve tokens")
+	ErrInvalidFunctionParameter             = sdkerrors.Register(ModuleName, 337, "Invalid function parameter")
+	ErrArgumentMissingOrNonUInteger         = sdkerrors.Register(ModuleName, 338, "Argument is missing or is not an unsigned integer")
+	ErrArgumentMissingOrNonBoolean          = sdkerrors.Register(ModuleName, 339, "Argument is missing or is not true or false")
 )
-
-/*
-func ErrArgumentMissingOrNonUInteger(codespace sdk.CodespaceType, arg string) sdk.Error {
-	errMsg := fmt.Sprintf("%s argument is missing or is not an unsigned integer", arg)
-	return sdk.NewError(codespace, CodeArgumentMissingOrIncorrectType, errMsg)
-}
-
-func ErrArgumentMissingOrNonBoolean(codespace sdk.CodespaceType, arg string) sdk.Error {
-	errMsg := fmt.Sprintf("%s argument is missing or is not true or false", arg)
-	return sdk.NewError(codespace, CodeArgumentMissingOrIncorrectType, errMsg)
-}
-
-func ErrIncorrectNumberOfReserveTokens(codespace sdk.CodespaceType, expected int) sdk.Error {
-	errMsg := fmt.Sprintf("Incorrect number of reserve tokens; expected: %d", expected)
-	return sdk.NewError(codespace, CodeIncorrectNumberOfValues, errMsg)
-}
-
-func ErrDidNotEditAnything(codespace sdk.CodespaceType) sdk.Error {
-	errMsg := "Did not edit anything from the bond"
-	return sdk.NewError(codespace, CodeDidNotEditAnything, errMsg)
-}
-
-func ErrDuplicateReserveToken(codespace sdk.CodespaceType) sdk.Error {
-	errMsg := "Cannot have duplicate tokens in reserve tokens"
-	return sdk.NewError(codespace, CodeInvalidBond, errMsg)
-}
-
-func ErrUnrecognizedFunctionType(codespace sdk.CodespaceType) sdk.Error {
-	errMsg := "Unrecognized function type"
-	return sdk.NewError(codespace, CodeUnrecognizedFunctionType, errMsg)
-}
-
-func ErrInvalidFunctionParameter(codespace sdk.CodespaceType, parameter string) sdk.Error {
-	errMsg := fmt.Sprintf("Invalid function parameter '%s'", parameter)
-	return sdk.NewError(codespace, CodeInvalidFunctionParameter, errMsg)
-}
-
-func ErrMaxSupplyDenomDoesNotMatchTokenDenom(codespace sdk.CodespaceType) sdk.Error {
-	errMsg := "Max supply denom does not match token denom"
-	return sdk.NewError(codespace, CodeMaxSupplyDenomInvalid, errMsg)
-}
-
-func ErrBondTokenCannotAlsoBeReserveToken(codespace sdk.CodespaceType) sdk.Error {
-	errMsg := "Token cannot also be a reserve token"
-	return sdk.NewError(codespace, CodeBondTokenInvalid, errMsg)
-}
-
-func ErrInvalidCoinDenomination(codespace sdk.CodespaceType, denom string) sdk.Error {
-	errMsg := fmt.Sprintf("Invalid coin denomination '%s'", denom)
-	return sdk.NewError(codespace, CodeInvalidCoinDenomination, errMsg)
-}
-*/

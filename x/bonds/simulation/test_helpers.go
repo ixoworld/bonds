@@ -138,7 +138,7 @@ func getInitialBondState(functionType string) string {
 //noinspection GoNilness
 func getDummyNonZeroReserve(reserveTokens []string) (reserve sdk.Coins) {
 	for _, token := range reserveTokens {
-		reserve = reserve.Add(sdk.Coins{sdk.NewCoin(token, sdk.OneInt())})
+		reserve = reserve.Add(sdk.Coins{sdk.NewCoin(token, sdk.OneInt())}...)
 	}
 	return reserve
 }

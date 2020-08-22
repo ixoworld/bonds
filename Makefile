@@ -64,7 +64,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 # The below include contains the tools target.
 
-all: install
+all: lint install
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
@@ -93,11 +93,47 @@ go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
 	@go mod verify
 
+draw-deps:
+	@# requires brew install graphviz or apt-get install graphviz
+	go get github.com/RobotsAndPencils/goviz
+	@goviz -i ./cmd/bondsd -d 2 | dot -Tpng -o dependency-graph.png
+
 clean:
 	rm -rf snapcraft-local.yaml build/
 
 distclean: clean
 	rm -rf vendor/
 
-.PHONY: all build-linux install \
-	go-mod-cache clean build
+benchmark:
+	@go test -mod=readonly -bench=. ./...
+
+########################################
+### Testing
+
+test: test-unit
+test-all: test-race test-cover
+
+test-unit:
+	@VERSION=$(VERSION) go test -mod=readonly ./...
+
+test-race:
+	@VERSION=$(VERSION) go test -mod=readonly -race ./...
+
+test-cover:
+	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+lint:
+	golangci-lint run
+	@find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+	go mod verify
+
+run:
+	./scripts/clean_build.sh
+	./scripts/run.sh
+
+run_ledger:
+	./scripts/clean_build.sh
+	./scripts/run_ledger.sh
+
+demo:
+	./scripts/demo.sh

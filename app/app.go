@@ -22,6 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/ixoworld/bonds/x/bonds"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -59,6 +60,8 @@ var (
 		upgrade.AppModuleBasic{},
 		supply.AppModuleBasic{},
 		evidence.AppModuleBasic{},
+
+		bonds.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -69,6 +72,10 @@ var (
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		gov.ModuleName:            {supply.Burner},
+
+		bonds.BondsMintBurnAccount:       {supply.Minter, supply.Burner},
+		bonds.BatchesIntermediaryAccount: nil,
+		bonds.BondsReserveAccount:        nil,
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -109,18 +116,20 @@ type BondsApp struct {
 	subspaces map[string]params.Subspace
 
 	// keepers
-	accountKeeper  auth.AccountKeeper
-	bankKeeper     bank.Keeper
-	supplyKeeper   supply.Keeper
-	stakingKeeper  staking.Keeper
+	AccountKeeper  auth.AccountKeeper
+	BankKeeper     bank.Keeper
+	SupplyKeeper   supply.Keeper
+	StakingKeeper  staking.Keeper
 	slashingKeeper slashing.Keeper
 	mintKeeper     mint.Keeper
 	distrKeeper    distr.Keeper
 	govKeeper      gov.Keeper
-	crisisKeeper   crisis.Keeper
+	CrisisKeeper   crisis.Keeper
 	upgradeKeeper  upgrade.Keeper
 	paramsKeeper   params.Keeper
 	evidenceKeeper evidence.Keeper
+
+	BondsKeeper bonds.Keeper
 
 	// Module Manager
 	mm *module.Manager
@@ -145,6 +154,8 @@ func NewBondsApp(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, mint.StoreKey, distr.StoreKey, slashing.StoreKey,
 		gov.StoreKey, upgrade.StoreKey, params.StoreKey, evidence.StoreKey,
+
+		bonds.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
@@ -170,35 +181,35 @@ func NewBondsApp(
 	app.subspaces[crisis.ModuleName] = app.paramsKeeper.Subspace(crisis.DefaultParamspace)
 
 	// Add keepers
-	app.accountKeeper = auth.NewAccountKeeper(
+	app.AccountKeeper = auth.NewAccountKeeper(
 		app.cdc, keys[auth.StoreKey], app.subspaces[auth.ModuleName], auth.ProtoBaseAccount,
 	)
-	app.bankKeeper = bank.NewBaseKeeper(
-		app.accountKeeper, app.subspaces[bank.ModuleName], app.BlacklistedAccAddrs(),
+	app.BankKeeper = bank.NewBaseKeeper(
+		app.AccountKeeper, app.subspaces[bank.ModuleName], app.BlacklistedAccAddrs(),
 	)
-	app.supplyKeeper = supply.NewKeeper(
-		app.cdc, keys[supply.StoreKey], app.accountKeeper, app.bankKeeper, maccPerms,
+	app.SupplyKeeper = supply.NewKeeper(
+		app.cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms,
 	)
 	stakingKeeper := staking.NewKeeper(
-		app.cdc, keys[staking.StoreKey], app.supplyKeeper, app.subspaces[staking.ModuleName],
+		app.cdc, keys[staking.StoreKey], app.SupplyKeeper, app.subspaces[staking.ModuleName],
 	)
 	app.mintKeeper = mint.NewKeeper(
-		app.cdc, keys[mint.StoreKey], app.subspaces[mint.ModuleName], &stakingKeeper, app.supplyKeeper, auth.FeeCollectorName,
+		app.cdc, keys[mint.StoreKey], app.subspaces[mint.ModuleName], &stakingKeeper, app.SupplyKeeper, auth.FeeCollectorName,
 	)
 	app.distrKeeper = distr.NewKeeper(
-		app.cdc, keys[distr.StoreKey], app.subspaces[distr.ModuleName], &stakingKeeper, app.supplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs(),
+		app.cdc, keys[distr.StoreKey], app.subspaces[distr.ModuleName], &stakingKeeper, app.SupplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs(),
 	)
 	app.slashingKeeper = slashing.NewKeeper(
 		app.cdc, keys[slashing.StoreKey], &stakingKeeper, app.subspaces[slashing.ModuleName],
 	)
-	app.crisisKeeper = crisis.NewKeeper(
-		app.subspaces[crisis.ModuleName], invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName,
+	app.CrisisKeeper = crisis.NewKeeper(
+		app.subspaces[crisis.ModuleName], invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName,
 	)
 	app.upgradeKeeper = upgrade.NewKeeper(
 		skipUpgradeHeights, keys[upgrade.StoreKey], app.cdc,
 	)
 	evidenceKeeper := evidence.NewKeeper(
-		app.cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName], &app.stakingKeeper, app.slashingKeeper,
+		app.cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName], &app.StakingKeeper, app.slashingKeeper,
 	)
 	evidenceRouter := evidence.NewRouter()
 	evidenceKeeper.SetRouter(evidenceRouter)
@@ -211,30 +222,40 @@ func NewBondsApp(
 		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgrade.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper))
 	app.govKeeper = gov.NewKeeper(
-		app.cdc, keys[gov.StoreKey], app.subspaces[gov.ModuleName], app.supplyKeeper, &stakingKeeper, govRouter,
+		app.cdc, keys[gov.StoreKey], app.subspaces[gov.ModuleName], app.SupplyKeeper, &stakingKeeper, govRouter,
 	)
 
 	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.stakingKeeper = *stakingKeeper.SetHooks(
+	// NOTE: StakingKeeper above is passed by reference, so that it will contain these hooks
+	app.StakingKeeper = *stakingKeeper.SetHooks(
 		staking.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()),
+	)
+
+	app.BondsKeeper = bonds.NewKeeper(
+		app.BankKeeper,
+		app.SupplyKeeper,
+		app.AccountKeeper,
+		app.StakingKeeper,
+		keys[bonds.StoreKey],
+		app.cdc,
 	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
-		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
-		auth.NewAppModule(app.accountKeeper),
-		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
-		crisis.NewAppModule(&app.crisisKeeper),
-		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		gov.NewAppModule(app.govKeeper, app.accountKeeper, app.supplyKeeper),
+		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx),
+		auth.NewAppModule(app.AccountKeeper),
+		bank.NewAppModule(app.BankKeeper, app.AccountKeeper),
+		crisis.NewAppModule(&app.CrisisKeeper),
+		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
+		gov.NewAppModule(app.govKeeper, app.AccountKeeper, app.SupplyKeeper),
 		mint.NewAppModule(app.mintKeeper),
-		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
-		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
-		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
+		slashing.NewAppModule(app.slashingKeeper, app.AccountKeeper, app.StakingKeeper),
+		distr.NewAppModule(app.distrKeeper, app.AccountKeeper, app.SupplyKeeper, app.StakingKeeper),
+		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
+		bonds.NewAppModule(app.BondsKeeper, app.AccountKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -243,18 +264,20 @@ func NewBondsApp(
 	app.mm.SetOrderBeginBlockers(
 		upgrade.ModuleName, mint.ModuleName, distr.ModuleName, slashing.ModuleName,
 		evidence.ModuleName, staking.ModuleName,
+		bonds.ModuleName,
 	)
-	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName)
+	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName, bonds.ModuleName)
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
 		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName,
 		slashing.ModuleName, gov.ModuleName, evidence.ModuleName, mint.ModuleName,
+		bonds.ModuleName,
 		supply.ModuleName, crisis.ModuleName, genutil.ModuleName,
 	)
 
-	app.mm.RegisterInvariants(&app.crisisKeeper)
+	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
@@ -262,13 +285,14 @@ func NewBondsApp(
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
 	app.sm = module.NewSimulationManager(
-		auth.NewAppModule(app.accountKeeper),
-		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
-		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		gov.NewAppModule(app.govKeeper, app.accountKeeper, app.supplyKeeper),
-		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
-		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
-		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
+		auth.NewAppModule(app.AccountKeeper),
+		bank.NewAppModule(app.BankKeeper, app.AccountKeeper),
+		bonds.NewAppModule(app.BondsKeeper, app.AccountKeeper),
+		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
+		gov.NewAppModule(app.govKeeper, app.AccountKeeper, app.SupplyKeeper),
+		distr.NewAppModule(app.distrKeeper, app.AccountKeeper, app.SupplyKeeper, app.StakingKeeper),
+		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
+		slashing.NewAppModule(app.slashingKeeper, app.AccountKeeper, app.StakingKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -281,7 +305,7 @@ func NewBondsApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(ante.NewAnteHandler(
-		app.accountKeeper, app.supplyKeeper, auth.DefaultSigVerificationGasConsumer,
+		app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer,
 	))
 	app.SetEndBlocker(app.EndBlocker)
 

@@ -2,5 +2,5 @@ package types
 
 //nolint
 const (
-	BondDenom = "ubonds"
+	BondDenom = "stake"
 )

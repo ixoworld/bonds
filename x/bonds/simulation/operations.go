@@ -173,8 +173,8 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
+		_, res, err := app.Deliver(tx)
+		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
 		}
 
@@ -228,8 +228,8 @@ func SimulateMsgEditBond(ak auth.AccountKeeper, k keeper.Keeper) simulation.Oper
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
+		_, res, err := app.Deliver(tx)
+		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
 		}
 
@@ -412,8 +412,8 @@ func SimulateMsgBuy(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operation
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
+		_, res, err := app.Deliver(tx)
+		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
 		}
 
@@ -476,8 +476,8 @@ func SimulateMsgSell(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operatio
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
+		_, res, err := app.Deliver(tx)
+		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
 		}
 
@@ -550,8 +550,8 @@ func SimulateMsgSwap(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operatio
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
+		_, res, err := app.Deliver(tx)
+		if err != nil {
 			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
 		}
 

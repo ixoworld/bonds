@@ -12,12 +12,12 @@ func CheckReserveTokenNames(resTokens []string, token string) error {
 	for _, r := range resTokens {
 		// Check if same as main token
 		if r == token {
-			return ErrBondTokenCannotAlsoBeReserveToken(DefaultCodespace)
+			return sdkerrors.Wrap(ErrBondTokenCannotAlsoBeReserveToken, r)
 		}
 
 		// Check if duplicate
 		if _, ok := uniqueReserveTokens[r]; ok {
-			return ErrDuplicateReserveToken(DefaultCodespace)
+			return sdkerrors.Wrap(ErrDuplicateReserveToken, uniqueReserveTokens[r])
 		} else {
 			uniqueReserveTokens[r] = ""
 		}
@@ -35,12 +35,12 @@ func CheckNoOfReserveTokens(resTokens []string, fnType string) error {
 	// Come up with number of expected reserve tokens
 	expectedNoOfTokens, ok := NoOfReserveTokensForFunctionType[fnType]
 	if !ok {
-		return ErrUnrecognizedFunctionType(DefaultCodespace)
+		return sdkerrors.Wrap(ErrUnrecognizedFunctionType, "")
 	}
 
 	// Check that number of reserve tokens is correct (if expecting a specific number of tokens)
 	if expectedNoOfTokens != AnyNumberOfReserveTokens && len(resTokens) != expectedNoOfTokens {
-		return ErrIncorrectNumberOfReserveTokens(DefaultCodespace, expectedNoOfTokens)
+		return sdkerrors.Wrapf(ErrIncorrectNumberOfReserveTokens, "expected: %d", expectedNoOfTokens)
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func CheckCoinDenom(denom string) (err error) {
 	if err2 != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err2.Error())
 	} else if denom != coin.Denom {
-		return ErrInvalidCoinDenomination(DefaultCodespace, denom)
+		return sdkerrors.Wrap(ErrInvalidCoinDenomination, denom)
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ func CheckCoinDenom(denom string) (err error) {
 func GetRequiredParamsForFunctionType(fnType string) (fnParams []string, err error) {
 	expectedParams, ok := RequiredParamsForFunctionType[fnType]
 	if !ok {
-		return nil, ErrUnrecognizedFunctionType(DefaultCodespace)
+		return nil, sdkerrors.Wrap(ErrUnrecognizedFunctionType, fnType)
 	}
 	return expectedParams, nil
 }
@@ -67,7 +67,7 @@ func GetRequiredParamsForFunctionType(fnType string) (fnParams []string, err err
 func GetExceptionsForFunctionType(fnType string) (restrictions FunctionParamRestrictions, err error) {
 	restrictions, ok := ExtraParameterRestrictions[fnType]
 	if !ok {
-		return nil, ErrUnrecognizedFunctionType(DefaultCodespace)
+		return nil, sdkerrors.Wrap(ErrUnrecognizedFunctionType, fnType)
 	}
 	return restrictions, nil
 }
