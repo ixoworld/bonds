@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ixoworld/bonds/x/bonds/client"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -24,7 +25,7 @@ const (
 
 // NewQuerier is the module level router for state queries
 func NewQuerier(keeper Keeper) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
 		case QueryBonds:
 			return queryBonds(ctx, keeper)
@@ -47,7 +48,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QuerySwapReturn:
 			return querySwapReturn(ctx, path[1:], keeper)
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown bonds query endpoint")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown bonds query endpoint")
 		}
 	}
 }
@@ -74,7 +75,7 @@ func zeroReserveTokensIfEmptyDec(reserveCoins sdk.DecCoins, bond types.Bond) sdk
 	return reserveCoins
 }
 
-func queryBonds(ctx sdk.Context, keeper Keeper) (res []byte, err sdk.Error) {
+func queryBonds(ctx sdk.Context, keeper Keeper) (res []byte, err error) {
 	var bondsList types.QueryBonds
 	iterator := keeper.GetBondIterator(ctx)
 	for ; iterator.Valid(); iterator.Next() {
@@ -91,12 +92,12 @@ func queryBonds(ctx sdk.Context, keeper Keeper) (res []byte, err sdk.Error) {
 	return bz, nil
 }
 
-func queryBond(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func queryBond(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "bond '%s' does not exist", bondToken)
 	}
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, bond)
@@ -107,11 +108,11 @@ func queryBond(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err s
 	return bz, nil
 }
 
-func queryBatch(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func queryBatch(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 
 	if !keeper.BatchExists(ctx, bondToken) {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("batch for '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "batch for '%s' does not exist", bondToken)
 	}
 
 	batch := keeper.MustGetBatch(ctx, bondToken)
@@ -124,11 +125,11 @@ func queryBatch(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err 
 	return bz, nil
 }
 
-func queryLastBatch(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func queryLastBatch(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 
 	if !keeper.LastBatchExists(ctx, bondToken) {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("last batch for '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "last batch for '%s' does not exist", bondToken)
 	}
 
 	batch := keeper.MustGetLastBatch(ctx, bondToken)
@@ -141,12 +142,12 @@ func queryLastBatch(ctx sdk.Context, path []string, keeper Keeper) (res []byte, 
 	return bz, nil
 }
 
-func queryCurrentPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func queryCurrentPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "bond '%s' does not exist", bondToken)
 	}
 
 	reserveBalances := keeper.GetReserveBalances(ctx, bondToken)
@@ -164,12 +165,12 @@ func queryCurrentPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byt
 	return bz, nil
 }
 
-func queryCurrentReserve(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func queryCurrentReserve(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "bond '%s' does not exist", bondToken)
 	}
 
 	reserveBalances := zeroReserveTokensIfEmpty(bond.CurrentReserve, bond)
@@ -181,18 +182,18 @@ func queryCurrentReserve(ctx sdk.Context, path []string, keeper Keeper) (res []b
 	return bz, nil
 }
 
-func queryCustomPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func queryCustomPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 	bondAmount := path[1]
 
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "bond '%s' does not exist", bondToken)
 	}
 
 	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bond.Token)
 	if err2 != nil {
-		return nil, sdk.ErrInvalidCoins(err2.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, err2.Error())
 	}
 
 	reservePrices, err := bond.GetPricesAtSupply(bondCoin.Amount)
@@ -209,24 +210,24 @@ func queryCustomPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte
 	return bz, nil
 }
 
-func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 	bondAmount := path[1]
 
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("bond '%s' does not exist", bondToken))
 	}
 
 	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bondToken)
 	if err2 != nil {
-		return nil, sdk.ErrInvalidCoins(err2.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, err2.Error())
 	}
 
 	// Max supply cannot be less than supply (max supply >= supply)
 	adjustedSupply := keeper.GetSupplyAdjustedForBuy(ctx, bondToken)
 	if bond.MaxSupply.IsLT(adjustedSupply.Add(bondCoin)) {
-		return nil, types.ErrCannotMintMoreThanMaxSupply(types.DefaultCodespace)
+		return nil, sdkerrors.Wrap(types.ErrCannotMintMoreThanMaxSupply, bond.MaxSupply.String())
 	}
 
 	reserveBalances := keeper.GetReserveBalances(ctx, bondToken)
@@ -241,7 +242,7 @@ func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, e
 	result.AdjustedSupply = adjustedSupply
 	result.Prices = zeroReserveTokensIfEmpty(reservePricesRounded, bond)
 	result.TxFees = zeroReserveTokensIfEmpty(txFee, bond)
-	result.TotalPrices = zeroReserveTokensIfEmpty(reservePricesRounded.Add(txFee), bond)
+	result.TotalPrices = zeroReserveTokensIfEmpty(reservePricesRounded.Add(txFee...), bond)
 	result.TotalFees = zeroReserveTokensIfEmpty(txFee, bond)
 
 	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, result)
@@ -252,28 +253,28 @@ func queryBuyPrice(ctx sdk.Context, path []string, keeper Keeper) (res []byte, e
 	return bz, nil
 }
 
-func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 	bondAmount := path[1]
 
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
-		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("bond '%s' does not exist", bondToken))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "bond '%s' does not exist", bondToken)
 	}
 
 	bondCoin, err2 := client.ParseTwoPartCoin(bondAmount, bondToken)
 	if err2 != nil {
-		return nil, sdk.ErrInvalidCoins(err2.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, err2.Error())
 	}
 
 	if !bond.AllowSells {
-		return nil, types.ErrBondDoesNotAllowSelling(types.DefaultCodespace)
+		return nil, sdkerrors.Wrap(types.ErrBondDoesNotAllowSelling, bond.Name)
 	}
 
 	// Cannot burn more tokens than what exists
 	adjustedSupply := keeper.GetSupplyAdjustedForSell(ctx, bondToken)
 	if adjustedSupply.IsLT(bondCoin) {
-		return nil, types.ErrCannotBurnMoreThanSupply(types.DefaultCodespace)
+		return nil, sdkerrors.Wrap(types.ErrCannotBurnMoreThanSupply, adjustedSupply.String())
 	}
 
 	reserveBalances := keeper.GetReserveBalances(ctx, bondToken)
@@ -282,7 +283,7 @@ func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 
 	txFees := bond.GetTxFees(reserveReturns)
 	exitFees := bond.GetExitFees(reserveReturns)
-	totalFees := types.AdjustFees(txFees.Add(exitFees), reserveReturnsRounded)
+	totalFees := types.AdjustFees(txFees.Add(exitFees...), reserveReturnsRounded)
 
 	var result types.QuerySellReturn
 	result.AdjustedSupply = adjustedSupply
@@ -300,7 +301,7 @@ func querySellReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 	return bz, nil
 }
 
-func querySwapReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err sdk.Error) {
+func querySwapReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte, err error) {
 	bondToken := path[0]
 	fromToken := path[1]
 	fromAmount := path[2]
@@ -308,12 +309,12 @@ func querySwapReturn(ctx sdk.Context, path []string, keeper Keeper) (res []byte,
 
 	fromCoin, err2 := client.ParseTwoPartCoin(fromAmount, fromToken)
 	if err2 != nil {
-		return nil, sdk.ErrInvalidCoins(err2.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, err2.Error())
 	}
 
 	bond, found := keeper.GetBond(ctx, bondToken)
 	if !found {
-		return nil, types.ErrBondDoesNotExist(types.DefaultCodespace, bondToken)
+		return nil, sdkerrors.Wrap(types.ErrBondDoesNotExist, bondToken)
 	}
 
 	reserveBalances := keeper.GetReserveBalances(ctx, bondToken)
