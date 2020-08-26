@@ -1039,7 +1039,7 @@ func TestCancelUnfulfillableBuys(t *testing.T) {
 
 	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
-	blankSellPrices := sdk.NewDecCoins(nil...) // blank
+	blankSellPrices := sdk.NewDecCoinsFromCoins(nil) // blank
 	zeroTokens := sdk.NewCoin(bond.Token, sdk.ZeroInt())
 
 	testCases := []struct {
