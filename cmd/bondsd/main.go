@@ -27,7 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-// bitsongd custom flags
+// bondsd custom flags
 const flagInvCheckPeriod = "inv-check-period"
 
 var invCheckPeriod uint
