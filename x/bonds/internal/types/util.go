@@ -140,7 +140,7 @@ func DivideDecCoinByDec(dc sdk.DecCoin, scale sdk.Dec) sdk.DecCoin {
 //noinspection GoNilness
 func DivideDecCoinsByDec(dcs sdk.DecCoins, scale sdk.Dec) (scaled sdk.DecCoins) {
 	for _, dc := range dcs {
-		scaled = scaled.Add(sdk.DecCoins{DivideDecCoinByDec(dc, scale)}...)
+		scaled = scaled.Add(DivideDecCoinByDec(dc, scale))
 	}
 	return scaled
 }
