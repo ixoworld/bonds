@@ -42,8 +42,8 @@ func main() {
 	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
 	rootCmd := &cobra.Command{
-		Use:   "bitsongcli",
-		Short: "BitSong Command line Interface",
+		Use:   "bondscli",
+		Short: "Bonds module app command line Interface",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
