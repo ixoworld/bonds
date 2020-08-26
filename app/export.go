@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
-// export the state of go-bitsong for a genesis file
+// export the state of bonds module app for a genesis file
 func (app *BondsApp) ExportAppStateAndValidators(
 	forZeroHeight bool, jailWhiteList []string,
 ) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
