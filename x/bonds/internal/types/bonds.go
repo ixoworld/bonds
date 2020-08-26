@@ -243,7 +243,7 @@ func NewBond(token, name, description string, creator sdk.AccAddress,
 //noinspection GoNilness
 func (bond Bond) GetNewReserveDecCoins(amount sdk.Dec) (coins sdk.DecCoins) {
 	for _, r := range bond.ReserveTokens {
-		coins = coins.Add(sdk.DecCoins{sdk.NewDecCoinFromDec(r, amount)}...)
+		coins = coins.Add(sdk.NewDecCoinFromDec(r, amount))
 	}
 	return coins
 }
