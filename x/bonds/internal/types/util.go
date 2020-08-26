@@ -104,7 +104,7 @@ func RoundReservePrices(ps sdk.DecCoins) (rounded sdk.Coins) {
 //noinspection GoNilness
 func RoundReserveReturns(rs sdk.DecCoins) (rounded sdk.Coins) {
 	for _, r := range rs {
-		rounded = rounded.Add(sdk.Coins{RoundReserveReturn(r)}...)
+		rounded = rounded.Add(RoundReserveReturn(r))
 	}
 	return rounded
 }
