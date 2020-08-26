@@ -48,7 +48,7 @@ var (
 	sellPrices = sdk.NewDecCoinsFromCoins(
 		sdk.NewInt64Coin(reserveToken, 4),
 		sdk.NewInt64Coin(reserveToken2, 5),
-	)...)
+	)
 
 	// Base order
 	baseOrderAddress = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
