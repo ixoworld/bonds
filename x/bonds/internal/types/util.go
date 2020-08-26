@@ -128,7 +128,7 @@ func MultiplyDecCoinByDec(dc sdk.DecCoin, scale sdk.Dec) sdk.DecCoin {
 //noinspection GoNilness
 func MultiplyDecCoinsByDec(dcs sdk.DecCoins, scale sdk.Dec) (scaled sdk.DecCoins) {
 	for _, dc := range dcs {
-		scaled = scaled.Add(sdk.DecCoins{MultiplyDecCoinByDec(dc, scale)}...)
+		scaled = scaled.Add(MultiplyDecCoinByDec(dc, scale))
 	}
 	return scaled
 }
