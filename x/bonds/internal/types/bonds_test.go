@@ -191,7 +191,7 @@ func TestGetNewReserveDecCoins(t *testing.T) {
 	expectedResult := sdk.NewDecCoinsFromCoins(
 		sdk.NewInt64Coin("aaa", 10),
 		sdk.NewInt64Coin("bbb", 10),
-	)...)
+	)
 
 	require.Equal(t, expectedResult, actualResult)
 }
