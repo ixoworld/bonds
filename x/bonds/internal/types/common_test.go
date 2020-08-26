@@ -115,7 +115,7 @@ func newDecMultitokenReserveFromDec(value sdk.Dec) sdk.DecCoins {
 }
 
 func newDecMultitokenReserveFromInt(value int64) sdk.DecCoins {
-	return sdk.NewDecCoinsFromCoins(sdk.NewCoins(
+	return sdk.NewDecCoinsFromCoins(
 		sdk.NewInt64Coin(reserveToken, value),
 		sdk.NewInt64Coin(reserveToken2, value),
 	)...)
