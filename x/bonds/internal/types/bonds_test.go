@@ -768,7 +768,7 @@ func TestReserveDenomsEqualTo(t *testing.T) {
 	for _, tc := range testCases {
 		coins := sdk.Coins{}
 		for _, res := range tc.toCompareTo {
-			coins = coins.Add(sdk.Coins{sdk.NewCoin(res, sdk.OneInt())}...)
+			coins = coins.Add(sdk.NewCoin(res, sdk.OneInt()))
 		}
 		require.Equal(t, tc.expectedEqual, bond.ReserveDenomsEqualTo(coins))
 	}
