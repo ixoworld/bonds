@@ -47,8 +47,8 @@ func main() {
 	ctx := server.NewDefaultContext()
 	cobra.EnableCommandSorting = false
 	rootCmd := &cobra.Command{
-		Use:               "bitsongd",
-		Short:             "Bitsong Daemon (server)",
+		Use:               "bondsd",
+		Short:             "Bonds module app daemon (server)",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
