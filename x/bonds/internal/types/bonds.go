@@ -577,7 +577,7 @@ func (bond Bond) GetExitFee(reserveAmount sdk.DecCoin) sdk.Coin {
 
 func (bond Bond) GetFees(reserveAmounts sdk.DecCoins, percentage sdk.Dec) (fees sdk.Coins) {
 	for _, r := range reserveAmounts {
-		fees = fees.Add(sdk.Coins{bond.GetFee(r, percentage)}...)
+		fees = fees.Add(bond.GetFee(r, percentage))
 	}
 	return fees
 }
