@@ -188,7 +188,7 @@ func TestGetNewReserveDecCoins(t *testing.T) {
 	amount := sdk.MustNewDecFromStr("10")
 	actualResult := bond.GetNewReserveDecCoins(amount)
 
-	expectedResult := sdk.NewDecCoinsFromCoins(sdk.NewCoins(
+	expectedResult := sdk.NewDecCoinsFromCoins(
 		sdk.NewInt64Coin("aaa", 10),
 		sdk.NewInt64Coin("bbb", 10),
 	)...)
