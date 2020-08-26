@@ -396,7 +396,7 @@ func (k Keeper) PerformSwap(ctx sdk.Context, token string, so types.SwapOrder) (
 	adjustedInput := so.Amount.Sub(txFee) // same as during GetReturnsForSwap
 
 	// Check if new rates violate sanity rate
-	newReserveBalances := reserveBalances.Add(sdk.Coins{adjustedInput}...).Sub(reserveReturns)
+	newReserveBalances := reserveBalances.Add(adjustedInput).Sub(reserveReturns)
 	if bond.ReservesViolateSanityRate(newReserveBalances) {
 		return sdkerrors.Wrap(types.ErrValuesViolateSanityRate, newReserveBalances.String()), true
 	}
