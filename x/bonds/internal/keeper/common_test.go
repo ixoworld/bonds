@@ -45,7 +45,7 @@ var (
 		sdk.NewInt64Coin(reserveToken2, 3),
 	)...)
 
-	sellPrices = sdk.NewDecCoinsFromCoins(sdk.NewCoins(
+	sellPrices = sdk.NewDecCoinsFromCoins(
 		sdk.NewInt64Coin(reserveToken, 4),
 		sdk.NewInt64Coin(reserveToken2, 5),
 	)...)
