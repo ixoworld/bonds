@@ -96,7 +96,7 @@ func RoundFee(f sdk.DecCoin) sdk.Coin {
 //noinspection GoNilness
 func RoundReservePrices(ps sdk.DecCoins) (rounded sdk.Coins) {
 	for _, p := range ps {
-		rounded = rounded.Add(sdk.Coins{RoundReservePrice(p)}...)
+		rounded = rounded.Add(RoundReservePrice(p))
 	}
 	return rounded
 }
