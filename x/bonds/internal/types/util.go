@@ -155,7 +155,7 @@ func AdjustFees(fees sdk.Coins, maxFees sdk.Coins) sdk.Coins {
 		maxFee := maxFees.AmountOf(f.Denom)
 		if f.Amount.GT(maxFee) {
 			extraFee := f.Amount.Sub(maxFee)
-			extraFees = extraFees.Add(sdk.Coins{sdk.NewCoin(f.Denom, extraFee)}...)
+			extraFees = extraFees.Add(sdk.NewCoin(f.Denom, extraFee))
 		}
 	}
 	return fees.Sub(extraFees)
