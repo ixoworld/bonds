@@ -1,5 +1,5 @@
 //nolint
-package simapp
+package app
 
 import (
 	"encoding/json"
@@ -8,13 +8,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tmkv "github.com/tendermint/tendermint/libs/kv"
 	"io/ioutil"
 )
 
 // SimulationOperations retrieves the simulation params from the provided file path
 // and returns all the modules weighted operations
-func SimulationOperations(app *SimApp, cdc *codec.Codec, config simulation.Config) []simulation.WeightedOperation {
+func SimulationOperations(app *BondsApp, cdc *codec.Codec, config simulation.Config) []simulation.WeightedOperation {
 	simState := module.SimulationState{
 		AppParams: make(simulation.AppParams),
 		Cdc:       cdc,
@@ -38,7 +38,7 @@ func SimulationOperations(app *SimApp, cdc *codec.Codec, config simulation.Confi
 // Simulation Utils
 
 // ExportStateToJSON util function to export the app state to JSON
-func ExportStateToJSON(app *SimApp, path string) error {
+func ExportStateToJSON(app *BondsApp, path string) error {
 	fmt.Println("exporting app state...")
 	appState, _, err := app.ExportAppStateAndValidators(false, nil)
 	if err != nil {
@@ -61,7 +61,7 @@ func ExportParamsToJSON(params simulation.Params, path string) error {
 
 // GetSimulationLog unmarshals the KVPair's Value to the corresponding type based on the
 // each's module store key and the prefix bytes of the KVPair's key.
-func GetSimulationLog(storeName string, sdr sdk.StoreDecoderRegistry, cdc *codec.Codec, kvAs, kvBs []cmn.KVPair) (log string) {
+func GetSimulationLog(storeName string, sdr sdk.StoreDecoderRegistry, cdc *codec.Codec, kvAs, kvBs []tmkv.Pair) (log string) {
 	for i := 0; i < len(kvAs); i++ {
 
 		if len(kvAs[i].Value) == 0 && len(kvBs[i].Value) == 0 {

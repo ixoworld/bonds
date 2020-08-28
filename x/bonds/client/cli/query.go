@@ -6,6 +6,7 @@ import (
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
@@ -20,7 +21,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	bondsQueryCmd.AddCommand(client.GetCommands(
+	bondsQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdBonds(storeKey, cdc),
 		GetCmdBond(storeKey, cdc),
 		GetCmdBatch(storeKey, cdc),

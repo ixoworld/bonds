@@ -5,28 +5,28 @@ GAS_PRICES="0.025stake"
 
 bondsd init local --chain-id bondschain-1
 
-yes $PASSWORD | bondscli keys delete miguel --force
-yes $PASSWORD | bondscli keys delete francesco --force
-yes $PASSWORD | bondscli keys delete shaun --force
-yes $PASSWORD | bondscli keys delete fee --force
-yes $PASSWORD | bondscli keys delete fee2 --force
-yes $PASSWORD | bondscli keys delete fee3 --force
-yes $PASSWORD | bondscli keys delete fee4 --force
-yes $PASSWORD | bondscli keys delete fee5 --force
+yes $PASSWORD | bondscli keys delete miguel --keyring-backend=test --force
+yes $PASSWORD | bondscli keys delete francesco --keyring-backend=test --force
+yes $PASSWORD | bondscli keys delete shaun --keyring-backend=test --force
+yes $PASSWORD | bondscli keys delete fee --keyring-backend=test --force
+yes $PASSWORD | bondscli keys delete fee2 --keyring-backend=test --force
+yes $PASSWORD | bondscli keys delete fee3 --keyring-backend=test --force
+yes $PASSWORD | bondscli keys delete fee4 --keyring-backend=test --force
+yes $PASSWORD | bondscli keys delete fee5 --keyring-backend=test --force
 
-yes $PASSWORD | bondscli keys add miguel
-yes $PASSWORD | bondscli keys add francesco
-yes $PASSWORD | bondscli keys add shaun
-yes $PASSWORD | bondscli keys add fee
-yes $PASSWORD | bondscli keys add fee2
-yes $PASSWORD | bondscli keys add fee3
-yes $PASSWORD | bondscli keys add fee4
-yes $PASSWORD | bondscli keys add fee5
+yes $PASSWORD | bondscli keys add miguel --keyring-backend=test
+yes $PASSWORD | bondscli keys add francesco --keyring-backend=test
+yes $PASSWORD | bondscli keys add shaun --keyring-backend=test
+yes $PASSWORD | bondscli keys add fee --keyring-backend=test
+yes $PASSWORD | bondscli keys add fee2 --keyring-backend=test
+yes $PASSWORD | bondscli keys add fee3 --keyring-backend=test
+yes $PASSWORD | bondscli keys add fee4 --keyring-backend=test
+yes $PASSWORD | bondscli keys add fee5 --keyring-backend=test
 
 # Note: important to add 'miguel' as a genesis-account since this is the chain's validator
-yes $PASSWORD | bondsd add-genesis-account "$(bondscli keys show miguel -a)" 200000000stake,1000000res,1000000rez
-yes $PASSWORD | bondsd add-genesis-account "$(bondscli keys show francesco -a)" 100000000stake,1000000res,1000000rez
-yes $PASSWORD | bondsd add-genesis-account "$(bondscli keys show shaun -a)" 100000000stake,1000000res,1000000rez
+yes $PASSWORD | bondsd add-genesis-account $(bondscli keys show miguel --keyring-backend=test -a) 200000000stake,1000000res,1000000rez
+yes $PASSWORD | bondsd add-genesis-account $(bondscli keys show francesco --keyring-backend=test -a) 100000000stake,1000000res,1000000rez
+yes $PASSWORD | bondsd add-genesis-account $(bondscli keys show shaun --keyring-backend=test -a) 100000000stake,1000000res,1000000rez
 
 # Set min-gas-prices
 FROM="minimum-gas-prices = \"\""
@@ -37,8 +37,9 @@ bondscli config chain-id bondschain-1
 bondscli config output json
 bondscli config indent true
 bondscli config trust-node true
+bondscli config keyring-backend test
 
-yes $PASSWORD | bondsd gentx --name miguel
+yes $PASSWORD | bondsd gentx --name miguel --keyring-backend=test
 
 bondsd collect-gentxs
 bondsd validate-genesis
@@ -53,5 +54,5 @@ bondsd validate-genesis
 # bondsd start --pruning "syncable" &
 # bondscli rest-server --chain-id bondschain-1 --laddr="tcp://0.0.0.0:1317" --trust-node && fg
 
-bondsd start --pruning "syncable" &
+bondsd start --pruning "everything" &
 bondscli rest-server --chain-id bondschain-1 --trust-node && fg

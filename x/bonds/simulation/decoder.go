@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"fmt"
 
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tmkv "github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 )
 
 // DecodeStore unmarshals the KVPair's Value to the corresponding type
-func DecodeStore(cdc *codec.Codec, kvA, kvB cmn.KVPair) string {
+func DecodeStore(cdc *codec.Codec, kvA, kvB tmkv.Pair) string {
 	switch {
 	case bytes.Equal(kvA.Key[:1], types.BondsKeyPrefix):
 		var bondA, bondB types.Bond

@@ -205,7 +205,7 @@ func TestGetBatchBuySellPrices(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, expectedPrices1)
 	expectedPrices2 := currentPrices.MulDec(fiveDec)
-	totalExpectedPrices := expectedPrices1.Add(expectedPrices2)
+	totalExpectedPrices := expectedPrices1.Add(expectedPrices2...)
 	expectedBuyPricesPerToken = types.DivideDecCoinsByDec(totalExpectedPrices, fiveDec.Add(fiveDec))
 
 	// Since buys>sells, buy prices are affected by extra buys and sell prices are current prices
@@ -231,7 +231,7 @@ func TestGetBatchBuySellPrices(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, expectedReturns1)
 	expectedReturns2 := currentPrices.MulDec(fiveDec)
-	totalExpectedReturns := expectedReturns1.Add(expectedReturns2)
+	totalExpectedReturns := expectedReturns1.Add(expectedReturns2...)
 	expectedSellPricesPerToken = types.DivideDecCoinsByDec(totalExpectedReturns, fiveDec.Add(fiveDec))
 
 	// Since sells>buys, sell prices are affected by extra sells and buy prices are current prices
@@ -358,7 +358,7 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		reservePrices := sdk.DecCoins{sdk.NewDecCoinFromDec(buyPrices[0].Denom, reservePrice)}
 		reservePricesRounded := types.RoundReserveReturns(reservePrices)
 		txFees := bond.GetTxFees(reservePrices)
-		totalPrices := reservePricesRounded.Add(txFees)
+		totalPrices := reservePricesRounded.Add(txFees...)
 
 		// Check expected prices
 		require.Equal(t, totalPrices.AmountOf(reserveToken), tc.expectedPrices)
@@ -390,7 +390,7 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		// Calculate increase in buyer balance
 		remainderForBuyer := tc.maxPrices.Sub(totalPrices)
 		tokensBought := sdk.NewCoin(bond.Token, tc.amount)
-		increaseInBuyerBal := sdk.Coins{tokensBought}.Add(remainderForBuyer)
+		increaseInBuyerBal := sdk.Coins{tokensBought}.Add(remainderForBuyer...)
 
 		// New values
 		newSupplySDK := app.SupplyKeeper.GetSupply(ctx).GetTotal().AmountOf(bond.Token)
@@ -404,9 +404,9 @@ func TestPerformBuyAtPrice(t *testing.T) {
 		require.Equal(t, prevSupplyBonds.Add(tokensBought), newSupplyBonds)
 		require.Equal(t, prevModuleAccBal.Sub(tc.maxPrices), newModuleAccBal)
 		require.Equal(t, txFees.IsZero(), tc.txFee.IsZero())
-		require.Equal(t, prevFeeAddrBal.Add(txFees), newFeeAddrBal.Add(nil))
-		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal), newBuyerBal)
-		require.Equal(t, prevReserveBal.Add(reservePricesRounded), newReserveBal)
+		require.Equal(t, prevFeeAddrBal.Add(txFees...), newFeeAddrBal.Add(nil...))
+		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal...), newBuyerBal)
+		require.Equal(t, prevReserveBal.Add(reservePricesRounded...), newReserveBal)
 	}
 }
 
@@ -467,7 +467,7 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		reservePrices := sdk.DecCoins{sdk.NewDecCoinFromDec(buyPrices[0].Denom, reservePrice)}
 		reservePricesRounded := types.RoundReserveReturns(reservePrices)
 		txFees := bond.GetTxFees(reservePrices)
-		totalPrices := reservePricesRounded.Add(txFees)
+		totalPrices := reservePricesRounded.Add(txFees...)
 
 		// Check expected prices
 		require.Equal(t, totalPrices.AmountOf(reserveToken), tc.expectedPrices)
@@ -499,7 +499,7 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		// Calculate increase in buyer balance
 		remainderForBuyer := tc.maxPrices.Sub(totalPrices)
 		tokensBought := sdk.NewCoin(bond.Token, tc.amount)
-		increaseInBuyerBal := sdk.Coins{tokensBought}.Add(remainderForBuyer)
+		increaseInBuyerBal := sdk.Coins{tokensBought}.Add(remainderForBuyer...)
 
 		// New values
 		newSupplySDK := app.SupplyKeeper.GetSupply(ctx).GetTotal().AmountOf(bond.Token)
@@ -513,16 +513,16 @@ func TestPerformBuyAtPriceAugmentedFunction(t *testing.T) {
 		require.Equal(t, prevSupplyBonds.Add(tokensBought), newSupplyBonds)
 		require.Equal(t, prevModuleAccBal.Sub(tc.maxPrices), newModuleAccBal)
 		require.Equal(t, txFees.IsZero(), tc.txFee.IsZero())
-		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal), newBuyerBal)
+		require.Equal(t, prevBuyerBal.Add(increaseInBuyerBal...), newBuyerBal)
 		if tc.state == types.HatchState {
-			toInitialReserve, _ := sdk.NewDecCoins(reservePricesRounded).MulDec(
+			toInitialReserve, _ := sdk.NewDecCoinsFromCoins(reservePricesRounded...).MulDec(
 				sdk.OneDec().Sub(args["theta"])).TruncateDecimal()
-			toFundingPool := txFees.Add(reservePricesRounded.Sub(toInitialReserve))
-			require.Equal(t, prevReserveBal.Add(toInitialReserve), newReserveBal)
-			require.Equal(t, prevFeeAddrBal.Add(toFundingPool), newFeeAddrBal)
+			toFundingPool := txFees.Add(reservePricesRounded.Sub(toInitialReserve)...)
+			require.Equal(t, prevReserveBal.Add(toInitialReserve...), newReserveBal)
+			require.Equal(t, prevFeeAddrBal.Add(toFundingPool...), newFeeAddrBal)
 		} else {
-			require.Equal(t, prevFeeAddrBal.Add(txFees), newFeeAddrBal)
-			require.Equal(t, prevReserveBal.Add(reservePricesRounded), newReserveBal)
+			require.Equal(t, prevFeeAddrBal.Add(txFees...), newFeeAddrBal)
+			require.Equal(t, prevReserveBal.Add(reservePricesRounded...), newReserveBal)
 		}
 	}
 }
@@ -573,7 +573,7 @@ func TestPerformSellAtPrice(t *testing.T) {
 		reserveReturn := sellPrices[0].Amount.MulInt(so.Amount.Amount)
 		reserveReturns := sdk.DecCoins{sdk.NewDecCoinFromDec(sellPrices[0].Denom, reserveReturn)}
 		reserveReturnsRounded := types.RoundReserveReturns(reserveReturns)
-		totalFees := bond.GetTxFees(reserveReturns).Add(bond.GetExitFees(reserveReturns))
+		totalFees := bond.GetTxFees(reserveReturns).Add(bond.GetExitFees(reserveReturns)...)
 		totalFees = types.AdjustFees(totalFees, reserveReturnsRounded)
 		totalReturns := reserveReturnsRounded.Sub(totalFees)
 
@@ -609,9 +609,9 @@ func TestPerformSellAtPrice(t *testing.T) {
 		if totalFees.IsZero() {
 			require.Equal(t, prevFeeAddrBal, newFeeAddrBal)
 		} else {
-			require.Equal(t, prevFeeAddrBal.Add(totalFees), newFeeAddrBal)
+			require.Equal(t, prevFeeAddrBal.Add(totalFees...), newFeeAddrBal)
 		}
-		require.Equal(t, prevSellerBal.Add(totalReturns), newSellerBal)
+		require.Equal(t, prevSellerBal.Add(totalReturns...), newSellerBal)
 	}
 }
 
@@ -726,14 +726,14 @@ func TestPerformSwap(t *testing.T) {
 		newSwapperBal := app.BankKeeper.GetCoins(ctx, swapperAddress)
 
 		require.Equal(t, prevModuleAccBal.Sub(fromAmounts), newModuleAccBal)
-		require.Equal(t, prevReserveBal.Add(totalIns).Sub(totalOuts), newReserveBal)
+		require.Equal(t, prevReserveBal.Add(totalIns...).Sub(totalOuts), newReserveBal)
 		require.Equal(t, txFees.IsZero(), tc.txFee.IsZero())
 		if txFees.IsZero() {
 			require.Equal(t, prevFeeAddrBal, newFeeAddrBal)
 		} else {
-			require.Equal(t, prevFeeAddrBal.Add(txFees), newFeeAddrBal)
+			require.Equal(t, prevFeeAddrBal.Add(txFees...), newFeeAddrBal)
 		}
-		require.Equal(t, prevSwapperBal.Add(totalOuts), newSwapperBal)
+		require.Equal(t, prevSwapperBal.Add(totalOuts...), newSwapperBal)
 	}
 }
 
@@ -749,7 +749,7 @@ func TestPerformBuys(t *testing.T) {
 	app.BondsKeeper.SetBatch(ctx, bond.Token, batch)
 
 	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
-	blankSellPrices := sdk.NewDecCoins(nil) // blank
+	blankSellPrices := sdk.NewDecCoinsFromCoins() // blank
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 2000)}
 
 	testCases := []struct {
@@ -785,7 +785,7 @@ func TestPerformBuys(t *testing.T) {
 		reservePrice := buyPrices[0].Amount.MulInt(bo.Amount.Amount)
 		reservePrices := sdk.DecCoins{sdk.NewDecCoinFromDec(buyPrices[0].Denom, reservePrice)}
 		totalPrices := types.RoundReserveReturns(reservePrices)
-		globalTotalPrices = globalTotalPrices.Add(totalPrices)
+		globalTotalPrices = globalTotalPrices.Add(totalPrices...)
 
 		// Add coins paid by buyer
 		_, err := app.BankKeeper.AddCoins(ctx, moduleAcc.GetAddress(), tc.maxPrices)
@@ -796,7 +796,7 @@ func TestPerformBuys(t *testing.T) {
 		tokensBought := sdk.NewCoin(bond.Token, tc.amount)
 		globalTokensBought = globalTokensBought.Add(tokensBought)
 		globalIncreaseInBuyerBal = globalIncreaseInBuyerBal.Add(
-			sdk.Coins{tokensBought}.Add(remainderForBuyer))
+			sdk.Coins{tokensBought}.Add(remainderForBuyer...)...)
 	}
 
 	// Perform buys
@@ -826,7 +826,7 @@ func TestPerformSells(t *testing.T) {
 	app.BondsKeeper.SetBatch(ctx, bond.Token, batch)
 
 	sellPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
-	blankBuyPrices := sdk.NewDecCoins(nil) // blank
+	blankBuyPrices := sdk.NewDecCoinsFromCoins() // blank
 
 	testCases := []struct {
 		amount sdk.Int
@@ -849,7 +849,7 @@ func TestPerformSells(t *testing.T) {
 		reserveReturn := sellPrices[0].Amount.MulInt(so.Amount.Amount)
 		reserveReturns := sdk.DecCoins{sdk.NewDecCoinFromDec(sellPrices[0].Denom, reserveReturn)}
 		reserveReturnsRounded := types.RoundReserveReturns(reserveReturns)
-		globalTotalReturns = globalTotalReturns.Add(reserveReturnsRounded)
+		globalTotalReturns = globalTotalReturns.Add(reserveReturnsRounded...)
 
 		// Add reserve tokens (freshly minted) paid by seller when buying to reserve
 		err := app.SupplyKeeper.MintCoins(ctx, types.BondsMintBurnAccount, reserveReturnsRounded)
@@ -950,15 +950,15 @@ func TestPerformSwaps(t *testing.T) {
 
 		if tc.willGetCancelled {
 			// Reserve returned back to swapper
-			globalIncreaseInSwapperBal = globalIncreaseInSwapperBal.Add(fromAmounts)
+			globalIncreaseInSwapperBal = globalIncreaseInSwapperBal.Add(fromAmounts...)
 		} else {
 			// Calculations
 			newInReserveDec := inReserve.Amount.Add(fromAmount.Amount).ToDec()
 			newOutReserveDec := sdk.NewDecCoinFromDec(tc.toToken, cp.Quo(newInReserveDec))
 			totalOuts := sdk.Coins{types.RoundReserveReturn(sdk.NewDecCoinFromCoin(outReserve).Sub(newOutReserveDec))} // out of reserves (i.e. returns)
-			globalIncreaseInSwapperBal = globalIncreaseInSwapperBal.Add(totalOuts)
-			globalDecreaseInSwapperBal = globalDecreaseInSwapperBal.Add(fromAmounts)
-			globalReserveBal = globalReserveBal.Add(fromAmounts).Sub(totalOuts)
+			globalIncreaseInSwapperBal = globalIncreaseInSwapperBal.Add(totalOuts...)
+			globalDecreaseInSwapperBal = globalDecreaseInSwapperBal.Add(fromAmounts...)
+			globalReserveBal = globalReserveBal.Add(fromAmounts...).Sub(totalOuts)
 		}
 	}
 
@@ -1039,7 +1039,7 @@ func TestCancelUnfulfillableBuys(t *testing.T) {
 
 	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
-	blankSellPrices := sdk.NewDecCoins(nil) // blank
+	blankSellPrices := sdk.NewDecCoinsFromCoins() // blank
 	zeroTokens := sdk.NewCoin(bond.Token, sdk.ZeroInt())
 
 	testCases := []struct {
@@ -1115,7 +1115,7 @@ func TestCancelUnfulfillableBuys(t *testing.T) {
 			require.Equal(t, buyPrices, batch.BuyPrices) // this changes only CancelUnfulfillableOrders is used
 
 			// Check that reserve tokens returned to buyer
-			newBalance := balanceBefore.Add(tc.maxPrices)
+			newBalance := balanceBefore.Add(tc.maxPrices...)
 			require.Empty(t, app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress()))
 			require.Equal(t, newBalance, app.BankKeeper.GetCoins(ctx, buyerAddress))
 		}
@@ -1128,7 +1128,7 @@ func TestCancelUnfulfillableOrders(t *testing.T) {
 
 	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
-	blankSellPrices := sdk.NewDecCoins(nil) // blank
+	blankSellPrices := sdk.NewDecCoinsFromCoins() // blank
 	zeroTokens := sdk.NewCoin(bond.Token, sdk.ZeroInt())
 
 	testCases := []struct {
@@ -1205,7 +1205,7 @@ func TestCancelUnfulfillableOrders(t *testing.T) {
 			require.NotEqual(t, buyPrices, batch.BuyPrices)
 
 			// Check that reserve tokens returned to buyer
-			newBalance := balanceBefore.Add(tc.maxPrices)
+			newBalance := balanceBefore.Add(tc.maxPrices...)
 			require.Empty(t, app.BankKeeper.GetCoins(ctx, moduleAcc.GetAddress()))
 			require.Equal(t, newBalance, app.BankKeeper.GetCoins(ctx, buyerAddress))
 		}

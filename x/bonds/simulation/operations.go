@@ -1,7 +1,6 @@
 package simulation
 
 import (
-	"errors"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -173,9 +172,9 @@ func SimulateMsgCreateBond(ak auth.AccountKeeper) simulation.Operation {
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
-			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
+		_, _, err = app.Deliver(tx)
+		if err != nil {
+			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		incrementBondCount() // since successfully created
@@ -228,9 +227,9 @@ func SimulateMsgEditBond(ak auth.AccountKeeper, k keeper.Keeper) simulation.Oper
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
-			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
+		_, _, err = app.Deliver(tx)
+		if err != nil {
+			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		return simulation.NewOperationMsg(msg, true, ""), nil, nil
@@ -412,9 +411,9 @@ func SimulateMsgBuy(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operation
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
-			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
+		_, _, err = app.Deliver(tx)
+		if err != nil {
+			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		return simulation.NewOperationMsg(msg, true, ""), nil, nil
@@ -476,9 +475,9 @@ func SimulateMsgSell(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operatio
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
-			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
+		_, _, err = app.Deliver(tx)
+		if err != nil {
+			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		return simulation.NewOperationMsg(msg, true, ""), nil, nil
@@ -550,9 +549,9 @@ func SimulateMsgSwap(ak auth.AccountKeeper, k keeper.Keeper) simulation.Operatio
 			simAccount.PrivKey,
 		)
 
-		res := app.Deliver(tx)
-		if !res.IsOK() {
-			return simulation.NoOpMsg(types.ModuleName), nil, errors.New(res.Log)
+		_, _, err = app.Deliver(tx)
+		if err != nil {
+			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		return simulation.NewOperationMsg(msg, true, ""), nil, nil

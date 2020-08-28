@@ -1,17 +1,16 @@
 #!/usr/bin/make -f
 
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-VERSION := v1.0.0 # $(shell echo $(shell git describe --tags) | sed 's/^v//')
+VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 
 export GO111MODULE = on
-export COSMOS_SDK_TEST_KEYRING = y
 
 # process build tags
 
-build_tags =
+build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
   ifeq ($(OS),Windows_NT)
     GCCEXE = $(shell where gcc.exe 2> NUL)
@@ -48,13 +47,12 @@ build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
 
-ldflags = \
-    -X github.com/cosmos/cosmos-sdk/version.Name=bonds \
-	-X github.com/cosmos/cosmos-sdk/version.ServerName=bondsd \
-	-X github.com/cosmos/cosmos-sdk/version.ClientName=bondscli \
-	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-	-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=bonds \
+		  -X github.com/cosmos/cosmos-sdk/version.ServerName=bondsd \
+		  -X github.com/cosmos/cosmos-sdk/version.ClientName=bondscli \
+		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 ifeq ($(WITH_CLEVELDB),yes)
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
@@ -63,6 +61,8 @@ ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+
+# The below include contains the tools target.
 
 all: lint install
 
@@ -74,6 +74,9 @@ else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/bondsd ./cmd/bondsd
 	go build -mod=readonly $(BUILD_FLAGS) -o build/bondscli ./cmd/bondscli
 endif
+
+build-linux: go.sum
+	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/bondsd

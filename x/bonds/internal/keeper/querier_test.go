@@ -385,7 +385,7 @@ func TestQueryBuyPrice(t *testing.T) {
 	buyPrices, _ := bond.GetPricesToMint(buyAmount, reserveBalances)
 	txFees := bond.GetTxFees(buyPrices)
 	roundedPrices := types.RoundReservePrices(buyPrices)
-	roundedTotalPrices := roundedPrices.Add(txFees)
+	roundedTotalPrices := roundedPrices.Add(txFees...)
 
 	// Calculate buy price manually
 	// reserveAt(10) = (m/n+1)x^(n+1) + xc = (12/3)(10^(2+1)) + 10(100) = 5000
@@ -423,7 +423,7 @@ func TestQueryBuyPrice(t *testing.T) {
 	buyPrices, _ = bond.GetPricesToMint(buyAmount, reserveBalances)
 	txFees = bond.GetTxFees(buyPrices)
 	roundedPrices = types.RoundReservePrices(buyPrices)
-	roundedTotalPrices = roundedPrices.Add(txFees)
+	roundedTotalPrices = roundedPrices.Add(txFees...)
 
 	// Calculate buy price manually
 	// reserveAt(15) = (m/n+1)x^(n+1) + xc = (12/3)(15^(2+1)) + 15(100) = 15000
@@ -495,7 +495,7 @@ func TestQuerySellPrice(t *testing.T) {
 	sellReturns := bond.GetReturnsForBurn(buyAmount, reserveBalances)
 	txFees := bond.GetTxFees(sellReturns)
 	exitFees := bond.GetExitFees(sellReturns)
-	totalFees := txFees.Add(exitFees)
+	totalFees := txFees.Add(exitFees...)
 	roundedReturns := types.RoundReserveReturns(sellReturns)
 	roundedTotalReturns := roundedReturns.Sub(totalFees)
 

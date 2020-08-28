@@ -17,13 +17,13 @@ wait() {
 tx_from_m() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 tx_from_f() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 RET=$(bondscli status 2>&1)
@@ -34,12 +34,12 @@ fi
 PASSWORD="12345678"
 GAS_PRICES="0.025stake"
 
-MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
+MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a --keyring-backend=test)
 
-FEE1=$(yes $PASSWORD | bondscli keys show fee -a)
-FEE2=$(yes $PASSWORD | bondscli keys show fee2 -a)
-FEE3=$(yes $PASSWORD | bondscli keys show fee3 -a)
-FEE4=$(yes $PASSWORD | bondscli keys show fee4 -a)
+FEE1=$(yes $PASSWORD | bondscli keys show fee -a --keyring-backend=test)
+FEE2=$(yes $PASSWORD | bondscli keys show fee2 -a --keyring-backend=test)
+FEE3=$(yes $PASSWORD | bondscli keys show fee3 -a --keyring-backend=test)
+FEE4=$(yes $PASSWORD | bondscli keys show fee4 -a --keyring-backend=test)
 
 # Power function with m:12,n:2,c:100, rez reserve, non-zero fees, and batch_blocks=1
 yes $PASSWORD | bondscli tx bonds create-bond \
@@ -60,6 +60,7 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=1 \
   --from miguel -y \
+  --keyring-backend=test \
   --broadcast-mode block \
   --gas-prices="$GAS_PRICES"
 
@@ -82,6 +83,7 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=3 \
   --from miguel -y \
+  --keyring-backend=test \
   --broadcast-mode block \
   --gas-prices="$GAS_PRICES"
 
@@ -104,6 +106,7 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=2 \
   --from miguel -y \
+  --keyring-backend=test \
   --broadcast-mode block \
   --gas-prices="$GAS_PRICES"
 
@@ -126,21 +129,22 @@ yes $PASSWORD | bondscli tx bonds create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=1 \
   --from miguel -y \
+  --keyring-backend=test \
   --broadcast-mode block \
   --gas-prices="$GAS_PRICES"
 
 # Buy 5token1, 5token2 from Miguel
 echo "Buying 5token1 from Miguel"
-yes $PASSWORD | bondscli tx bonds buy 5token1 "100000res" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES"
+yes $PASSWORD | bondscli tx bonds buy 5token1 "100000res" --from miguel --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 echo "Buying 5token2 from Miguel"
-yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES"
+yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from miguel --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 
 # Buy token2 and token3 from Francesco and Shaun
 echo "Buying 5token2 from Francesco"
-yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES"
+yes $PASSWORD | bondscli tx bonds buy 5token2 "100000res" --from francesco --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 echo "Buying 5token3 from Shaun"
-yes $PASSWORD | bondscli tx bonds buy 5token3 "100res,100rez" --from shaun -y --broadcast-mode block --gas-prices="$GAS_PRICES"
+yes $PASSWORD | bondscli tx bonds buy 5token3 "100res,100rez" --from shaun --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES"
 
 # Buy 5token4 from Miguel (using token1 and token2)
 echo "Buying 5token4 from Miguel"
-yes $PASSWORD | bondscli tx bonds buy 5token4 "2token1,2token2" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES"
+yes $PASSWORD | bondscli tx bonds buy 5token4 "2token1,2token2" --from miguel --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES"
