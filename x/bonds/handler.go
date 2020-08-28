@@ -80,11 +80,11 @@ func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) []abci.ValidatorUpdate {
 
 func handleMsgCreateBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgCreateBond) (*sdk.Result, error) {
 	if keeper.BankKeeper.BlacklistedAddr(msg.FeeAddress) {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, fmt.Sprintf("%s is not allowed to receive transactions", msg.FeeAddress))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive transactions", msg.FeeAddress)
 	}
 
 	if keeper.BondExists(ctx, msg.Token) {
-		return nil, sdkerrors.Wrapf(types.ErrBondAlreadyExists, "%s", msg.Token)
+		return nil, sdkerrors.Wrap(types.ErrBondAlreadyExists, msg.Token)
 	} else if msg.Token == keeper.StakingKeeper.GetParams(ctx).BondDenom {
 		return nil, sdkerrors.Wrap(types.ErrBondTokenCannotBeStakingToken, msg.Token)
 	}
@@ -173,7 +173,7 @@ func handleMsgEditBond(ctx sdk.Context, keeper keeper.Keeper, msg types.MsgEditB
 	}
 
 	if !bond.SignersEqualTo(msg.Signers) {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "List of signers does not match the one in the bond")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "list of signers does not match the one in the bond")
 	}
 
 	if msg.Name != types.DoNotModifyField {
@@ -493,7 +493,7 @@ func handleMsgMakeOutcomePayment(ctx sdk.Context, keeper keeper.Keeper, msg type
 	if bond.State != types.OpenState {
 		return nil, sdkerrors.Wrap(types.ErrInvalidStateForAction, bond.State)
 	} else if bond.OutcomePayment.Empty() {
-		return nil, sdkerrors.Wrap(types.ErrCannotMakeZeroOutcomePayment, "")
+		return nil, types.ErrCannotMakeZeroOutcomePayment
 	}
 
 	// Send outcome payment to reserve
