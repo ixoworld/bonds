@@ -749,7 +749,7 @@ func TestPerformBuys(t *testing.T) {
 	app.BondsKeeper.SetBatch(ctx, bond.Token, batch)
 
 	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
-	blankSellPrices := sdk.NewDecCoinsFromCoins(nil) // blank
+	blankSellPrices := sdk.NewDecCoinsFromCoins() // blank
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 2000)}
 
 	testCases := []struct {
@@ -826,7 +826,7 @@ func TestPerformSells(t *testing.T) {
 	app.BondsKeeper.SetBatch(ctx, bond.Token, batch)
 
 	sellPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
-	blankBuyPrices := sdk.NewDecCoinsFromCoins(nil) // blank
+	blankBuyPrices := sdk.NewDecCoinsFromCoins() // blank
 
 	testCases := []struct {
 		amount sdk.Int
@@ -1039,7 +1039,7 @@ func TestCancelUnfulfillableBuys(t *testing.T) {
 
 	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
-	blankSellPrices := sdk.NewDecCoinsFromCoins(nil) // blank
+	blankSellPrices := sdk.NewDecCoinsFromCoins() // blank
 	zeroTokens := sdk.NewCoin(bond.Token, sdk.ZeroInt())
 
 	testCases := []struct {
@@ -1128,7 +1128,7 @@ func TestCancelUnfulfillableOrders(t *testing.T) {
 
 	buyPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 	maxPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 1100)}
-	blankSellPrices := sdk.NewDecCoinsFromCoins(nil) // blank
+	blankSellPrices := sdk.NewDecCoinsFromCoins() // blank
 	zeroTokens := sdk.NewCoin(bond.Token, sdk.ZeroInt())
 
 	testCases := []struct {
