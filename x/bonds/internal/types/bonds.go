@@ -351,8 +351,6 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 			panic(err)
 		}
 		temp5 := a.Mul(temp3.Add(x))
-		// TODO: To check
-		// constant := a.Mul((b.Mul(b).Add(c)).ApproxSqrt())
 		approx, err := (b.Mul(b).Add(c)).ApproxSqrt()
 		if err != nil {
 			// TODO: improve error check
