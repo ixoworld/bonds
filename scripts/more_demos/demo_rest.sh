@@ -45,10 +45,10 @@ fi
 
 PASSWORD="12345678"
 GAS_PRICES="0.025stake"
-MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
-FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
-SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
-FEE=$(yes $PASSWORD | bondscli keys show fee -a)
+MIGUEL=$(yes $PASSWORD | bondscli keys show miguel --keyring-backend=test -a)
+FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco --keyring-backend=test -a)
+SHAUN=$(yes $PASSWORD | bondscli keys show shaun --keyring-backend=test -a)
+FEE=$(yes $PASSWORD | bondscli keys show fee --keyring-backend=test -a)
 
 echo "Creating bond..."
 rest_from_m bonds/create_bond '{
