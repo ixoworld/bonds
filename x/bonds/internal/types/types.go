@@ -17,7 +17,7 @@ func CheckReserveTokenNames(resTokens []string, token string) error {
 
 		// Check if duplicate
 		if _, ok := uniqueReserveTokens[r]; ok {
-			return sdkerrors.Wrap(ErrDuplicateReserveToken, uniqueReserveTokens[r])
+			return sdkerrors.Wrap(ErrDuplicateReserveToken, r)
 		} else {
 			uniqueReserveTokens[r] = ""
 		}
