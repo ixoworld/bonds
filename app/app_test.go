@@ -26,16 +26,16 @@ func TestBondsdExport(t *testing.T) {
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
-// TODO: check the new blacklist logic
 // ensure that black listed addresses are properly set in bank keeper
-/* func TestBlackListedAddrs(t *testing.T) {
+func TestBlackListedAddrs(t *testing.T) {
 	memDB := db.NewMemDB()
 	app := NewBondsApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), memDB, nil, true, map[int64]bool{}, 0)
 
 	for acc := range maccPerms {
-		require.True(t, app.BankKeeper.BlacklistedAddr(app.SupplyKeeper.GetModuleAddress(acc)))
+		blacklisted := !allowedReceivingModAcc[acc]
+		require.Equal(t, blacklisted, app.BankKeeper.BlacklistedAddr(app.SupplyKeeper.GetModuleAddress(acc)))
 	}
-}*/
+}
 
 func setGenesis(app *BondsApp) error {
 	genesisState := simapp.NewDefaultGenesisState()
