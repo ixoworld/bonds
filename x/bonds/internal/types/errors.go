@@ -6,44 +6,6 @@ import (
 
 const (
 	DefaultCodespace = ModuleName
-
-	// General
-	/*CodeArgumentInvalid                = 301
-	CodeArgumentMissingOrIncorrectType = 302
-	CodeIncorrectNumberOfValues        = 303
-	CodeActionInvalid                  = 304
-
-	// Bonds
-	CodeBondDoesNotExist        = 305
-	CodeBondAlreadyExists       = 306
-	CodeBondDoesNotAllowSelling = 307
-	CodeDidNotEditAnything      = 308
-	CodeInvalidSwapper          = 309
-	CodeInvalidBond             = 310
-	CodeInvalidState            = 311
-
-	// Function types and function parameters
-	CodeUnrecognizedFunctionType             = 312
-	CodeInvalidFunctionParameter             = 313
-	CodeFunctionNotAvailableForFunctionType  = 314
-	CodeFunctionRequiresNonZeroCurrentSupply = 315
-
-	// Token/coin names
-	CodeReserveTokenInvalid     = 316
-	CodeMaxSupplyDenomInvalid   = 317
-	CodeBondTokenInvalid        = 318
-	CodeReserveDenomsMismatch   = 319
-	CodeInvalidCoinDenomination = 320
-
-	// Amounts and fees
-	CodeInvalidResultantSupply     = 321
-	CodeMaxPriceExceeded           = 322
-	CodeSwapAmountInvalid          = 323
-	CodeOrderQuantityLimitExceeded = 324
-	CodeSanityRateViolated         = 325
-	CodeFeeTooLarge                = 326
-	CodeNoBondTokensOwned          = 327
-	CodeInsufficientReserveToBuy   = 328*/
 )
 
 var (
