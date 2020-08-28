@@ -826,7 +826,7 @@ func TestPerformSells(t *testing.T) {
 	app.BondsKeeper.SetBatch(ctx, bond.Token, batch)
 
 	sellPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
-	blankBuyPrices := sdk.NewDecCoins(nil...) // blank
+	blankBuyPrices := sdk.NewDecCoinsFromCoins(nil) // blank
 
 	testCases := []struct {
 		amount sdk.Int
