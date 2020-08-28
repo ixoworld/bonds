@@ -213,7 +213,7 @@ func (msg MsgEditBond) ValidateBasic() error {
 		}
 	}
 	if !atLeaseOneEdit {
-		return sdkerrors.Wrap(ErrDidNotEditAnything, "")
+		return ErrDidNotEditAnything
 	}
 
 	return nil
