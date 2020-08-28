@@ -58,9 +58,6 @@ var (
 	NewFunctionParam = types.NewFunctionParam
 	NewBond          = types.NewBond
 
-	ApproxRoot = types.ApproxRoot
-	Power      = types.Power
-
 	RoundReservePrice     = types.RoundReservePrice
 	RoundReserveReturn    = types.RoundReserveReturn
 	RoundFee              = types.RoundFee

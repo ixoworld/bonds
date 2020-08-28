@@ -261,7 +261,7 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err err
 		n64 := args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
 		result = bond.GetNewReserveDecCoins(
-			Power(x, uint64(n64)).Mul(m).Add(c))
+			x.Power(uint64(n64)).Mul(m).Add(c))
 	case SigmoidFunction:
 		a := args["a"]
 		b := args["b"]
@@ -335,7 +335,7 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 		m := args["m"]
 		n, n64 := args["n"], args["n"].TruncateInt64() // enforced by powerParameterRestrictions
 		c := args["c"]
-		temp1 := Power(x, uint64(n64+1))
+		temp1 := x.Power(uint64(n64 + 1))
 		temp2 := temp1.Mul(m).Quo(n.Add(sdk.OneDec()))
 		temp3 := x.Mul(c)
 		result = temp2.Add(temp3)
