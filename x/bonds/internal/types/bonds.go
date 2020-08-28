@@ -268,10 +268,10 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err err
 		c := args["c"]
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
-		temp3, e := temp2.ApproxSqrt()
+		temp3, err := temp2.ApproxSqrt()
 		// TODO: To check
-		if e != nil {
-			return nil, e
+		if err != nil {
+			return nil, err
 		}
 		result = bond.GetNewReserveDecCoins(
 			a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
