@@ -13,10 +13,7 @@ func TestValidateBasicMsgCreateTokenArgumentMissingGivesError(t *testing.T) {
 	message.Token = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateNameArgumentMissingGivesError(t *testing.T) {
@@ -24,10 +21,7 @@ func TestValidateBasicMsgCreateNameArgumentMissingGivesError(t *testing.T) {
 	message.Name = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateDescriptionArgumentMissingGivesError(t *testing.T) {
@@ -35,10 +29,7 @@ func TestValidateBasicMsgCreateDescriptionArgumentMissingGivesError(t *testing.T
 	message.Description = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateCreatorMissingGivesError(t *testing.T) {
@@ -46,10 +37,7 @@ func TestValidateBasicMsgCreateCreatorMissingGivesError(t *testing.T) {
 	message.Creator = sdk.AccAddress{}
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateReserveTokenArgumentMissingGivesError(t *testing.T) {
@@ -57,10 +45,7 @@ func TestValidateBasicMsgCreateReserveTokenArgumentMissingGivesError(t *testing.
 	message.ReserveTokens = nil
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgFeeAddressArgumentMissingGivesError(t *testing.T) {
@@ -68,10 +53,7 @@ func TestValidateBasicMsgFeeAddressArgumentMissingGivesError(t *testing.T) {
 	message.FeeAddress = sdk.AccAddress{}
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgFunctionTypeArgumentMissingGivesError(t *testing.T) {
@@ -79,10 +61,7 @@ func TestValidateBasicMsgFunctionTypeArgumentMissingGivesError(t *testing.T) {
 	message.FunctionType = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgCreateBond: Bond token denomination
@@ -92,14 +71,10 @@ func TestValidateBasicMsgCreateInvalidTokenArgumentGivesError(t *testing.T) {
 	message.Token = "123abc" // starts with number
 	err := message.ValidateBasic()
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeInvalidCoinDenomination, err.Code())
 
 	message.Token = "a" // too short
 	err = message.ValidateBasic()
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeInvalidCoinDenomination, err.Code())
 }
 
 // MsgCreateBond: Function parameters and function type
@@ -112,10 +87,7 @@ func TestValidateBasicMsgCreateMissingFunctionParamGivesError(t *testing.T) {
 	}
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeIncorrectNumberOfValues, err.Code())
 }
 
 func TestValidateBasicMsgCreateTypoFunctionParamGivesError(t *testing.T) {
@@ -127,10 +99,7 @@ func TestValidateBasicMsgCreateTypoFunctionParamGivesError(t *testing.T) {
 	}
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentMissingOrIncorrectType, err.Code())
 }
 
 func TestValidateBasicMsgCreateNegativeFunctionParamGivesError(t *testing.T) {
@@ -138,10 +107,7 @@ func TestValidateBasicMsgCreateNegativeFunctionParamGivesError(t *testing.T) {
 	message.FunctionParameters[0].Value = sdk.NewDec(-1)
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgFunctionTypeArgumentInvalidGivesError(t *testing.T) {
@@ -149,10 +115,7 @@ func TestValidateBasicMsgFunctionTypeArgumentInvalidGivesError(t *testing.T) {
 	message.FunctionType = "invalid_function_type"
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeUnrecognizedFunctionType, err.Code())
 }
 
 // MsgCreateBond: Reserve tokens
@@ -162,10 +125,7 @@ func TestValidateBasicMsgCreateReserveTokenArgumentInvalidGivesError(t *testing.
 	message.ReserveTokens[0] = "123abc" // invalid denomination
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeInvalidCoinDenomination, err.Code())
 }
 
 func TestValidateBasicMsgCreateNoReserveTokensInvalidGivesError(t *testing.T) {
@@ -173,10 +133,7 @@ func TestValidateBasicMsgCreateNoReserveTokensInvalidGivesError(t *testing.T) {
 	message.ReserveTokens = nil
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateReserveTokensWrongAmountInvalidGivesError(t *testing.T) {
@@ -184,10 +141,7 @@ func TestValidateBasicMsgCreateReserveTokensWrongAmountInvalidGivesError(t *test
 	message.ReserveTokens = append(message.ReserveTokens, "extra")
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeIncorrectNumberOfValues, err.Code())
 }
 
 // MsgCreateBond: Max supply validity
@@ -197,10 +151,7 @@ func TestValidateBasicMsgCreateInvalidMaxSupplyGivesError(t *testing.T) {
 	message.MaxSupply.Amount = message.MaxSupply.Amount.Neg() // negate
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 // MsgCreateBond: Order quantity limits validity
@@ -211,10 +162,7 @@ func TestValidateBasicMsgCreateInvalidOrderQuantityLimitGivesError(t *testing.T)
 	message.OrderQuantityLimits[0].Amount = message.OrderQuantityLimits[0].Amount.Neg()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 // MsgCreateBond: Max supply denom matches bond token denom
@@ -224,10 +172,7 @@ func TestValidateBasicMsgCreateMaxSupplyDenomTokenDenomMismatchGivesError(t *tes
 	message.Token = message.MaxSupply.Denom + "a" // to ensure different
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeMaxSupplyDenomInvalid, err.Code())
 }
 
 // MsgCreateBond: Sanity values must be positive
@@ -237,10 +182,7 @@ func TestValidateBasicMsgCreateNegativeSanityRateGivesError(t *testing.T) {
 	message.SanityRate = sdk.OneDec().Neg()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateNegativeSanityPercentageGivesError(t *testing.T) {
@@ -248,10 +190,7 @@ func TestValidateBasicMsgCreateNegativeSanityPercentageGivesError(t *testing.T) 
 	message.SanityMarginPercentage = sdk.OneDec().Neg()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgCreateBond: Fee percentages must be positive and not add up to 100
@@ -261,10 +200,7 @@ func TestValidateBasicMsgCreateTxFeeIsNegativeGivesError(t *testing.T) {
 	message.TxFeePercentage = sdk.NewDec(-1)
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateTxFeeIsZeroGivesNoError(t *testing.T) {
@@ -272,7 +208,6 @@ func TestValidateBasicMsgCreateTxFeeIsZeroGivesNoError(t *testing.T) {
 	message.TxFeePercentage = sdk.ZeroDec()
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
 
@@ -281,10 +216,7 @@ func TestValidateBasicMsgCreateExitFeeIsNegativeGivesError(t *testing.T) {
 	message.ExitFeePercentage = sdk.NewDec(-1)
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateExitFeeIsZeroGivesNoError(t *testing.T) {
@@ -292,7 +224,6 @@ func TestValidateBasicMsgCreateExitFeeIsZeroGivesNoError(t *testing.T) {
 	message.ExitFeePercentage = sdk.ZeroDec()
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
 
@@ -303,22 +234,16 @@ func TestValidateBasicMsgCreate100PercentFeeGivesError(t *testing.T) {
 	message.ExitFeePercentage = sdk.ZeroDec()
 	err := message.ValidateBasic()
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeFeeTooLarge, err.Code())
 
 	message.TxFeePercentage = sdk.NewDec(50)
 	message.ExitFeePercentage = sdk.NewDec(50)
 	err = message.ValidateBasic()
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeFeeTooLarge, err.Code())
 
 	message.TxFeePercentage = sdk.ZeroDec()
 	message.ExitFeePercentage = sdk.NewDec(100)
 	err = message.ValidateBasic()
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeFeeTooLarge, err.Code())
 
 	message.TxFeePercentage = sdk.MustNewDecFromStr("49.999999")
 	message.ExitFeePercentage = sdk.NewDec(50)
@@ -336,10 +261,7 @@ func TestValidateBasicMsgCreateZeroBatchBlocksGivesError(t *testing.T) {
 	message.BatchBlocks = sdk.ZeroUint()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgCreateZeroMaxSupplyGivesError(t *testing.T) {
@@ -347,10 +269,7 @@ func TestValidateBasicMsgCreateZeroMaxSupplyGivesError(t *testing.T) {
 	message.MaxSupply = sdk.NewCoin(token, sdk.ZeroInt())
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgCreateBond: Valid bond creation
@@ -359,7 +278,6 @@ func TestValidateBasicMsgCreateBondCorrectlyGivesNoError(t *testing.T) {
 	message := newValidMsgCreateBond()
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
 
@@ -370,10 +288,7 @@ func TestValidateBasicMsgEditBondTokenArgumentMissingGivesError(t *testing.T) {
 	message.Token = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgEditBondNameArgumentMissingGivesError(t *testing.T) {
@@ -381,10 +296,7 @@ func TestValidateBasicMsgEditBondNameArgumentMissingGivesError(t *testing.T) {
 	message.Name = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgEditBondDescriptionArgumentMissingGivesError(t *testing.T) {
@@ -392,10 +304,7 @@ func TestValidateBasicMsgEditBondDescriptionArgumentMissingGivesError(t *testing
 	message.Description = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgEditBondOrderQuantityLimitsArgumentMissingGivesNoError(t *testing.T) {
@@ -403,7 +312,6 @@ func TestValidateBasicMsgEditBondOrderQuantityLimitsArgumentMissingGivesNoError(
 	message.OrderQuantityLimits = ""
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
 
@@ -412,10 +320,7 @@ func TestValidateBasicMsgEditBondSanityRateArgumentMissingGivesError(t *testing.
 	message.SanityRate = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgEditBondSanityMarginPercentageArgumentMissingGivesError(t *testing.T) {
@@ -423,10 +328,7 @@ func TestValidateBasicMsgEditBondSanityMarginPercentageArgumentMissingGivesError
 	message.SanityMarginPercentage = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgEditBondEditorArgumentMissingGivesError(t *testing.T) {
@@ -434,10 +336,7 @@ func TestValidateBasicMsgEditBondEditorArgumentMissingGivesError(t *testing.T) {
 	message.Editor = nil
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgEditBond: no edits
@@ -448,10 +347,7 @@ func TestValidateBasicMsgEditBondNoEditsGivesError(t *testing.T) {
 		DoNotModifyField, initCreator, initSigners)
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeDidNotEditAnything, err.Code())
 }
 
 // MsgEditBond: correct edit
@@ -460,7 +356,6 @@ func TestValidateBasicMsgEditBondCorrectlyGivesNoError(t *testing.T) {
 	message := newValidMsgEditBond()
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
 
@@ -471,10 +366,7 @@ func TestValidateBasicMsgBuyBuyerArgumentMissingGivesError(t *testing.T) {
 	message.Buyer = sdk.AccAddress{}
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgBuy: invalid arguments
@@ -484,10 +376,7 @@ func TestValidateBasicMsgBuyInvalidAmountGivesError(t *testing.T) {
 	message.Amount.Amount = message.Amount.Amount.Neg()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 func TestValidateBasicMsgBuyZeroAmountGivesError(t *testing.T) {
@@ -495,10 +384,7 @@ func TestValidateBasicMsgBuyZeroAmountGivesError(t *testing.T) {
 	message.Amount.Amount = sdk.ZeroInt()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgBuyMaxPricesInvalidGivesError(t *testing.T) {
@@ -506,10 +392,7 @@ func TestValidateBasicMsgBuyMaxPricesInvalidGivesError(t *testing.T) {
 	message.MaxPrices[0].Amount = sdk.ZeroInt()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 // MsgBuy: correct buy
@@ -518,7 +401,6 @@ func TestValidateBasicMsgBuyCorrectlyGivesNoError(t *testing.T) {
 	message := newValidMsgBuy()
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
 
@@ -529,10 +411,7 @@ func TestValidateBasicMsgSellSellerArgumentMissingGivesError(t *testing.T) {
 	message.Seller = sdk.AccAddress{}
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgSell: invalid arguments
@@ -542,10 +421,7 @@ func TestValidateBasicMsgSellInvalidAmountGivesError(t *testing.T) {
 	message.Amount.Amount = message.Amount.Amount.Neg()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 func TestValidateBasicMsgSellZeroAmountGivesError(t *testing.T) {
@@ -553,10 +429,7 @@ func TestValidateBasicMsgSellZeroAmountGivesError(t *testing.T) {
 	message.Amount.Amount = sdk.ZeroInt()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgSell: correct sell
@@ -565,7 +438,6 @@ func TestValidateBasicMsgSellCorrectlyGivesNoError(t *testing.T) {
 	message := newValidMsgSell()
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
 
@@ -576,10 +448,7 @@ func TestValidateBasicMsgSwapSwapperArgumentMissingGivesError(t *testing.T) {
 	message.Swapper = sdk.AccAddress{}
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgSwapBondTokenArgumentMissingGivesError(t *testing.T) {
@@ -587,10 +456,7 @@ func TestValidateBasicMsgSwapBondTokenArgumentMissingGivesError(t *testing.T) {
 	message.BondToken = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 func TestValidateBasicMsgSwapToTokenArgumentMissingGivesError(t *testing.T) {
@@ -598,10 +464,7 @@ func TestValidateBasicMsgSwapToTokenArgumentMissingGivesError(t *testing.T) {
 	message.ToToken = ""
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgSwap: invalid arguments
@@ -611,10 +474,7 @@ func TestValidateBasicMsgSwapInvalidFromAmountGivesError(t *testing.T) {
 	message.From.Amount = message.From.Amount.Neg()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, sdk.CodeInvalidCoins, err.Code())
 }
 
 func TestValidateBasicMsgSwapInvalidToTokenGivesError(t *testing.T) {
@@ -622,10 +482,7 @@ func TestValidateBasicMsgSwapInvalidToTokenGivesError(t *testing.T) {
 	message.ToToken = "123abc"
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeInvalidCoinDenomination, err.Code())
 }
 
 func TestValidateBasicMsgSwapZeroFromAmountGivesError(t *testing.T) {
@@ -633,10 +490,7 @@ func TestValidateBasicMsgSwapZeroFromAmountGivesError(t *testing.T) {
 	message.From.Amount = sdk.ZeroInt()
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeArgumentInvalid, err.Code())
 }
 
 // MsgSwap: fromToken==toToken
@@ -647,10 +501,7 @@ func TestValidateBasicMsgSwapFromAndToSameTokenGivesError(t *testing.T) {
 	message.ToToken = message.From.Denom
 
 	err := message.ValidateBasic()
-
 	require.NotNil(t, err)
-	// TODO: is this necessary?
-	// require.Equal(t, CodeInvalidSwapper, err.Code())
 }
 
 // MsgSwap: correct swap
@@ -659,6 +510,5 @@ func TestValidateBasicMsgSwapCorrectlyGivesNoError(t *testing.T) {
 	message := newValidMsgSwap()
 
 	err := message.ValidateBasic()
-
 	require.Nil(t, err)
 }
