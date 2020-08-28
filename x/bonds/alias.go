@@ -6,228 +6,102 @@ package bonds
 
 import (
 	"github.com/ixoworld/bonds/x/bonds/client"
-	"github.com/ixoworld/bonds/x/bonds/client/cli"
-	"github.com/ixoworld/bonds/x/bonds/client/rest"
 	"github.com/ixoworld/bonds/x/bonds/internal/keeper"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
-	"github.com/ixoworld/bonds/x/bonds/simulation"
 )
 
 const (
-	RestBondToken                      = rest.RestBondToken
-	RestBondAmount                     = rest.RestBondAmount
-	RestFromTokenWithAmount            = rest.RestFromTokenWithAmount
-	RestToToken                        = rest.RestToToken
-	QueryBonds                         = keeper.QueryBonds
-	QueryBond                          = keeper.QueryBond
-	QueryBatch                         = keeper.QueryBatch
-	QueryLastBatch                     = keeper.QueryLastBatch
-	QueryCurrentPrice                  = keeper.QueryCurrentPrice
-	QueryCurrentReserve                = keeper.QueryCurrentReserve
-	QueryCustomPrice                   = keeper.QueryCustomPrice
-	QueryBuyPrice                      = keeper.QueryBuyPrice
-	QuerySellReturn                    = keeper.QuerySellReturn
-	QuerySwapReturn                    = keeper.QuerySwapReturn
-	PowerFunction                      = types.PowerFunction
-	SigmoidFunction                    = types.SigmoidFunction
-	SwapperFunction                    = types.SwapperFunction
-	AugmentedFunction                  = types.AugmentedFunction
-	HatchState                         = types.HatchState
-	OpenState                          = types.OpenState
-	SettleState                        = types.SettleState
-	DoNotModifyField                   = types.DoNotModifyField
-	AnyNumberOfReserveTokens           = types.AnyNumberOfReserveTokens
-	DefaultCodespace                   = types.DefaultCodespace
-	EventTypeCreateBond                = types.EventTypeCreateBond
-	EventTypeEditBond                  = types.EventTypeEditBond
-	EventTypeInitSwapper               = types.EventTypeInitSwapper
-	EventTypeBuy                       = types.EventTypeBuy
-	EventTypeSell                      = types.EventTypeSell
-	EventTypeSwap                      = types.EventTypeSwap
-	EventTypeMakeOutcomePayment        = types.EventTypeMakeOutcomePayment
-	EventTypeWithdrawShare             = types.EventTypeWithdrawShare
-	EventTypeOrderCancel               = types.EventTypeOrderCancel
-	EventTypeOrderFulfill              = types.EventTypeOrderFulfill
-	EventTypeStateChange               = types.EventTypeStateChange
-	AttributeKeyBond                   = types.AttributeKeyBond
-	AttributeKeyName                   = types.AttributeKeyName
-	AttributeKeyDescription            = types.AttributeKeyDescription
-	AttributeKeyFunctionType           = types.AttributeKeyFunctionType
-	AttributeKeyFunctionParameters     = types.AttributeKeyFunctionParameters
-	AttributeKeyReserveTokens          = types.AttributeKeyReserveTokens
-	AttributeKeyTxFeePercentage        = types.AttributeKeyTxFeePercentage
-	AttributeKeyExitFeePercentage      = types.AttributeKeyExitFeePercentage
-	AttributeKeyFeeAddress             = types.AttributeKeyFeeAddress
-	AttributeKeyMaxSupply              = types.AttributeKeyMaxSupply
-	AttributeKeyOrderQuantityLimits    = types.AttributeKeyOrderQuantityLimits
-	AttributeKeySanityRate             = types.AttributeKeySanityRate
-	AttributeKeySanityMarginPercentage = types.AttributeKeySanityMarginPercentage
-	AttributeKeyAllowSells             = types.AttributeKeyAllowSells
-	AttributeKeySigners                = types.AttributeKeySigners
-	AttributeKeyBatchBlocks            = types.AttributeKeyBatchBlocks
-	AttributeKeyOutcomePayment         = types.AttributeKeyOutcomePayment
-	AttributeKeyState                  = types.AttributeKeyState
-	AttributeKeyMaxPrices              = types.AttributeKeyMaxPrices
-	AttributeKeySwapFromToken          = types.AttributeKeySwapFromToken
-	AttributeKeySwapToToken            = types.AttributeKeySwapToToken
-	AttributeKeyOrderType              = types.AttributeKeyOrderType
-	AttributeKeyAddress                = types.AttributeKeyAddress
-	AttributeKeyCancelReason           = types.AttributeKeyCancelReason
-	AttributeKeyTokensMinted           = types.AttributeKeyTokensMinted
-	AttributeKeyTokensBurned           = types.AttributeKeyTokensBurned
-	AttributeKeyTokensSwapped          = types.AttributeKeyTokensSwapped
-	AttributeKeyChargedPrices          = types.AttributeKeyChargedPrices
-	AttributeKeyChargedPricesReserve   = types.AttributeKeyChargedPricesReserve
-	AttributeKeyChargedPricesFunding   = types.AttributeKeyChargedPricesFunding
-	AttributeKeyChargedFees            = types.AttributeKeyChargedFees
-	AttributeKeyReturnedToAddress      = types.AttributeKeyReturnedToAddress
-	AttributeKeyNewBondTokenBalance    = types.AttributeKeyNewBondTokenBalance
-	AttributeKeyOldState               = types.AttributeKeyOldState
-	AttributeKeyNewState               = types.AttributeKeyNewState
-	AttributeValueBuyOrder             = types.AttributeValueBuyOrder
-	AttributeValueSellOrder            = types.AttributeValueSellOrder
-	AttributeValueSwapOrder            = types.AttributeValueSwapOrder
-	AttributeValueCategory             = types.AttributeValueCategory
-	ModuleName                         = types.ModuleName
-	StoreKey                           = types.StoreKey
-	BondsMintBurnAccount               = types.BondsMintBurnAccount
-	BatchesIntermediaryAccount         = types.BatchesIntermediaryAccount
-	BondsReserveAccount                = types.BondsReserveAccount
-	QuerierRoute                       = types.QuerierRoute
-	RouterKey                          = types.RouterKey
-	TypeMsgCreateBond                  = types.TypeMsgCreateBond
-	TypeMsgEditBond                    = types.TypeMsgEditBond
-	TypeMsgBuy                         = types.TypeMsgBuy
-	TypeMsgSell                        = types.TypeMsgSell
-	TypeMsgSwap                        = types.TypeMsgSwap
-	TypeMsgMakeOutcomePayment          = types.TypeMsgMakeOutcomePayment
-	TypeMsgWithdrawShare               = types.TypeMsgWithdrawShare
-	OpWeightMsgCreateBond              = simulation.OpWeightMsgCreateBond
-	OpWeightMsgEditBond                = simulation.OpWeightMsgEditBond
-	OpWeightMsgBuy                     = simulation.OpWeightMsgBuy
-	OpWeightMsgSell                    = simulation.OpWeightMsgSell
-	OpWeightMsgSwap                    = simulation.OpWeightMsgSwap
-	DefaultWeightMsgCreateBond         = simulation.DefaultWeightMsgCreateBond
-	DefaultWeightMsgEditBond           = simulation.DefaultWeightMsgEditBond
-	DefaultWeightMsgBuy                = simulation.DefaultWeightMsgBuy
-	DefaultWeightMsgSell               = simulation.DefaultWeightMsgSell
-	DefaultWeightMsgSwap               = simulation.DefaultWeightMsgSwap
-	InitialBonds                       = simulation.InitialBonds
-	MaxBonds                           = simulation.MaxBonds
-	MaxNumberOfInitialBonds            = simulation.MaxNumberOfInitialBonds
-	MaxNumberOfBonds                   = simulation.MaxNumberOfBonds
-	FlagToken                          = cli.FlagToken
-	FlagName                           = cli.FlagName
-	FlagDescription                    = cli.FlagDescription
-	FlagFunctionType                   = cli.FlagFunctionType
-	FlagFunctionParameters             = cli.FlagFunctionParameters
-	FlagReserveTokens                  = cli.FlagReserveTokens
-	FlagTxFeePercentage                = cli.FlagTxFeePercentage
-	FlagExitFeePercentage              = cli.FlagExitFeePercentage
-	FlagFeeAddress                     = cli.FlagFeeAddress
-	FlagMaxSupply                      = cli.FlagMaxSupply
-	FlagOrderQuantityLimits            = cli.FlagOrderQuantityLimits
-	FlagSanityRate                     = cli.FlagSanityRate
-	FlagSanityMarginPercentage         = cli.FlagSanityMarginPercentage
-	FlagAllowSells                     = cli.FlagAllowSells
-	FlagSigners                        = cli.FlagSigners
-	FlagBatchBlocks                    = cli.FlagBatchBlocks
-	FlagOutcomePayment                 = cli.FlagOutcomePayment
+	PowerFunction     = types.PowerFunction
+	SigmoidFunction   = types.SigmoidFunction
+	SwapperFunction   = types.SwapperFunction
+	AugmentedFunction = types.AugmentedFunction
+
+	HatchState  = types.HatchState
+	OpenState   = types.OpenState
+	SettleState = types.SettleState
+
+	DoNotModifyField = types.DoNotModifyField
+
+	AnyNumberOfReserveTokens = types.AnyNumberOfReserveTokens
+
+	DefaultCodespace = types.DefaultCodespace
+
+	ModuleName = types.ModuleName
+	StoreKey   = types.StoreKey
+
+	BondsMintBurnAccount       = types.BondsMintBurnAccount
+	BatchesIntermediaryAccount = types.BatchesIntermediaryAccount
+	BondsReserveAccount        = types.BondsReserveAccount
+
+	QuerierRoute = types.QuerierRoute
+	RouterKey    = types.RouterKey
 )
 
 var (
 	// functions aliases
-	RegisterRoutes                   = rest.RegisterRoutes
-	NewQuerier                       = keeper.NewQuerier
-	NewKeeper                        = keeper.NewKeeper
-	RegisterInvariants               = keeper.RegisterInvariants
-	AllInvariants                    = keeper.AllInvariants
-	SupplyInvariant                  = keeper.SupplyInvariant
-	ReserveInvariant                 = keeper.ReserveInvariant
-	RegisterCodec                    = types.RegisterCodec
-	NewBatch                         = types.NewBatch
-	NewBaseOrder                     = types.NewBaseOrder
-	NewBuyOrder                      = types.NewBuyOrder
-	NewSellOrder                     = types.NewSellOrder
-	NewSwapOrder                     = types.NewSwapOrder
-	NewFunctionParam                 = types.NewFunctionParam
-	NewBond                          = types.NewBond
-	CheckReserveTokenNames           = types.CheckReserveTokenNames
-	CheckNoOfReserveTokens           = types.CheckNoOfReserveTokens
-	CheckCoinDenom                   = types.CheckCoinDenom
-	GetRequiredParamsForFunctionType = types.GetRequiredParamsForFunctionType
-	GetExceptionsForFunctionType     = types.GetExceptionsForFunctionType
-	ApproxRoot                       = types.ApproxRoot
-	Power                            = types.Power
-	RoundReservePrice                = types.RoundReservePrice
-	RoundReserveReturn               = types.RoundReserveReturn
-	RoundFee                         = types.RoundFee
-	RoundReservePrices               = types.RoundReservePrices
-	RoundReserveReturns              = types.RoundReserveReturns
-	MultiplyDecCoinByInt             = types.MultiplyDecCoinByInt
-	MultiplyDecCoinsByInt            = types.MultiplyDecCoinsByInt
-	MultiplyDecCoinByDec             = types.MultiplyDecCoinByDec
-	MultiplyDecCoinsByDec            = types.MultiplyDecCoinsByDec
-	DivideDecCoinByDec               = types.DivideDecCoinByDec
-	DivideDecCoinsByDec              = types.DivideDecCoinsByDec
-	AdjustFees                       = types.AdjustFees
-	AccAddressesToString             = types.AccAddressesToString
-	StringsToString                  = types.StringsToString
-	Invariant                        = types.Invariant
-	Supply                           = types.Supply
-	Reserve                          = types.Reserve
-	SpotPrice                        = types.SpotPrice
-	NewGenesisState                  = types.NewGenesisState
-	ValidateGenesis                  = types.ValidateGenesis
-	DefaultGenesisState              = types.DefaultGenesisState
-	GetBondKey                       = types.GetBondKey
-	GetBatchKey                      = types.GetBatchKey
-	GetLastBatchKey                  = types.GetLastBatchKey
-	NewMsgCreateBond                 = types.NewMsgCreateBond
-	NewMsgEditBond                   = types.NewMsgEditBond
-	NewMsgBuy                        = types.NewMsgBuy
-	NewMsgSell                       = types.NewMsgSell
-	NewMsgSwap                       = types.NewMsgSwap
-	NewMsgMakeOutcomePayment         = types.NewMsgMakeOutcomePayment
-	NewMsgWithdrawShare              = types.NewMsgWithdrawShare
-	WeightedOperations               = simulation.WeightedOperations
-	SimulateMsgCreateBond            = simulation.SimulateMsgCreateBond
-	SimulateMsgEditBond              = simulation.SimulateMsgEditBond
-	SimulateMsgBuy                   = simulation.SimulateMsgBuy
-	SimulateMsgSell                  = simulation.SimulateMsgSell
-	SimulateMsgSwap                  = simulation.SimulateMsgSwap
-	GenInitialNumberOfBonds          = simulation.GenInitialNumberOfBonds
-	GenMaxNumberOfBonds              = simulation.GenMaxNumberOfBonds
-	RandomizedGenState               = simulation.RandomizedGenState
-	DecodeStore                      = simulation.DecodeStore
-	ParseFunctionParams              = client.ParseFunctionParams
-	ParseSigners                     = client.ParseSigners
-	ParseTwoPartCoin                 = client.ParseTwoPartCoin
-	GetTxCmd                         = cli.GetTxCmd
-	GetCmdCreateBond                 = cli.GetCmdCreateBond
-	GetCmdEditBond                   = cli.GetCmdEditBond
-	GetCmdBuy                        = cli.GetCmdBuy
-	GetCmdSell                       = cli.GetCmdSell
-	GetCmdSwap                       = cli.GetCmdSwap
-	GetCmdMakeOutcomePayment         = cli.GetCmdMakeOutcomePayment
-	GetCmdWithdrawShare              = cli.GetCmdWithdrawShare
-	GetQueryCmd                      = cli.GetQueryCmd
-	GetCmdBonds                      = cli.GetCmdBonds
-	GetCmdBond                       = cli.GetCmdBond
-	GetCmdBatch                      = cli.GetCmdBatch
-	GetCmdLastBatch                  = cli.GetCmdLastBatch
-	GetCmdCurrentPrice               = cli.GetCmdCurrentPrice
-	GetCmdCurrentReserve             = cli.GetCmdCurrentReserve
-	GetCmdCustomPrice                = cli.GetCmdCustomPrice
-	GetCmdBuyPrice                   = cli.GetCmdBuyPrice
-	GetCmdSellReturn                 = cli.GetCmdSellReturn
-	GetCmdSwapReturn                 = cli.GetCmdSwapReturn
+
+	NewQuerier = keeper.NewQuerier
+	NewKeeper  = keeper.NewKeeper
+
+	RegisterInvariants = keeper.RegisterInvariants
+	AllInvariants      = keeper.AllInvariants
+	SupplyInvariant    = keeper.SupplyInvariant
+	ReserveInvariant   = keeper.ReserveInvariant
+
+	RegisterCodec = types.RegisterCodec
+
+	NewBatch         = types.NewBatch
+	NewBaseOrder     = types.NewBaseOrder
+	NewBuyOrder      = types.NewBuyOrder
+	NewSellOrder     = types.NewSellOrder
+	NewSwapOrder     = types.NewSwapOrder
+	NewFunctionParam = types.NewFunctionParam
+	NewBond          = types.NewBond
+
+	ApproxRoot = types.ApproxRoot
+	Power      = types.Power
+
+	RoundReservePrice     = types.RoundReservePrice
+	RoundReserveReturn    = types.RoundReserveReturn
+	RoundFee              = types.RoundFee
+	RoundReservePrices    = types.RoundReservePrices
+	RoundReserveReturns   = types.RoundReserveReturns
+	MultiplyDecCoinByInt  = types.MultiplyDecCoinByInt
+	MultiplyDecCoinsByInt = types.MultiplyDecCoinsByInt
+	MultiplyDecCoinByDec  = types.MultiplyDecCoinByDec
+	MultiplyDecCoinsByDec = types.MultiplyDecCoinsByDec
+	DivideDecCoinByDec    = types.DivideDecCoinByDec
+	DivideDecCoinsByDec   = types.DivideDecCoinsByDec
+	AdjustFees            = types.AdjustFees
+
+	NewGenesisState     = types.NewGenesisState
+	ValidateGenesis     = types.ValidateGenesis
+	DefaultGenesisState = types.DefaultGenesisState
+
+	GetBondKey      = types.GetBondKey
+	GetBatchKey     = types.GetBatchKey
+	GetLastBatchKey = types.GetLastBatchKey
+
+	NewMsgCreateBond         = types.NewMsgCreateBond
+	NewMsgEditBond           = types.NewMsgEditBond
+	NewMsgBuy                = types.NewMsgBuy
+	NewMsgSell               = types.NewMsgSell
+	NewMsgSwap               = types.NewMsgSwap
+	NewMsgMakeOutcomePayment = types.NewMsgMakeOutcomePayment
+	NewMsgWithdrawShare      = types.NewMsgWithdrawShare
+
+	ParseFunctionParams = client.ParseFunctionParams
+	ParseSigners        = client.ParseSigners
+	ParseTwoPartCoin    = client.ParseTwoPartCoin
 
 	// variable aliases
-	ModuleCdc                               = types.ModuleCdc
-	RequiredParamsForFunctionType           = types.RequiredParamsForFunctionType
-	NoOfReserveTokensForFunctionType        = types.NoOfReserveTokensForFunctionType
-	ExtraParameterRestrictions              = types.ExtraParameterRestrictions
+
+	ModuleCdc = types.ModuleCdc
+
+	RequiredParamsForFunctionType    = types.RequiredParamsForFunctionType
+	NoOfReserveTokensForFunctionType = types.NoOfReserveTokensForFunctionType
+	ExtraParameterRestrictions       = types.ExtraParameterRestrictions
+
 	ErrArgumentMustBePositive               = types.ErrArgumentMustBePositive
 	ErrArgumentMustBeInteger                = types.ErrArgumentMustBeInteger
 	ErrArgumentMustBeBetween                = types.ErrArgumentMustBeBetween
@@ -267,28 +141,34 @@ var (
 	ErrInvalidFunctionParameter             = types.ErrInvalidFunctionParameter
 	ErrArgumentMissingOrNonUInteger         = types.ErrArgumentMissingOrNonUInteger
 	ErrArgumentMissingOrNonBoolean          = types.ErrArgumentMissingOrNonBoolean
-	BondsKeyPrefix                          = types.BondsKeyPrefix
-	BatchesKeyPrefix                        = types.BatchesKeyPrefix
-	LastBatchesKeyPrefix                    = types.LastBatchesKeyPrefix
+
+	BondsKeyPrefix       = types.BondsKeyPrefix
+	BatchesKeyPrefix     = types.BatchesKeyPrefix
+	LastBatchesKeyPrefix = types.LastBatchesKeyPrefix
 )
 
 type (
-	Keeper                    = keeper.Keeper
-	Batch                     = types.Batch
-	BaseOrder                 = types.BaseOrder
-	BuyOrder                  = types.BuyOrder
-	SellOrder                 = types.SellOrder
-	SwapOrder                 = types.SwapOrder
+	Keeper = keeper.Keeper
+
+	Batch     = types.Batch
+	BaseOrder = types.BaseOrder
+	BuyOrder  = types.BuyOrder
+	SellOrder = types.SellOrder
+	SwapOrder = types.SwapOrder
+
 	FunctionParamRestrictions = types.FunctionParamRestrictions
 	FunctionParam             = types.FunctionParam
 	FunctionParams            = types.FunctionParams
-	Bond                      = types.Bond
-	GenesisState              = types.GenesisState
-	MsgCreateBond             = types.MsgCreateBond
-	MsgEditBond               = types.MsgEditBond
-	MsgBuy                    = types.MsgBuy
-	MsgSell                   = types.MsgSell
-	MsgSwap                   = types.MsgSwap
-	MsgMakeOutcomePayment     = types.MsgMakeOutcomePayment
-	MsgWithdrawShare          = types.MsgWithdrawShare
+
+	Bond = types.Bond
+
+	GenesisState = types.GenesisState
+
+	MsgCreateBond         = types.MsgCreateBond
+	MsgEditBond           = types.MsgEditBond
+	MsgBuy                = types.MsgBuy
+	MsgSell               = types.MsgSell
+	MsgSwap               = types.MsgSwap
+	MsgMakeOutcomePayment = types.MsgMakeOutcomePayment
+	MsgWithdrawShare      = types.MsgWithdrawShare
 )
