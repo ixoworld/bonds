@@ -19,38 +19,25 @@ func Init() {
 // stakingGenesisState returns the default genesis state for the staking module, replacing the
 // bond denom from stake to ubtsg
 func stakingGenesisState() staking.GenesisState {
-	return staking.GenesisState{
-		Params: staking.NewParams(
-			staking.DefaultUnbondingTime,
-			staking.DefaultMaxValidators,
-			staking.DefaultMaxEntries,
-			0,
-			types.BondDenom,
-		),
-	}
+	// Get default staking genesis state and set staking bond denom to BondDenom
+	state := staking.DefaultGenesisState()
+	state.Params.BondDenom = types.BondDenom
+	return state
 }
 
 func govGenesisState() gov.GenesisState {
-	return gov.NewGenesisState(
-		1,
-		gov.NewDepositParams(
-			sdk.NewCoins(sdk.NewCoin(types.BondDenom, govTypes.DefaultMinDepositTokens)),
-			gov.DefaultPeriod,
-		),
-		gov.NewVotingParams(gov.DefaultPeriod),
-		gov.NewTallyParams(govTypes.DefaultQuorum, govTypes.DefaultThreshold, govTypes.DefaultVeto),
+	// Get default gov genesis state and set deposit denom to BondDenom
+	state := gov.DefaultGenesisState()
+	state.DepositParams = gov.NewDepositParams(
+		sdk.NewCoins(sdk.NewCoin(types.BondDenom, govTypes.DefaultMinDepositTokens)),
+		gov.DefaultPeriod,
 	)
+	return state
 }
 
 func mintGenesisState() mint.GenesisState {
-	return mint.GenesisState{
-		Params: mint.NewParams(
-			types.BondDenom,
-			sdk.NewDecWithPrec(13, 2),
-			sdk.NewDecWithPrec(20, 2),
-			sdk.NewDecWithPrec(7, 2),
-			sdk.NewDecWithPrec(67, 2),
-			uint64(60*60*8766/5), // assuming 5 second block times
-		),
-	}
+	// Get default mint genesis state and set mint denom to BondDenom
+	state := mint.DefaultGenesisState()
+	state.Params.MintDenom = types.BondDenom
+	return state
 }
