@@ -54,6 +54,5 @@ bondsd validate-genesis
 # bondsd start --pruning "syncable" &
 # bondscli rest-server --chain-id bondschain-1 --laddr="tcp://0.0.0.0:1317" --trust-node && fg
 
-# bondsd start --pruning "syncable" &
-bondsd start &
+bondsd start --pruning "everything" &
 bondscli rest-server --chain-id bondschain-1 --trust-node && fg
