@@ -110,13 +110,13 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		gApp := app.NewBondsApp(logger, db, traceStore, false, map[int64]bool{}, invCheckPeriod)
-		err := gApp.LoadHeight(height)
+		app := app.NewBondsApp(logger, db, traceStore, false, map[int64]bool{}, invCheckPeriod)
+		err := app.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
-		return gApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+		return app.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	gApp := app.NewBondsApp(logger, db, traceStore, true, map[int64]bool{}, invCheckPeriod)
-	return gApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+	app := app.NewBondsApp(logger, db, traceStore, true, map[int64]bool{}, invCheckPeriod)
+	return app.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
