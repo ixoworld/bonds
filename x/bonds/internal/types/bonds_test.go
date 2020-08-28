@@ -581,12 +581,8 @@ func TestGetReturnsForSwap(t *testing.T) {
 			fromAmount, tc.to, reserveBalances)
 		if tc.amountInvalid {
 			require.Error(t, err)
-			// TODO: is this necessary?
-			// require.Equal(t, err.Code(), CodeSwapAmountInvalid)
 		} else if tc.invalidReserveToken {
 			require.Error(t, err)
-			// TODO: is this necessary?
-			// require.Equal(t, err.Code(), CodeReserveTokenInvalid)
 		} else {
 			require.Nil(t, err)
 			expectedResult := sdk.NewCoins(sdk.NewCoin(tc.to, tc.expectedReturn))
@@ -608,8 +604,6 @@ func TestGetReturnsForSwapNonSwapperFunctionFails(t *testing.T) {
 
 		_, _, err := bond.GetReturnsForSwap(dummyCoin, "", sdk.Coins{})
 		require.Error(t, err)
-		// require.False(t, err.Result().IsOK())
-		// require.Equal(t, err.Code(), CodeFunctionNotAvailableForFunctionType)
 	}
 }
 
