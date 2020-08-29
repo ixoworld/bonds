@@ -82,7 +82,7 @@ func (msg MsgCreateBond) ValidateBasic() error {
 	} else if strings.TrimSpace(msg.FunctionType) == "" {
 		return sdkerrors.Wrap(ErrArgumentCannotBeEmpty, "Function Type")
 	}
-	// Note: FunctionParameters can be empty
+	// Note: FunctionParameters and OutcomePayment can be empty
 
 	// Check that bond token is a valid token name
 	err := CheckCoinDenom(msg.Token)
