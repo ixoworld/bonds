@@ -36,9 +36,7 @@ We also need to decide what the maximum supply will be for the bond token. This 
 
 ### Reserve Token/s
 
-The reserve tokens are the tokens that accounts will send to the bond in order to mint bond tokens. This means that the accounts will need to have these reserve tokens. For this reason, we will simply use `stake` as the reserve token.
-
-We could have easily decided to instead use another reserve token, as well as multiple reserve tokens, such as `res` and `rez`. In the case of two or more reserve tokens, the same power function will apply exactly, meaning that if `5res` are required to mint `1demo`, then `5rez` will also be required.
+The reserve tokens are the tokens that accounts will send to the bond in order to mint bond tokens. This means that the accounts will need to have these reserve tokens. For this reason, we will simply use `stake` as the reserve token. We could have easily decided to instead use another reserve token.
 
 ### Fees
 
