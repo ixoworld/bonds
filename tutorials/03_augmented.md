@@ -36,6 +36,8 @@ In this tutorial, the values picked will be: `d0=500.0`, `p0=0.01`, `theta=0.4`,
 
 <img alt="augmented graph" src="./img/augmented7.png"/>
 
+Generated using: https://github.com/BlockScience/cadCAD-Tutorials/tree/master/00-Reference-Mechanisms/01-augmented-bonding-curve
+
 ### Fees
 
 In this tutorial, the transaction fee percentage will be set to `0%`, the main reason being that the augmented function has an integrated fee percentage `theta` for the hatch phase. The exit fee percentage will be `0.1%`
