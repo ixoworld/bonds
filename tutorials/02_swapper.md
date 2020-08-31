@@ -137,6 +137,8 @@ The created bond can be queried using `bondscli q bonds bond demo`, which should
 }
 ```
 
+Note that some extra fields that we did not input ourselves are present. These were discussed in previous tutorials.
+
 ## Supply Liquidity
 
 Liquidity can be added to the AMM by performing buys (mint-to-deposit), which mints bond tokens. Similarly, liquidity would be removed by performing sells (burn-to-withdraw) which burns bond tokens. Once liquidity (i.e. reserve tokens) is added by liquidity providers, swaps can take place using the reserve that is in place. If a liquidity provider burns-to-withdraw, they get a proportional share of each of the two reserve pools (`x` and `y`) in exchange for bond tokens.
