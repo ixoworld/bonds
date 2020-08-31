@@ -25,7 +25,7 @@ Note that in the case of the swapper function, we do not have any extra constant
 
 ### Reserve Token/s
 
-The reserve tokens are the tokens that accounts will send to the bond in order to mint bond tokens. In the case of a swapper function, the number of reserve tokens will be exactly 2 (`x` and `y`). In this tutorial, we will use `res` and `rez`.
+The reserve tokens are the tokens that accounts will send to the bond in order to mint bond tokens. A swapper function has a pair of reserve tokens, which are in fact the tokens that can be swapped for each other. In this tutorial, we will use `res` and `rez`.
 
 Note that in the case of the swapper function, the amount of reserve required to add liquidity to the AMM (i.e. buy a certain number of `demo` tokens) will depend on the ratio of the current reserves. If the `x` balance is greater, than more `x` tokens will be required, and vice-versa.
 
@@ -139,7 +139,7 @@ The created bond can be queried using `bondscli q bonds bond demo`, which should
 
 ## Supply Liquidity
 
-Liquidity can be added to the AMM by performing buys (mint-to-deposit). Similarly, liquidity would be removed by performing sells (burn-to-withdraw).
+Liquidity can be added to the AMM by performing buys (mint-to-deposit), which mints bond tokens. Similarly, liquidity would be removed by performing sells (burn-to-withdraw) which burns bond tokens. Once liquidity (i.e. reserve tokens) is added by liquidity providers, swaps can take place using the reserve that is in place. If a liquidity provider burns-to-withdraw, they get a proportional share of each of the two reserve pools (`x` and `y`) in exchange for bond tokens.
 
 In general, when adding liquidity to a swapper function, the current exchange rate (based on the `x` and `y` balances) is used to determine how much of each reserve token makes up the price. The first buy is special and plays a very important role in specifying the price of the bond token. Since we have no price reference for the first buy in a swapper function, the `MaxPrices` specified are used as the actual price, with no extra fees charged.
 
