@@ -6,6 +6,9 @@ Throughout this tutorial, some knowledge around [Augmented Bonding Curves](https
 
 - [Bond Configuration](#bond-configuration)
 - [Bond Creation](#bond-creation)
+- [Mint to Deposit (Hatch Phase)](#mint-to-deposit-hatch-phase)
+- [Mint to Deposit and Burn to Withdraw (Open Phase)](#mint-to-deposit-and-burn-to-withdraw-open-phase)
+- [Outcome Payment, Settlement, Share Withdrawal](#outcome-payment-settlement-share-withdrawal)
 
 ## Bond Configuration
 
