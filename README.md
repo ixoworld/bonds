@@ -82,7 +82,14 @@ Alternatively, to run with one of the users set up to use Ledger:
 make run_ledger
 ```
 
-To run a demo (requires application to be running):
+To build and run the application with some preset accounts:
+```bash
+make run_with_data
+```
+
+### Demos
+
+To run a demo (requires application to be run using `run_with_data`):
 ```bash
 make demo
 ```

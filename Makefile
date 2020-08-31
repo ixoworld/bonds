@@ -129,7 +129,11 @@ lint:
 
 run:
 	./scripts/clean_build.sh
-	./scripts/run.sh
+	./scripts/run_only.sh
+
+run_with_data:
+	./scripts/clean_build.sh
+	./scripts/run_with_data.sh
 
 run_ledger:
 	./scripts/clean_build.sh
