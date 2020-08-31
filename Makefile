@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+VERSION := $(shell echo $(shell git describe --tags --always) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
