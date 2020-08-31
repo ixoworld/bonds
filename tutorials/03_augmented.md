@@ -165,3 +165,103 @@ The created bond can be queried using `bondscli q bonds bond demo`, which should
 Note that some extra fields that we did not input ourselves are present. Some of these were discussed in previous tutorials. However, note that in the case of the augmented function:
 - the function parameters were extended to include newly calculated values `R0`, `S0`, and `V0`, which are based on the formulae presented in the [Curve Function](#curve-function)
 - the intial state is actually `HATCH`, representing the hatch phase, rather than `OPEN`
+
+## Mint to Deposit (Hatch Phase)
+
+During the hatch phase, one can only perform a buy (mint-to-deposit). The buying price will be `p0`, and we can query this for confirmation using `bondscli q bonds current-price demo`, which gives:
+
+```bash
+[
+  {
+    "denom": "stake",
+    "amount": "0.010000000000000000"
+  }
+]
+```
+
+Given that the initial supply `S0` is `50000`, it will require `50000demo` in order for the augmented curve to transition to the `OPEN` phase. We can go ahead and just perform a buy of `50000demo` in a single buy. The expected price will be `0.01 x 50000 = 500stake`. We can confirm this using `bondscli q bonds buy-price 50000demo`, which gives:
+
+```bash
+{
+  ...
+  "total_prices": [
+    {
+      "denom": "stake",
+      "amount": "500"
+    }
+  ],
+  ...
+}
+```
+
+Note that this matches the initial raise `d0`. Also note that since we are not charging any transaction fees, the total price quoted by the query matches exactly our calculations above.
+
+We can perform the buy as follows, with `500stake` as the max spend. The account used is the `miguel` account (created when running `make run_with_data`).
+
+```bash
+bondscli tx bonds buy 50000demo 500stake \
+  --from miguel \
+  --keyring-backend=test \
+  --broadcast-mode block \
+  --gas-prices=0.025stake \
+  -y
+```
+
+We can query the `miguel` account to confirm that the demo tokens have reached the account by using `bondscli q account $(bondscli keys show miguel -a)`. A maximum of 2 blocks-worth of time might need to pass for the order in the batch to get processed.
+
+```bash
+...
+{
+    "coins": [
+      {
+        "denom": "demo",
+        "amount": "50000"
+      },
+      ...
+      {
+        "denom": "stake",
+        "amount": "99994500"
+      }
+    ],
+...
+```
+
+Note how the account now has `50000demo` and `99994500stake` (a `5500stake` decrease!). The decrease in stake includes the buying price charged `500stake` and the blockchain gas fees `5000stake`.
+
+We can also confirm the supply and reserve values and that the bond has transitioned to the `OPEN` phase by querying the bond using `bondscli q bonds bond demo` which gives the below result. Note how the current reserve matches `R0=300`.
+
+```bash
+...
+"current_supply": {
+  "denom": "demo",
+  "amount": "50000"
+},
+"current_reserve": [
+  {
+    "denom": "stake",
+    "amount": "300"
+  }
+],
+...
+"state": "OPEN"
+...
+```
+
+The remaining `200` out of the `500stake` deposited were sent to the funding pool (i.e. fee address) and can be queried using `bondscli q account "$FEEADDR"`.
+
+## Mint to Deposit and Burn to Withdraw (Open Phase)
+
+Now that the `OPEN` phase has been reached, we can query the price again using `bondscli q bonds current-price demo`, which gives:
+
+```bash
+[
+  {
+    "denom": "stake",
+    "amount": "0.018000000000000000"
+  }
+]
+```
+
+This can be matched up with the pricing function presented in the [Curve Function](#curve-function) section:
+
+<img alt="pricing function" src="./img/augmented8.png" height="55"/>
