@@ -6,3 +6,4 @@ These tutorials assume that you have a running blockchain with the Bonds module 
 
 1. **[Creating a Bond for Continuous Funding using Standard Bonds Module Functions](01_standard.md)**
 2. **[Creating a swap automated market-maker](02_swapper.md)**
+3. **[Creating an augmented bonding curve](03_augmented.md)**
