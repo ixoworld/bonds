@@ -1,4 +1,4 @@
-package app
+package simapp
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 )
 
 // export the state of bonds module app for a genesis file
-func (app *BondsApp) ExportAppStateAndValidators(
+func (app *SimApp) ExportAppStateAndValidators(
 	forZeroHeight bool, jailWhiteList []string,
 ) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	// as if they could withdraw from the start of the next block
@@ -37,7 +37,7 @@ func (app *BondsApp) ExportAppStateAndValidators(
 // prepare for fresh start at zero height
 // NOTE zero height genesis is a temporary feature which will be deprecated
 //      in favour of export at a block height
-func (app *BondsApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
+func (app *SimApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
 	applyWhiteList := false
 
 	//Check if there is a whitelist

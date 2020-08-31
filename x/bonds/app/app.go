@@ -1,4 +1,4 @@
-package app
+package simapp
 
 import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -85,7 +85,7 @@ var (
 )
 
 // MakeCodec constructs the *std.Codec and *codec.Codec instances used by
-// BondsApp.
+// SimApp.
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 
@@ -99,10 +99,10 @@ func MakeCodec() *codec.Codec {
 }
 
 // Verify app interface at compile time
-var _ simapp.App = (*BondsApp)(nil)
+var _ simapp.App = (*SimApp)(nil)
 
 // Extended ABCI application
-type BondsApp struct {
+type SimApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
@@ -138,11 +138,11 @@ type BondsApp struct {
 	sm *module.SimulationManager
 }
 
-// NewBondsApp returns a reference to an initialized BondsApp.
-func NewBondsApp(
+// NewSimApp returns a reference to an initialized SimApp.
+func NewSimApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	skipUpgradeHeights map[int64]bool, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
-) *BondsApp {
+) *SimApp {
 	cdc := MakeCodec()
 
 	// BaseApp handles interactions with Tendermint through the ABCI protocol
@@ -159,7 +159,7 @@ func NewBondsApp(
 	)
 	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
-	app := &BondsApp{
+	app := &SimApp{
 		BaseApp:        bApp,
 		cdc:            cdc,
 		invCheckPeriod: invCheckPeriod,
@@ -319,32 +319,32 @@ func NewBondsApp(
 }
 
 // Name returns the name of the App
-func (app *BondsApp) Name() string { return app.BaseApp.Name() }
+func (app *SimApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *BondsApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *SimApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
-func (app *BondsApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *SimApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
 // InitChainer application update at chain initialization
-func (app *BondsApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *SimApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
 	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
 	return app.mm.InitGenesis(ctx, genesisState)
 }
 
 // LoadHeight loads a particular height
-func (app *BondsApp) LoadHeight(height int64) error {
+func (app *SimApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *BondsApp) ModuleAccountAddrs() map[string]bool {
+func (app *SimApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[supply.NewModuleAddress(acc).String()] = true
@@ -354,7 +354,7 @@ func (app *BondsApp) ModuleAccountAddrs() map[string]bool {
 }
 
 // BlacklistedAccAddrs returns all the app's module account addresses black listed for receiving tokens.
-func (app *BondsApp) BlacklistedAccAddrs() map[string]bool {
+func (app *SimApp) BlacklistedAccAddrs() map[string]bool {
 	blacklistedAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		blacklistedAddrs[supply.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
@@ -364,11 +364,11 @@ func (app *BondsApp) BlacklistedAccAddrs() map[string]bool {
 }
 
 // Codec returns the application's sealed codec.
-func (app *BondsApp) Codec() *codec.Codec {
+func (app *SimApp) Codec() *codec.Codec {
 	return app.cdc
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *BondsApp) SimulationManager() *module.SimulationManager {
+func (app *SimApp) SimulationManager() *module.SimulationManager {
 	return app.sm
 }

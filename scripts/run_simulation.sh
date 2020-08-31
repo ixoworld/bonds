@@ -5,7 +5,7 @@ SCRIPTPATH="$(
 
 echo "Running simulation $1..."
 
-go test -mod=readonly github.com/ixoworld/bonds/app \
+go test -mod=readonly github.com/ixoworld/bonds/x/bonds/app \
   -run=TestFullAppSimulation \
   -v \
   -timeout 24h \

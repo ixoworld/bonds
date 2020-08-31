@@ -1,5 +1,5 @@
 //nolint
-package app
+package simapp
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ import (
 
 // SimulationOperations retrieves the simulation params from the provided file path
 // and returns all the modules weighted operations
-func SimulationOperations(app *BondsApp, cdc *codec.Codec, config simulation.Config) []simulation.WeightedOperation {
+func SimulationOperations(app *SimApp, cdc *codec.Codec, config simulation.Config) []simulation.WeightedOperation {
 	simState := module.SimulationState{
 		AppParams: make(simulation.AppParams),
 		Cdc:       cdc,
@@ -38,7 +38,7 @@ func SimulationOperations(app *BondsApp, cdc *codec.Codec, config simulation.Con
 // Simulation Utils
 
 // ExportStateToJSON util function to export the app state to JSON
-func ExportStateToJSON(app *BondsApp, path string) error {
+func ExportStateToJSON(app *SimApp, path string) error {
 	fmt.Println("exporting app state...")
 	appState, _, err := app.ExportAppStateAndValidators(false, nil)
 	if err != nil {

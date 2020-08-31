@@ -16,8 +16,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/ixoworld/bonds/app"
-	"github.com/ixoworld/bonds/types"
+	"github.com/ixoworld/bonds/x/bonds/app"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -33,16 +32,7 @@ const flagInvCheckPeriod = "inv-check-period"
 var invCheckPeriod uint
 
 func main() {
-	cdc := app.MakeCodec()
-
-	// Initialize the app overriding the various methods we want to customize
-	app.Init()
-
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(types.Bech32PrefixAccAddr, types.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(types.Bech32PrefixValAddr, types.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(types.Bech32PrefixConsAddr, types.Bech32PrefixConsPub)
-	config.Seal()
+	cdc := simapp.MakeCodec()
 
 	ctx := server.NewDefaultContext()
 	cobra.EnableCommandSorting = false
@@ -52,24 +42,24 @@ func main() {
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
-	rootCmd.AddCommand(genutilcli.InitCmd(ctx, cdc, app.ModuleBasics, app.DefaultNodeHome))
-	rootCmd.AddCommand(genutilcli.CollectGenTxsCmd(ctx, cdc, auth.GenesisAccountIterator{}, app.DefaultNodeHome))
+	rootCmd.AddCommand(genutilcli.InitCmd(ctx, cdc, simapp.ModuleBasics, simapp.DefaultNodeHome))
+	rootCmd.AddCommand(genutilcli.CollectGenTxsCmd(ctx, cdc, auth.GenesisAccountIterator{}, simapp.DefaultNodeHome))
 	rootCmd.AddCommand(genutilcli.MigrateGenesisCmd(ctx, cdc))
 	rootCmd.AddCommand(
 		genutilcli.GenTxCmd(
-			ctx, cdc, app.ModuleBasics, staking.AppModuleBasic{},
-			auth.GenesisAccountIterator{}, app.DefaultNodeHome, app.DefaultCLIHome,
+			ctx, cdc, simapp.ModuleBasics, staking.AppModuleBasic{},
+			auth.GenesisAccountIterator{}, simapp.DefaultNodeHome, simapp.DefaultCLIHome,
 		),
 	)
-	rootCmd.AddCommand(genutilcli.ValidateGenesisCmd(ctx, cdc, app.ModuleBasics))
-	rootCmd.AddCommand(AddGenesisAccountCmd(ctx, cdc, app.DefaultNodeHome, app.DefaultCLIHome))
+	rootCmd.AddCommand(genutilcli.ValidateGenesisCmd(ctx, cdc, simapp.ModuleBasics))
+	rootCmd.AddCommand(AddGenesisAccountCmd(ctx, cdc, simapp.DefaultNodeHome, simapp.DefaultCLIHome))
 	rootCmd.AddCommand(flags.NewCompletionCmd(rootCmd, true))
 	rootCmd.AddCommand(debug.Cmd(cdc))
 
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
 	// prepare and add flags
-	executor := cli.PrepareBaseCmd(rootCmd, "BS", app.DefaultNodeHome)
+	executor := cli.PrepareBaseCmd(rootCmd, "BS", simapp.DefaultNodeHome)
 	rootCmd.PersistentFlags().UintVar(&invCheckPeriod, flagInvCheckPeriod,
 		0, "Assert registered invariants every N blocks")
 	err := executor.Execute()
@@ -95,7 +85,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 		panic(err)
 	}
 
-	return app.NewBondsApp(
+	return simapp.NewSimApp(
 		logger, db, traceStore, true, skipUpgradeHeights, invCheckPeriod,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
@@ -110,13 +100,13 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		app := app.NewBondsApp(logger, db, traceStore, false, map[int64]bool{}, invCheckPeriod)
+		app := simapp.NewSimApp(logger, db, traceStore, false, map[int64]bool{}, invCheckPeriod)
 		err := app.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return app.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	app := app.NewBondsApp(logger, db, traceStore, true, map[int64]bool{}, invCheckPeriod)
+	app := simapp.NewSimApp(logger, db, traceStore, true, map[int64]bool{}, invCheckPeriod)
 	return app.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

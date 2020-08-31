@@ -1,4 +1,4 @@
-package app
+package simapp
 
 import (
 	"os"
@@ -16,12 +16,12 @@ import (
 
 func TestBondsdExport(t *testing.T) {
 	memDB := db.NewMemDB()
-	app := NewBondsApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), memDB, nil, true, map[int64]bool{}, 0)
+	app := NewSimApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), memDB, nil, true, map[int64]bool{}, 0)
 	err := setGenesis(app)
 	require.NoError(t, err)
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newApp := NewBondsApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), memDB, nil, true, map[int64]bool{}, 0)
+	newApp := NewSimApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), memDB, nil, true, map[int64]bool{}, 0)
 	_, _, err = newApp.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
@@ -29,7 +29,7 @@ func TestBondsdExport(t *testing.T) {
 // ensure that black listed addresses are properly set in bank keeper
 func TestBlackListedAddrs(t *testing.T) {
 	memDB := db.NewMemDB()
-	app := NewBondsApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), memDB, nil, true, map[int64]bool{}, 0)
+	app := NewSimApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), memDB, nil, true, map[int64]bool{}, 0)
 
 	for acc := range maccPerms {
 		blacklisted := !allowedReceivingModAcc[acc]
@@ -37,7 +37,7 @@ func TestBlackListedAddrs(t *testing.T) {
 	}
 }
 
-func setGenesis(app *BondsApp) error {
+func setGenesis(app *SimApp) error {
 	genesisState := simapp.NewDefaultGenesisState()
 	stateBytes, err := codec.MarshalJSONIndent(app.cdc, genesisState)
 	if err != nil {

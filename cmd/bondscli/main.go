@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/ixoworld/bonds/types"
-
 	"os"
 	"path"
 
@@ -12,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
@@ -24,20 +21,11 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/ixoworld/bonds/app"
+	"github.com/ixoworld/bonds/x/bonds/app"
 )
 
 func main() {
-	cdc := app.MakeCodec()
-
-	// Initialize the app overriding the various methods we want to customize
-	app.Init()
-
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(types.Bech32PrefixAccAddr, types.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(types.Bech32PrefixValAddr, types.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(types.Bech32PrefixConsAddr, types.Bech32PrefixConsPub)
-	config.Seal()
+	cdc := simapp.MakeCodec()
 
 	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
@@ -55,7 +43,7 @@ func main() {
 	// Construct Root Command
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		client.ConfigCmd(app.DefaultCLIHome),
+		client.ConfigCmd(simapp.DefaultCLIHome),
 		queryCmd(cdc),
 		txCmd(cdc),
 		flags.LineBreak,
@@ -68,7 +56,7 @@ func main() {
 	)
 
 	// Add flags and prefix all env exposed with BS
-	executor := cli.PrepareMainCmd(rootCmd, "BS", app.DefaultCLIHome)
+	executor := cli.PrepareMainCmd(rootCmd, "BS", simapp.DefaultCLIHome)
 
 	err := executor.Execute()
 	if err != nil {
@@ -95,7 +83,7 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 	)
 
 	// add modules' query commands
-	app.ModuleBasics.AddQueryCommands(queryCmd, cdc)
+	simapp.ModuleBasics.AddQueryCommands(queryCmd, cdc)
 
 	return queryCmd
 }
@@ -118,7 +106,7 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	)
 
 	// add modules' tx commands
-	app.ModuleBasics.AddTxCommands(txCmd, cdc)
+	simapp.ModuleBasics.AddTxCommands(txCmd, cdc)
 
 	return txCmd
 }
@@ -129,7 +117,7 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 func registerRoutes(rs *lcd.RestServer) {
 	client.RegisterRoutes(rs.CliCtx, rs.Mux)
 	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
-	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
+	simapp.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 }
 
 func initConfig(cmd *cobra.Command) error {

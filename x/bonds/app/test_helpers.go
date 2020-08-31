@@ -1,4 +1,4 @@
-package app
+package simapp
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -8,9 +8,9 @@ import (
 )
 
 // Setup initializes a new SimApp. A Nop logger is set in SimApp.
-func Setup(isCheckTx bool) *BondsApp {
+func Setup(isCheckTx bool) *SimApp {
 	db := dbm.NewMemDB()
-	app := NewBondsApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
+	app := NewSimApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState()
