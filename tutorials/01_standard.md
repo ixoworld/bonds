@@ -2,12 +2,12 @@
 
 ## Contents
 
-- [Configuration](#configuration)
+- [Bond Configuration](#bond-configuration)
 - [Bond Creation](#bond-creation)
 - [Mint to Deposit](#mint-to-deposit)
 - [Burn to Withdraw](#burn-to-withdraw)
 
-## Configuration
+## Bond Configuration
 
 ### Curve Function
 

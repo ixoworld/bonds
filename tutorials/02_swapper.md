@@ -2,12 +2,12 @@
 
 ## Contents
 
-- [Configuration](#configuration)
+- [Bond Configuration](#bond-configuration)
 - [Bond Creation](#bond-creation)
 - [Supply Liquidity](#supply-liquidity)
 - [Make a Swap](#make-a-swap)
 
-## Configuration
+## Bond Configuration
 
 Configuration steps that were covered in previous tutorials will not be described in this tutorial, unless they take on new meaning.
 
@@ -39,7 +39,11 @@ In the case of a swapper function, order quantity limits also apply to swap amou
 
 ### Sanity Rate and Sanity Margin Percentage
 
-TODO
+The sanity values (sanity rate and sanity margin percentage) are used in the case of a swapper function to set a range of valid exchange rate (`x/y`) between the two reserve tokens, such that if a swap order causes the exchange rate to go outside of the valid range, the swap is cancelled.
+
+The valid exchange rate range is defined by `sanity rate ± sanity margin percentage`. In other words, between `(100 - sanity margin percentage) x sanity rate` and `(100 + sanity margin percentage) x sanity rate`.
+
+In this tutorial, we will go with a `0.5` sanity rate and `20%` sanity margin percentage. This means that the reserve balance of `x` is expected to be half that of `y`, with a 20 percent error. If `x=500`, then `y` can be between `833.33` and `1250`.
 
 ### Other Customisation
 
@@ -242,4 +246,4 @@ We can query the `miguel` account to confirm that the demo tokens are no longer 
 ...
 ```
 
-Note how the account now has `999490res` and `999017rez` (a `10res` decrease and `17rez` increase).
+Note how the account now has `999490res` and `999017rez` (a `10res` decrease and `17rez` increase). Note also that we have not violated the sanity values (sanity rate and sanity margin percentage) with this swap.
