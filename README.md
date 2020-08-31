@@ -100,3 +100,7 @@ The demo consists of:
 - A mix of buys and sells
 
 To run a more specific demo, check out the `scripts/more_demos/` folder.
+
+## Tutorials
+
+Guided tutorials are also provided and can be found in the tutorials folder [here](tutorials/README.md)!
