@@ -25,5 +25,5 @@ echo "$PASSWORD" | bondsd gentx --name miguel
 bondsd collect-gentxs
 bondsd validate-genesis
 
-bondsd start --pruning "syncable" &
+bondsd start --pruning "everything" &
 bondscli rest-server --chain-id bondschain-1 --trust-node && fg
