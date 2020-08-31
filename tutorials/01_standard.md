@@ -24,7 +24,7 @@ The remaining values `m`, `n`, and `c` are constants that we need to come up wit
 
 From the above power function, a reserve function is deduced by integrating the power curve. This is shown below and includes the same `m`, `n`, `c` constants that were in the original function, but also includes `r`, which is the reserve balance that is required to be in place for the bond token's supply to be `x`. 
 
-<img alt="drawing" src="./img/power2.png" height="20"/>
+<img alt="drawing" src="./img/power2.png" height="40"/>
 
 This function allows us to calculate the price of buying a number of bond tokens or the returns when selling bond tokens.
 
