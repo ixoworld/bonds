@@ -162,19 +162,19 @@ We can query the `miguel` account to confirm that the `1demo` has reached the ac
 
 ```bash
 ...
-    "coins": [
-      {
-        "denom": "demo",
-        "amount": "1"
-      },
-      {
-        "denom": "res",
-        "amount": "999500"
-      },
-      {
-        "denom": "rez",
-        "amount": "999000"
-      },
+"coins": [
+  {
+    "denom": "demo",
+    "amount": "1"
+  },
+  {
+    "denom": "res",
+    "amount": "999500"
+  },
+  {
+    "denom": "rez",
+    "amount": "999000"
+  },
 ...
 ```
 
@@ -182,16 +182,16 @@ At this point, if we query the buy price for an additional `1demo` using `bondsc
 
 ```
 ...
-  "prices": [
-    {
-      "denom": "res",
-      "amount": "500"
-    },
-    {
-      "denom": "rez",
-      "amount": "1000"
-    }
-  ],
+"prices": [
+  {
+    "denom": "res",
+    "amount": "500"
+  },
+  {
+    "denom": "rez",
+    "amount": "1000"
+  }
+],
 ...
 ```
 
@@ -233,18 +233,18 @@ We can query the `miguel` account to confirm that the demo tokens are no longer 
 
 ```bash
 ...
-    "coins": [
-      ...
-      {
-        "denom": "res",
-        "amount": "999490"
-      },
-      {
-        "denom": "rez",
-        "amount": "999017"
-      },
-      ...
-    ],
+"coins": [
+  ...
+  {
+    "denom": "res",
+    "amount": "999490"
+  },
+  {
+    "denom": "rez",
+    "amount": "999017"
+  },
+  ...
+],
 ...
 ```
 

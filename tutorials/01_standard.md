@@ -243,17 +243,17 @@ We can query the `miguel` account to confirm that the demo tokens have reached t
 
 ```bash
 ...
-    "coins": [
-      {
-        "denom": "demo",
-        "amount": "10"
-      },
-      ...
-      {
-        "denom": "stake",
-        "amount": "99989975"
-      }
-    ],
+"coins": [
+  {
+    "denom": "demo",
+    "amount": "10"
+  },
+  ...
+  {
+    "denom": "stake",
+    "amount": "99989975"
+  }
+],
 ...
 ```
 
@@ -319,13 +319,13 @@ We can query the `miguel` account to confirm that the demo tokens are no longer 
 
 ```bash
 ...
-    "coins": [
+"coins": [
 ...
-      {
-        "denom": "stake",
-        "amount": "99989945"
-      }
-    ],
+  {
+    "denom": "stake",
+    "amount": "99989945"
+  }
+],
 ...
 ```
 

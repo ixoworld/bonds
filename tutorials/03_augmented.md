@@ -46,7 +46,7 @@ In this tutorial, the transaction fee percentage will be set to `0%`, the main r
 
 The outcome payment is an optional (non-enforceable) promise that the bond creator makes to investors specified in terms of a token amount. This is the amount that will need to be deposited into the bond to transition it from the `OPEN` state to the `SETTLE` state, once the goals of the bond have been reached as a result of the reserve token funding that the bond received.
 
-This new reserve will be immediately available to all bond token holders, and the amount available to each holder depends on the amount of bond tokens that they hold. In the case of this tutorial, this will be set to `100000res`.
+This new reserve will be immediately available to all bond token holders, and the amount available to each holder depends on the amount of bond tokens that they hold. In the case of this tutorial, this will be set to `100000stake`.
 
 ### Other Customisation
 
@@ -79,7 +79,7 @@ bondscli tx bonds create-bond \
   --allow-sells \
   --signers="$SHAUNADDR" \
   --batch-blocks=1 \
-  --outcome-payment="100000res" \
+  --outcome-payment="100000stake" \
   --from shaun \
   --keyring-backend=test \
   --broadcast-mode block \
@@ -182,16 +182,14 @@ During the hatch phase, one can only perform a buy (mint-to-deposit). The buying
 Given that the initial supply `S0` is `50000`, it will require `50000demo` in order for the augmented curve to transition to the `OPEN` phase. We can go ahead and just perform a buy of `50000demo` in a single buy. The expected price will be `0.01 x 50000 = 500stake`. We can confirm this using `bondscli q bonds buy-price 50000demo`, which gives:
 
 ```bash
+...
+"total_prices": [
 {
-  ...
-  "total_prices": [
-    {
-      "denom": "stake",
-      "amount": "500"
-    }
-  ],
-  ...
+  "denom": "stake",
+  "amount": "500"
 }
+],
+...
 ```
 
 Note that this matches the initial raise `d0`. Also note that since we are not charging any transaction fees, the total price quoted by the query matches exactly our calculations above.
@@ -211,18 +209,17 @@ We can query the `miguel` account to confirm that the demo tokens have reached t
 
 ```bash
 ...
-{
-    "coins": [
-      {
-        "denom": "demo",
-        "amount": "50000"
-      },
-      ...
-      {
-        "denom": "stake",
-        "amount": "99994500"
-      }
-    ],
+"coins": [
+  {
+    "denom": "demo",
+    "amount": "50000"
+  },
+  ...
+  {
+    "denom": "stake",
+    "amount": "99994500"
+  }
+],
 ...
 ```
 
@@ -247,7 +244,7 @@ We can also confirm the supply and reserve values and that the bond has transiti
 ...
 ```
 
-The remaining `200` out of the `500stake` deposited were sent to the funding pool (i.e. fee address) and can be queried using `bondscli q account "$FEEADDR"`.
+The remaining `200` out of the `500stake` deposited were sent to the funding pool (i.e. fee address) and can be queried using `bondscli q account "$FEEADDR"`. Note that the bond creator is expected to have access to this funding pool and will be able to safely use any funds send to it.
 
 ## Mint to Deposit and Burn to Withdraw (Open Phase)
 
@@ -265,3 +262,83 @@ Now that the `OPEN` phase has been reached, we can query the price again using `
 This can be matched up with the pricing function presented in the [Curve Function](#curve-function) section:
 
 <img alt="pricing function" src="./img/augmented8.png" height="55"/>
+
+Given that mint-to-deposit and burn-to-withdraw during the `OPEN` phase have been covered in previous tutorials, these will not be covered again in this tutorial.
+
+## Outcome Payment, Settlement, Share Withdrawal
+
+As a refresher, the outcome payment is an amount of tokens that the bond creator had indicated would be paid to the bond once certain goals were reached. In the case of this tutorial, this is `100000stake`.
+
+Let's assume that those goals were reached and the bond creator wants to make the outcome payment. Note that anyone with enough tokens is able to make the outcome payment, not just the bond creator.
+
+Before making the payment, it is interesting to query the returns from selling before the outcome payment reaches the reserves, using `bondscli q bonds sell-return 50000demo`, which gives:
+
+```bash
+...
+"total_returns": [
+  {
+    "denom": "stake",
+    "amount": "299"
+  }
+  ],
+  "total_fees": [
+  {
+    "denom": "stake",
+    "amount": "1"
+  }
+]
+...
+```
+
+Note that the maximum that the user can get back at the moment is the exact amount that was initially invested, `300stake`, minus an exit fee of `1stake`.
+
+Now let's make the outcome payment from the bond creator. The account used is the `shaun` account (created when running `make run_with_data`).
+
+```bash
+bondscli tx bonds make-outcome-payment demo \
+  --from shaun \
+  --keyring-backend=test \
+  --broadcast-mode block \
+  --gas-prices=0.025stake \
+  -y
+```
+
+This causes a state transition from `OPEN` to `SETTLE` and adds `100000stake` to the reserve. Both of these can be confirmed by querying the bond using `bondscli q bonds bond demo`, which gives:
+
+```bash
+...
+"current_reserve": [
+  {
+    "denom": "stake",
+    "amount": "100300"
+  }
+],
+...
+"state": "SETTLE"
+...
+```
+
+At this stage, both buys and sells have been disabled and the only action that is possible is for bond token holders to withdraw their share of the reserve pool by performing a share withdrawal. The account used is the `miguel` account (created when running `make run_with_data`).
+
+```
+bondscli tx bonds withdraw-share demo \
+  --from miguel \
+  --keyring-backend=test \
+  --broadcast-mode block \
+  --gas-prices=0.025stake \
+  -y
+```
+
+Since the `miguel` account held 100% of the bond token supply, this share withdrawal sends all of the bond reserve to `miguel` and burns the entire bond token supply (sent by `miguel`, which held all of these). In fact if we query the bond one last time, this information can be confirmed, using `bondscli q bonds bond demo`, which gives:
+
+```bash
+...
+"current_supply": {
+  "denom": "demo",
+  "amount": "0"
+},
+"current_reserve": [],
+...
+```
+
+Querying the `miguel` account reveals that the account no longer holds any `demo` tokens and has received `100300stake`.
