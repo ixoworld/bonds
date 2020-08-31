@@ -15,47 +15,47 @@ Algorithmic Applications include:
 
 Function (used as pricing function):
 
-<img alt="drawing" src="./img/power1.png" height="20"/>
+<img alt="power function price" src="./img/power1.png" height="20"/>
 
 Integral (used as reserve function):
 
-<img alt="drawing" src="./img/power2.png" height="40"/>
+<img alt="power function reserve" src="./img/power2.png" height="40"/>
 
 ### Logistic Function (sigmoid)
 
 Function (used as pricing function):
 
-<img alt="drawing" src="./img/sigmoid1.png" height="80"/>
+<img alt="sigmoid function price" src="./img/sigmoid1.png" height="80"/>
 
 Integral (used as reserve function):
 
-<img alt="drawing" src="./img/sigmoid2.png" height="55"/>
+<img alt="sigmoid function reserve" src="./img/sigmoid2.png" height="55"/>
 
 ### Augmented Bonding Curves (augmented)
 
 Initial reserve:
 
-<img alt="drawing" src="./img/augmented1.png" height="20"/>
+<img alt="initial reserve" src="./img/augmented1.png" height="20"/>
 
 Initial supply:
 
-<img alt="drawing" src="./img/augmented2.png" height="20"/>
+<img alt="initial supply" src="./img/augmented2.png" height="20"/>
 
 Constant power function invariant:
 
-<img alt="drawing" src="./img/augmented3.png" height="40"/>
+<img alt="constant power" src="./img/augmented3.png" height="40"/>
 
 Invariant function:
 
-<img alt="drawing" src="./img/augmented4.png" height="55"/>
+<img alt="invariant function" src="./img/augmented4.png" height="55"/>
 
 Pricing function:
 
-<img alt="drawing" src="./img/augmented5.png" height="55"/>
+<img alt="pricing function" src="./img/augmented5.png" height="55"/>
 
 Reserve function:
 
-<img alt="drawing" src="./img/augmented6.png" height="50"/>
+<img alt="reserve function" src="./img/augmented6.png" height="50"/>
 
 Ref: https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751
 
@@ -63,4 +63,4 @@ Ref: https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751
 
 Reserve function:
 
-<img alt="drawing" src="./img/swapper.png" height="20"/>
+<img alt="swapper function" src="./img/swapper.png" height="20"/>

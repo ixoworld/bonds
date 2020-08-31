@@ -13,18 +13,18 @@
 
 In this tutorial, a power function bond will be created. The power function implemented by the Bonds module is shown below, where `y` represents the price per bond token, in reserve tokens, for a specific supply `x` of bond tokens:
 
-<img alt="drawing" src="./img/power1.png" height="20"/>
+<img alt="power function price" src="./img/power1.png" height="20"/>
  
 The remaining values `m`, `n`, and `c` are constants that we need to come up with ourselves. In this tutorial, the values picked will be: `m=12`, `n=2`, `c=100`, which gives us the below curve.
 
 - Increasing/decreasing `m` and `n` makes the incline steeper or more gradual, respectively, meaning a quicker increase in price or a more gradual increase. `n` has a greater effect on this, given that it is a power.
 - Increasing/decreasing `c` lifts/lowers the curve, respectively, which means greater prices throughout the curve but maintaining the steepness of the curve.
 
-<img alt="drawing" src="img/power3.png"/>
+<img alt="power function graph" src="img/power3.png"/>
 
 From the above power function, a reserve function is deduced by integrating the power curve. This is shown below and includes the same `m`, `n`, `c` constants that were in the original function, but also includes `r`, which is the reserve balance that is required to be in place for the bond token's supply to be `x`. 
 
-<img alt="drawing" src="./img/power2.png" height="40"/>
+<img alt="power function reserve" src="./img/power2.png" height="40"/>
 
 This function allows us to calculate the price of buying a number of bond tokens or the returns when selling bond tokens.
 

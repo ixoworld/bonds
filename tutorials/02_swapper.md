@@ -15,7 +15,7 @@ Configuration steps that were covered in previous tutorials will not be describe
 
 In this tutorial, a swapper function bond will be created. The swapper function implemented by the Bonds module is shown below, where `x` and `y` represent the balances of two distinct reserves (i.e. two reserve tokens). The constant `k` is not user-decided but is simply the product of the two balances, which is expected to remain the same for any number of swaps and only increases/decreases when liquidity increases/decreases (i.e. a buy or sell, respectively).
 
-<img alt="drawing" src="./img/swapper.png" height="20"/>
+<img alt="swapper function" src="./img/swapper.png" height="20"/>
  
 This function allows us to calculate the price of buying a number of bond tokens or the returns when selling bond tokens, as well as the returns for swapping a number of `x` tokens to `y` tokens and vice-versa:
 - Buying and selling is considered adding/removing liquidity to/from the swap AMM, and thus buying requires depositing both `x` and `y` tokens, and similarly returns when selling are of both `x` and `y` tokens. Internal calculations that determine prices/returns will not be discussed in this tutorial.

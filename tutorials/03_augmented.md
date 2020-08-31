@@ -14,17 +14,17 @@ Throughout this tutorial, some knowledge around [Augmented Bonding Curves](https
 In this tutorial, an augmented function bond will be created. The augmented function implemented by the Bonds module can be represented by the below formulas [\[ref\]](https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751):
 
 - Initial reserve:
-  <img alt="drawing" src="./img/augmented1.png" height="20"/>
+  <img alt="initial reserve" src="./img/augmented1.png" height="20"/>
 - Initial supply:
-  <img alt="drawing" src="./img/augmented2.png" height="20"/>
+  <img alt="initial supply" src="./img/augmented2.png" height="20"/>
 - Constant power function invariant:
-  <img alt="drawing" src="./img/augmented3.png" height="40"/>
+  <img alt="constant power" src="./img/augmented3.png" height="40"/>
 - Invariant function:
-  <img alt="drawing" src="./img/augmented4.png" height="55"/>
+  <img alt="invariant function" src="./img/augmented4.png" height="55"/>
 - Pricing function:
-  <img alt="drawing" src="./img/augmented5.png" height="55"/>
+  <img alt="pricing function" src="./img/augmented5.png" height="55"/>
 - Reserve function:
-  <img alt="drawing" src="./img/augmented6.png" height="50"/>
+  <img alt="reserve function" src="./img/augmented6.png" height="50"/>
 
 From all of the above formulas, the four constants that we need to come up with ourselves are:
 - `d0`: the total initial raise of reserve tokens, which will be split between the initial reserve `R0` and the initial funding `theta * d0`
@@ -34,7 +34,7 @@ From all of the above formulas, the four constants that we need to come up with 
 
 In this tutorial, the values picked will be: `d0=500.0`, `p0=0.01`, `theta=0.4`, `kappa=3.0`, which gives us the below curve.
 
-<img alt="drawing" src="./img/augmented7.png"/>
+<img alt="augmented graph" src="./img/augmented7.png"/>
 
 ### Fees
 
