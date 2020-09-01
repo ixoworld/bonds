@@ -495,6 +495,14 @@ func (k Keeper) PerformSwapOrders(ctx sdk.Context, token string) {
 					logger.Info(fmt.Sprintf("cancelled swap order for %s to %s from %s", so.Amount.String(), so.ToToken, so.Address.String()))
 					logger.Debug(fmt.Sprintf("cancellation reason: %s", err.Error()))
 
+					ctx.EventManager().EmitEvent(sdk.NewEvent(
+						types.EventTypeOrderCancel,
+						sdk.NewAttribute(types.AttributeKeyBond, token),
+						sdk.NewAttribute(types.AttributeKeyOrderType, types.AttributeValueSwapOrder),
+						sdk.NewAttribute(types.AttributeKeyAddress, so.Address.String()),
+						sdk.NewAttribute(types.AttributeKeyCancelReason, batch.Swaps[i].CancelReason),
+					))
+
 					// Return from amount to swapper
 					err := k.SupplyKeeper.SendCoinsFromModuleToAccount(ctx,
 						types.BatchesIntermediaryAccount, so.Address, sdk.Coins{so.Amount})
@@ -559,7 +567,7 @@ func (k Keeper) CancelUnfulfillableBuys(ctx sdk.Context, token string) (cancelle
 					sdk.NewAttribute(types.AttributeKeyBond, token),
 					sdk.NewAttribute(types.AttributeKeyOrderType, types.AttributeValueBuyOrder),
 					sdk.NewAttribute(types.AttributeKeyAddress, bo.Address.String()),
-					sdk.NewAttribute(types.AttributeKeyCancelReason, bo.CancelReason),
+					sdk.NewAttribute(types.AttributeKeyCancelReason, batch.Buys[i].CancelReason),
 				))
 
 				// Return reserve to buyer

@@ -82,7 +82,14 @@ Alternatively, to run with one of the users set up to use Ledger:
 make run_ledger
 ```
 
-To run a demo (requires application to be running):
+To build and run the application with some preset accounts:
+```bash
+make run_with_data
+```
+
+### Demos
+
+To run a demo (requires application to be run using `run_with_data`):
 ```bash
 make demo
 ```
@@ -93,3 +100,7 @@ The demo consists of:
 - A mix of buys and sells
 
 To run a more specific demo, check out the `scripts/more_demos/` folder.
+
+## Tutorials
+
+Guided tutorials are also provided and can be found in the tutorials folder [here](tutorials/README.md)!

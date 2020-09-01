@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	simapp "github.com/ixoworld/bonds/app"
+	"github.com/ixoworld/bonds/x/bonds/app"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -92,9 +92,9 @@ func functionParametersAugmented() types.FunctionParams {
 func powerReserves() []string   { return []string{reserveToken} }
 func swapperReserves() []string { return []string{reserveToken, reserveToken2} }
 
-func Setup(isCheckTx bool) *simapp.BondsApp {
+func Setup(isCheckTx bool) *simapp.SimApp {
 	db := dbm.NewMemDB()
-	app := simapp.NewBondsApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
+	app := simapp.NewSimApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
 	cdc := simapp.MakeCodec()
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
@@ -116,7 +116,7 @@ func Setup(isCheckTx bool) *simapp.BondsApp {
 	return app
 }
 
-func createTestApp(isCheckTx bool) (*simapp.BondsApp, sdk.Context) {
+func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
 	app := Setup(isCheckTx)
 
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
