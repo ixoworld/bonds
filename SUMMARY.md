@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Bonds Module](README.md)
+* [Risk-Prediction Module](risk-prediction-module.md)
 * [Bonds module specification](spec/README.md)
   * [Functions Library](spec/07_functions_library.md)
   * [Events](spec/05_events.md)
