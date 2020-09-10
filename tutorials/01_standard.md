@@ -1,4 +1,8 @@
-# Creating a Bond for Continuous Funding using Standard Bonds Module Functions
+---
+description: Tutorial
+---
+
+# Continuous Funding with Simple Functions
 
 ## Contents
 

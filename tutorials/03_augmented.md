@@ -1,4 +1,8 @@
-# Creating an augmented bonding curve
+---
+description: Tutorial
+---
+
+# Augmented Bonding Curve
 
 Throughout this tutorial, some knowledge around [Augmented Bonding Curves](https://medium.com/giveth/deep-dive-augmented-bonding-curves-3f1f7c1fa751) will be assumed.
 

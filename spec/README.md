@@ -46,7 +46,7 @@ Any Cosmos application chain that implements the Bonds module is able to perform
 5. [**Events**](05_events.md)
    * [EndBlocker](05_events.md#endblocker)
    * [Handlers](05_events.md#handlers)
-6. [**Future Improvements**](../06_future_improvements.md)
+6. [**Future Improvements**](06_future_improvements.md)
 7. [**Functions Library**](07_functions_library.md)
    * [Function Types](07_functions_library.md#function-types)
 
