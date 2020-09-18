@@ -3,5 +3,5 @@
 rm -rf "$HOME"/.bondsd
 rm -rf "$HOME"/.bondscli
 
-cd "$HOME"/go/src/github.com/ixoworld/bonds/ || exit
+cd ../ # assumes currently in bonds/scripts/ folder
 make install
