@@ -87,7 +87,7 @@ bondscli tx bonds create-bond \
   --allow-sells \
   --signers="$SHAUNADDR" \
   --batch-blocks=2 \
-  --outcome_payment="" \
+  --outcome-payment="" \
   --from shaun \
   --keyring-backend=test \
   --broadcast-mode block \
