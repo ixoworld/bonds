@@ -179,6 +179,7 @@ func NewSimApp(
 	app.subspaces[gov.ModuleName] = app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	app.subspaces[evidence.ModuleName] = app.paramsKeeper.Subspace(evidence.DefaultParamspace)
 	app.subspaces[crisis.ModuleName] = app.paramsKeeper.Subspace(crisis.DefaultParamspace)
+	app.subspaces[bonds.ModuleName] = app.paramsKeeper.Subspace(bonds.DefaultParamspace)
 
 	// Add keepers
 	app.AccountKeeper = auth.NewAccountKeeper(
@@ -237,6 +238,7 @@ func NewSimApp(
 		app.AccountKeeper,
 		app.StakingKeeper,
 		keys[bonds.StoreKey],
+		app.subspaces[bonds.ModuleName],
 		app.cdc,
 	)
 

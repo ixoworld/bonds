@@ -9,8 +9,6 @@ import (
 	db "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/simapp"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -38,7 +36,7 @@ func TestBlackListedAddrs(t *testing.T) {
 }
 
 func setGenesis(app *SimApp) error {
-	genesisState := simapp.NewDefaultGenesisState()
+	genesisState := NewDefaultGenesisState()
 	stateBytes, err := codec.MarshalJSONIndent(app.cdc, genesisState)
 	if err != nil {
 		return err

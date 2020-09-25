@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	"net/http"
 )
 
@@ -57,6 +58,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, queryRoute st
 	r.HandleFunc(
 		fmt.Sprintf("/bonds/{%s}/swap_return/{%s}/{%s}", RestBondToken, RestFromTokenWithAmount, RestToToken),
 		querySwapReturnHandler(cliCtx, queryRoute),
+	).Methods("GET")
+
+	r.HandleFunc(
+		"/bonds/params",
+		queryParamsRequestHandler(cliCtx),
 	).Methods("GET")
 }
 
@@ -233,6 +239,26 @@ func querySwapReturnHandler(cliCtx context.CLIContext, queryRoute string) http.H
 			return
 		}
 
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryParamsRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		route := fmt.Sprintf("custom/%s/parameters", types.QuerierRoute)
+
+		res, height, err := cliCtx.QueryWithData(route, nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

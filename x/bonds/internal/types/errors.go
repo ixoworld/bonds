@@ -48,4 +48,5 @@ var (
 	ErrInvalidFunctionParameter             = sdkerrors.Register(ModuleName, 337, "invalid function parameter")
 	ErrArgumentMissingOrNonUInteger         = sdkerrors.Register(ModuleName, 338, "argument is missing or is not an unsigned integer")
 	ErrArgumentMissingOrNonBoolean          = sdkerrors.Register(ModuleName, 339, "argument is missing or is not true or false")
+	ErrReservedBondToken                    = sdkerrors.Register(ModuleName, 340, "bond token is reserved")
 )

@@ -26,8 +26,9 @@ const (
 
 	DefaultCodespace = types.DefaultCodespace
 
-	ModuleName = types.ModuleName
-	StoreKey   = types.StoreKey
+	ModuleName        = types.ModuleName
+	DefaultParamspace = types.DefaultParamspace
+	StoreKey          = types.StoreKey
 
 	BondsMintBurnAccount       = types.BondsMintBurnAccount
 	BatchesIntermediaryAccount = types.BatchesIntermediaryAccount
