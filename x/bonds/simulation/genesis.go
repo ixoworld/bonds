@@ -110,7 +110,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 		}
 	}
 
-	bondsGenesis := types.NewGenesisState(bonds, batches)
+	bondsGenesis := types.NewGenesisState(bonds, batches,
+		types.Params{ReservedBondTokens: defaultReserveTokens})
 
 	fmt.Printf("Selected randomly generated bonds genesis state:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, bondsGenesis))
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(bondsGenesis)
