@@ -3,9 +3,13 @@
 ALICE=$(bondscli keys show alice --keyring-backend=test -a)  # organiser
 FEE=$(bondscli keys show fee --keyring-backend=test -a)      # funding pool
 
-P1=$(bondscli keys add p1 --keyring-backend=test)  # participant 1 (new account)
-P2=$(bondscli keys add p2 --keyring-backend=test)  # participant 2 (new account)
-P3=$(bondscli keys add p3 --keyring-backend=test)  # participant 3 (new account)
+bondscli keys add p1 --keyring-backend=test
+bondscli keys add p2 --keyring-backend=test
+bondscli keys add p3 --keyring-backend=test
+
+P1=$(bondscli keys show p1 --keyring-backend=test -a)  # participant 1 (new account)
+P2=$(bondscli keys show p2 --keyring-backend=test -a)  # participant 2 (new account)
+P3=$(bondscli keys show p3 --keyring-backend=test -a)  # participant 3 (new account)
 
 # Creator-specified values:
 #   d0 := 1000000       // initial raise (reserve [uatom])
@@ -78,7 +82,7 @@ bondscli tx bonds withdraw-share ufit --from p1 --keyring-backend=test --broadca
 # P2 withdraws their share
 bondscli tx bonds withdraw-share ufit --from p2 --keyring-backend=test --broadcast-mode block -y
 
-# P1 balance is equal to that of P2 (both get an equal share of the outcome payment)
+# P1 balance is equal to that of P2 (each gets a proportional share of the outcome payment)
 bondscli q account "$P1"
 bondscli q account "$P2"
 
