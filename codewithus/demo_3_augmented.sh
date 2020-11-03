@@ -16,7 +16,7 @@ P3=$(bondscli keys add p3 --keyring-backend=test)  # participant 3 (new account)
 # Calculated values:
 #   R0 = 1000000        // initial reserve (calculated by (1-theta)*d0)
 #   S0 = 1000000        // initial supply (equal to R0 since p0=1)
-#   V0 = 1000000000000  // invariant
+#   V0 = 1000000000000  // invariant which relates supply and reserve
 
 # Create an Augmented Bonding Curve
 bondscli tx bonds create-bond \
