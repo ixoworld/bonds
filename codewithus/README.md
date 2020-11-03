@@ -6,8 +6,9 @@ Make your own Automated Market-Maker, using the new Cosmos SDK Bonds Module
 
 ## Resources
 
+- Repository (_you're already here_): https://github.com/ixoworld/bonds/
 - Medium article: https://medium.com/ixo-blog/cosmic-bonding-4f948dd4c2e4
-- Repository (you're already here): https://github.com/ixoworld/bonds/
+- Risk-Adjusted Bonding Burves: https://github.com/BlockScience/InterchainFoundation/
 - Part of the [Code with Us](https://cosmos.network/series/code-with-us) online workshop series.
 
 ## Installation Requirements
