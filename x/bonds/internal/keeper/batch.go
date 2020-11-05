@@ -493,7 +493,7 @@ func (k Keeper) PerformSwapOrders(ctx sdk.Context, token string) {
 					batch.Swaps[i].CancelReason = err.Error()
 
 					logger.Info(fmt.Sprintf("cancelled swap order for %s to %s from %s", so.Amount.String(), so.ToToken, so.Address.String()))
-					logger.Debug(fmt.Sprintf("cancellation reason: %s", err.Error()))
+					logger.Info(fmt.Sprintf("cancellation reason: %s", err.Error())) // set to Info for visibility
 
 					ctx.EventManager().EmitEvent(sdk.NewEvent(
 						types.EventTypeOrderCancel,
@@ -560,7 +560,7 @@ func (k Keeper) CancelUnfulfillableBuys(ctx sdk.Context, token string) (cancelle
 				cancelledOrders += 1
 
 				logger.Info(fmt.Sprintf("cancelled buy order for %s from %s", bo.Amount.String(), bo.Address.String()))
-				logger.Debug(fmt.Sprintf("cancellation reason: %s", err.Error()))
+				logger.Info(fmt.Sprintf("cancellation reason: %s", err.Error())) // set to Info for visibility
 
 				ctx.EventManager().EmitEvent(sdk.NewEvent(
 					types.EventTypeOrderCancel,
