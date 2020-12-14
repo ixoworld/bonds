@@ -1,11 +1,14 @@
 package keeper_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	simapp "github.com/ixoworld/bonds/x/bonds/app"
+	"github.com/ixoworld/bonds/x/bonds/app"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 )
 
 var (
@@ -37,15 +40,15 @@ var (
 	initOutcomePayment         = sdk.Coins(nil)
 	initState                  = types.OpenState
 
-	buyPrices = sdk.NewDecCoins(sdk.NewCoins(
+	buyPrices = sdk.NewDecCoinsFromCoins(sdk.NewCoins(
 		sdk.NewInt64Coin(reserveToken, 2),
 		sdk.NewInt64Coin(reserveToken2, 3),
-	))
+	)...)
 
-	sellPrices = sdk.NewDecCoins(sdk.NewCoins(
+	sellPrices = sdk.NewDecCoinsFromCoins(
 		sdk.NewInt64Coin(reserveToken, 4),
 		sdk.NewInt64Coin(reserveToken2, 5),
-	))
+	)
 
 	// Base order
 	baseOrderAddress = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -89,8 +92,32 @@ func functionParametersAugmented() types.FunctionParams {
 func powerReserves() []string   { return []string{reserveToken} }
 func swapperReserves() []string { return []string{reserveToken, reserveToken2} }
 
+func Setup(isCheckTx bool) *simapp.SimApp {
+	db := dbm.NewMemDB()
+	app := simapp.NewSimApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
+	cdc := simapp.MakeCodec()
+	if !isCheckTx {
+		// init chain must be called to stop deliverState from being nil
+		genesisState := simapp.NewDefaultGenesisState()
+		stateBytes, err := codec.MarshalJSONIndent(cdc, genesisState)
+		if err != nil {
+			panic(err)
+		}
+
+		// Initialize the chain
+		app.InitChain(
+			abci.RequestInitChain{
+				Validators:    []abci.ValidatorUpdate{},
+				AppStateBytes: stateBytes,
+			},
+		)
+	}
+
+	return app
+}
+
 func createTestApp(isCheckTx bool) (*simapp.SimApp, sdk.Context) {
-	app := simapp.Setup(isCheckTx)
+	app := Setup(isCheckTx)
 
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
 

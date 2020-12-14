@@ -45,10 +45,10 @@ fi
 
 PASSWORD="12345678"
 GAS_PRICES="0.025stake"
-MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
-FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
-SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
-FEE=$(yes $PASSWORD | bondscli keys show fee -a)
+MIGUEL=$(yes $PASSWORD | bondscli keys show miguel --keyring-backend=test -a)
+FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco --keyring-backend=test -a)
+SHAUN=$(yes $PASSWORD | bondscli keys show shaun --keyring-backend=test -a)
+FEE=$(yes $PASSWORD | bondscli keys show fee --keyring-backend=test -a)
 
 echo "Creating bond..."
 # shellcheck disable=SC2046
@@ -141,7 +141,7 @@ rest_from_m bonds/swap '{
                         "to_token":"rez"
                       }'
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco swap 5000 rez to res..."
 # shellcheck disable=SC2046
@@ -157,7 +157,7 @@ rest_from_f bonds/swap '{
                           "to_token":"res"
                         }'
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"
 
 echo "Miguel sells 1abc..."
 # shellcheck disable=SC2046

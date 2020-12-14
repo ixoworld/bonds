@@ -1,80 +1,94 @@
 package simapp
 
 import (
-	"encoding/json"
+	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/mint"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/ixoworld/bonds/x/bonds"
-	"github.com/ixoworld/bonds/x/bonds/internal/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	dbm "github.com/tendermint/tm-db"
 	"io"
 	"os"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-
-	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
-	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 )
 
-const appName = "bondsmodule"
+const appName = "Bonds"
 
 var (
-	// DefaultCLIHome default home directories for the application CLI
+	// DefaultCLIHome represents the default home directory for the application CLI
 	DefaultCLIHome = os.ExpandEnv("$HOME/.bondscli")
 
 	// DefaultNodeHome sets the folder where the application data and configuration will be stored
 	DefaultNodeHome = os.ExpandEnv("$HOME/.bondsd")
 
-	// ModuleBasics The module BasicManager is in charge of setting up basic,
-	// non-dependant module elements, such as codec registration
-	// and genesis verification.
+	// ModuleBasics is in charge of setting up basic module elements
 	ModuleBasics = module.NewBasicManager(
-		genutil.AppModuleBasic{},
 		auth.AppModuleBasic{},
+		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
-		params.AppModuleBasic{},
 		staking.AppModuleBasic{},
+		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
-		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distr.ProposalHandler),
+		gov.NewAppModuleBasic(
+			paramsclient.ProposalHandler, distr.ProposalHandler, upgradeclient.ProposalHandler,
+		),
+		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		evidence.AppModuleBasic{},
+
 		bonds.AppModuleBasic{},
 	)
 
-	// account permissions
+	// module account permissions
 	maccPerms = map[string][]string{
-		auth.FeeCollectorName:            nil,
-		distr.ModuleName:                 nil,
-		staking.BondedPoolName:           {supply.Burner, supply.Staking},
-		staking.NotBondedPoolName:        {supply.Burner, supply.Staking},
-		gov.ModuleName:                   {supply.Burner},
-		types.BondsMintBurnAccount:       {supply.Minter, supply.Burner},
-		types.BatchesIntermediaryAccount: nil,
-		types.BondsReserveAccount:        nil,
+		auth.FeeCollectorName:     nil,
+		distr.ModuleName:          nil,
+		mint.ModuleName:           {supply.Minter},
+		staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		gov.ModuleName:            {supply.Burner},
+
+		bonds.BondsMintBurnAccount:       {supply.Minter, supply.Burner},
+		bonds.BatchesIntermediaryAccount: nil,
+		bonds.BondsReserveAccount:        nil,
+	}
+
+	// module accounts that are allowed to receive tokens
+	allowedReceivingModAcc = map[string]bool{
+		distr.ModuleName: true,
 	}
 )
 
-// MakeCodec generates the necessary codecs for Amino
+// MakeCodec constructs the *std.Codec and *codec.Codec instances used by
+// SimApp.
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
+
 	ModuleBasics.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
@@ -84,39 +98,51 @@ func MakeCodec() *codec.Codec {
 	return cdc.Seal()
 }
 
+// Verify app interface at compile time
+var _ simapp.App = (*SimApp)(nil)
+
+// Extended ABCI application
 type SimApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
-	// keys to access the substores
-	keys  map[string]*sdk.KVStoreKey
-	tKeys map[string]*sdk.TransientStoreKey
+	invCheckPeriod uint
 
-	// Keepers
+	// sdk keys to access the substores
+	keys  map[string]*sdk.KVStoreKey
+	tkeys map[string]*sdk.TransientStoreKey
+
+	// subspaces
+	subspaces map[string]params.Subspace
+
+	// keepers
 	AccountKeeper  auth.AccountKeeper
 	BankKeeper     bank.Keeper
-	StakingKeeper  staking.Keeper
-	SlashingKeeper slashing.Keeper
-	DistrKeeper    distr.Keeper
 	SupplyKeeper   supply.Keeper
-	GovKeeper      gov.Keeper
+	StakingKeeper  staking.Keeper
+	slashingKeeper slashing.Keeper
+	mintKeeper     mint.Keeper
+	distrKeeper    distr.Keeper
+	govKeeper      gov.Keeper
 	CrisisKeeper   crisis.Keeper
-	ParamsKeeper   params.Keeper
-	BondsKeeper    bonds.Keeper
+	upgradeKeeper  upgrade.Keeper
+	paramsKeeper   params.Keeper
+	evidenceKeeper evidence.Keeper
+
+	BondsKeeper bonds.Keeper
 
 	// Module Manager
 	mm *module.Manager
 
-	// Simulation manager
+	// the module manager
 	sm *module.SimulationManager
 }
 
+// NewSimApp returns a reference to an initialized SimApp.
 func NewSimApp(
-	logger log.Logger, db dbm.DB, traceStore io.Writer,
-	loadLatest bool, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
+	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
+	skipUpgradeHeights map[int64]bool, invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
 ) *SimApp {
-
-	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()
 
 	// BaseApp handles interactions with Tendermint through the ABCI protocol
@@ -124,96 +150,86 @@ func NewSimApp(
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetAppVersion(version.Version)
 
-	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
-		supply.StoreKey, distr.StoreKey, slashing.StoreKey, gov.StoreKey,
-		params.StoreKey, bonds.StoreKey)
-	tKeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
+	keys := sdk.NewKVStoreKeys(
+		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
+		supply.StoreKey, mint.StoreKey, distr.StoreKey, slashing.StoreKey,
+		gov.StoreKey, upgrade.StoreKey, params.StoreKey, evidence.StoreKey,
 
-	// Here you initialize your application with the store keys it requires
-	var app = &SimApp{
-		BaseApp: bApp,
-		cdc:     cdc,
-		keys:    keys,
-		tKeys:   tKeys,
+		bonds.StoreKey,
+	)
+	tkeys := sdk.NewTransientStoreKeys(params.TStoreKey)
+
+	app := &SimApp{
+		BaseApp:        bApp,
+		cdc:            cdc,
+		invCheckPeriod: invCheckPeriod,
+		keys:           keys,
+		tkeys:          tkeys,
+		subspaces:      make(map[string]params.Subspace),
 	}
 
-	// The ParamsKeeper handles parameter storage for the application
-	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tKeys[params.TStoreKey], params.DefaultCodespace)
-	// Set specific supspaces
-	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
-	bankSupspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
-	stakingSubspace := app.ParamsKeeper.Subspace(staking.DefaultParamspace)
-	distrSubspace := app.ParamsKeeper.Subspace(distr.DefaultParamspace)
-	slashingSubspace := app.ParamsKeeper.Subspace(slashing.DefaultParamspace)
-	govSubspace := app.ParamsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
-	crisisSubspace := app.ParamsKeeper.Subspace(crisis.DefaultParamspace)
+	// Init params keeper and subspaces
+	app.paramsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey])
+	app.subspaces[auth.ModuleName] = app.paramsKeeper.Subspace(auth.DefaultParamspace)
+	app.subspaces[bank.ModuleName] = app.paramsKeeper.Subspace(bank.DefaultParamspace)
+	app.subspaces[staking.ModuleName] = app.paramsKeeper.Subspace(staking.DefaultParamspace)
+	app.subspaces[mint.ModuleName] = app.paramsKeeper.Subspace(mint.DefaultParamspace)
+	app.subspaces[distr.ModuleName] = app.paramsKeeper.Subspace(distr.DefaultParamspace)
+	app.subspaces[slashing.ModuleName] = app.paramsKeeper.Subspace(slashing.DefaultParamspace)
+	app.subspaces[gov.ModuleName] = app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
+	app.subspaces[evidence.ModuleName] = app.paramsKeeper.Subspace(evidence.DefaultParamspace)
+	app.subspaces[crisis.ModuleName] = app.paramsKeeper.Subspace(crisis.DefaultParamspace)
+	app.subspaces[bonds.ModuleName] = app.paramsKeeper.Subspace(bonds.DefaultParamspace)
 
-	// The AccountKeeper handles address -> account lookups
+	// Add keepers
 	app.AccountKeeper = auth.NewAccountKeeper(
-		app.cdc,
-		keys[auth.StoreKey],
-		authSubspace,
-		auth.ProtoBaseAccount,
+		app.cdc, keys[auth.StoreKey], app.subspaces[auth.ModuleName], auth.ProtoBaseAccount,
 	)
-
-	// The BankKeeper allows you perform sdk.Coins interactions
 	app.BankKeeper = bank.NewBaseKeeper(
-		app.AccountKeeper,
-		bankSupspace,
-		bank.DefaultCodespace,
-		app.ModuleAccountAddrs(),
+		app.AccountKeeper, app.subspaces[bank.ModuleName], app.BlacklistedAccAddrs(),
 	)
-
-	// The SupplyKeeper collects transaction fees and renders them to the fee distribution module
 	app.SupplyKeeper = supply.NewKeeper(
-		app.cdc,
-		keys[supply.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		maccPerms,
+		app.cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms,
 	)
-
-	// The staking keeper
 	stakingKeeper := staking.NewKeeper(
-		app.cdc,
-		keys[staking.StoreKey],
-		app.SupplyKeeper,
-		stakingSubspace,
-		staking.DefaultCodespace,
+		app.cdc, keys[staking.StoreKey], app.SupplyKeeper, app.subspaces[staking.ModuleName],
 	)
-
-	app.DistrKeeper = distr.NewKeeper(
-		app.cdc,
-		keys[distr.StoreKey],
-		distrSubspace,
-		&stakingKeeper,
-		app.SupplyKeeper,
-		distr.DefaultCodespace,
-		auth.FeeCollectorName,
-		app.ModuleAccountAddrs(),
+	app.mintKeeper = mint.NewKeeper(
+		app.cdc, keys[mint.StoreKey], app.subspaces[mint.ModuleName], &stakingKeeper, app.SupplyKeeper, auth.FeeCollectorName,
 	)
-
-	app.SlashingKeeper = slashing.NewKeeper(
-		app.cdc,
-		keys[slashing.StoreKey],
-		&stakingKeeper,
-		slashingSubspace,
-		slashing.DefaultCodespace,
+	app.distrKeeper = distr.NewKeeper(
+		app.cdc, keys[distr.StoreKey], app.subspaces[distr.ModuleName], &stakingKeeper, app.SupplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs(),
 	)
-
+	app.slashingKeeper = slashing.NewKeeper(
+		app.cdc, keys[slashing.StoreKey], &stakingKeeper, app.subspaces[slashing.ModuleName],
+	)
 	app.CrisisKeeper = crisis.NewKeeper(
-		crisisSubspace,
-		invCheckPeriod,
-		app.SupplyKeeper,
-		auth.FeeCollectorName,
+		app.subspaces[crisis.ModuleName], invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName,
+	)
+	app.upgradeKeeper = upgrade.NewKeeper(
+		skipUpgradeHeights, keys[upgrade.StoreKey], app.cdc,
+	)
+	evidenceKeeper := evidence.NewKeeper(
+		app.cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName], &app.StakingKeeper, app.slashingKeeper,
+	)
+	evidenceRouter := evidence.NewRouter()
+	evidenceKeeper.SetRouter(evidenceRouter)
+	app.evidenceKeeper = *evidenceKeeper
+
+	// register the proposal types
+	govRouter := gov.NewRouter()
+	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
+		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
+		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
+		AddRoute(upgrade.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper))
+	app.govKeeper = gov.NewKeeper(
+		app.cdc, keys[gov.StoreKey], app.subspaces[gov.ModuleName], app.SupplyKeeper, &stakingKeeper, govRouter,
 	)
 
 	// register the staking hooks
 	// NOTE: StakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
-		staking.NewMultiStakingHooks(
-			app.DistrKeeper.Hooks(),
-			app.SlashingKeeper.Hooks()),
+		staking.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()),
 	)
 
 	app.BondsKeeper = bonds.NewKeeper(
@@ -222,90 +238,90 @@ func NewSimApp(
 		app.AccountKeeper,
 		app.StakingKeeper,
 		keys[bonds.StoreKey],
+		app.subspaces[bonds.ModuleName],
 		app.cdc,
 	)
 
-	// register the proposal types
-	govRouter := gov.NewRouter()
-	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
-		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
-		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper))
-	app.GovKeeper = gov.NewKeeper(app.cdc, keys[gov.StoreKey], govSubspace,
-		app.SupplyKeeper, &stakingKeeper, gov.DefaultCodespace, govRouter)
-
+	// NOTE: Any module instantiated in the module manager that is later modified
+	// must be passed by reference here.
 	app.mm = module.NewManager(
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.AccountKeeper),
 		bank.NewAppModule(app.BankKeeper, app.AccountKeeper),
-		bonds.NewAppModule(app.BondsKeeper, app.AccountKeeper),
 		crisis.NewAppModule(&app.CrisisKeeper),
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
-		gov.NewAppModule(app.GovKeeper, app.AccountKeeper, app.SupplyKeeper),
-		distr.NewAppModule(app.DistrKeeper, app.AccountKeeper, app.SupplyKeeper, app.StakingKeeper),
-		slashing.NewAppModule(app.SlashingKeeper, app.AccountKeeper, app.StakingKeeper),
+		gov.NewAppModule(app.govKeeper, app.AccountKeeper, app.SupplyKeeper),
+		mint.NewAppModule(app.mintKeeper),
+		slashing.NewAppModule(app.slashingKeeper, app.AccountKeeper, app.StakingKeeper),
+		distr.NewAppModule(app.distrKeeper, app.AccountKeeper, app.SupplyKeeper, app.StakingKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
+		upgrade.NewAppModule(app.upgradeKeeper),
+		evidence.NewAppModule(app.evidenceKeeper),
+		bonds.NewAppModule(app.BondsKeeper, app.AccountKeeper),
 	)
 
-	app.mm.SetOrderBeginBlockers(distr.ModuleName, slashing.ModuleName, bonds.ModuleName)
+	// During begin block slashing happens after distr.BeginBlocker so that
+	// there is nothing left over in the validator fee pool, so as to keep the
+	// CanWithdrawInvariant invariant.
+	app.mm.SetOrderBeginBlockers(
+		upgrade.ModuleName, mint.ModuleName, distr.ModuleName, slashing.ModuleName,
+		evidence.ModuleName, staking.ModuleName,
+		bonds.ModuleName,
+	)
 	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName, bonds.ModuleName)
 
-	// Sets the order of Genesis - Order matters, genutil is to always come last
+	// NOTE: The genutils module must occur after staking so that pools are
+	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
-		distr.ModuleName,
-		staking.ModuleName,
-		auth.ModuleName,
-		bank.ModuleName,
-		slashing.ModuleName,
-		gov.ModuleName,
+		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName,
+		slashing.ModuleName, gov.ModuleName, evidence.ModuleName, mint.ModuleName,
 		bonds.ModuleName,
-		supply.ModuleName,
-		crisis.ModuleName,
-		genutil.ModuleName,
+		supply.ModuleName, crisis.ModuleName, genutil.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
+	// create the simulation manager and define the order of the modules for deterministic simulations
+	//
+	// NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// transactions
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(app.AccountKeeper),
 		bank.NewAppModule(app.BankKeeper, app.AccountKeeper),
 		bonds.NewAppModule(app.BondsKeeper, app.AccountKeeper),
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
-		gov.NewAppModule(app.GovKeeper, app.AccountKeeper, app.SupplyKeeper),
-		distr.NewAppModule(app.DistrKeeper, app.AccountKeeper, app.SupplyKeeper, app.StakingKeeper),
-		slashing.NewAppModule(app.SlashingKeeper, app.AccountKeeper, app.StakingKeeper),
+		gov.NewAppModule(app.govKeeper, app.AccountKeeper, app.SupplyKeeper),
+		distr.NewAppModule(app.distrKeeper, app.AccountKeeper, app.SupplyKeeper, app.StakingKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
+		slashing.NewAppModule(app.slashingKeeper, app.AccountKeeper, app.StakingKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
 
 	// initialize stores
 	app.MountKVStores(keys)
-	app.MountTransientStores(tKeys)
+	app.MountTransientStores(tkeys)
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer))
+	app.SetAnteHandler(ante.NewAnteHandler(
+		app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer,
+	))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
-		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-		if err != nil {
-			cmn.Exit(err.Error())
+		if err := app.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
+			tmos.Exit(err.Error())
 		}
 	}
 
 	return app
 }
 
-// InitChainer application update at chain initialization
-func (app *SimApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	var genesisState GenesisState
-	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
-
-	return app.mm.InitGenesis(ctx, genesisState)
-}
+// Name returns the name of the App
+func (app *SimApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *SimApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
@@ -315,6 +331,13 @@ func (app *SimApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abc
 // EndBlocker application updates every end block
 func (app *SimApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
+}
+
+// InitChainer application update at chain initialization
+func (app *SimApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState GenesisState
+	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+	return app.mm.InitGenesis(ctx, genesisState)
 }
 
 // LoadHeight loads a particular height
@@ -332,26 +355,22 @@ func (app *SimApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
+// BlacklistedAccAddrs returns all the app's module account addresses black listed for receiving tokens.
+func (app *SimApp) BlacklistedAccAddrs() map[string]bool {
+	blacklistedAddrs := make(map[string]bool)
+	for acc := range maccPerms {
+		blacklistedAddrs[supply.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
+	}
+
+	return blacklistedAddrs
+}
+
+// Codec returns the application's sealed codec.
 func (app *SimApp) Codec() *codec.Codec {
 	return app.cdc
 }
 
-//_________________________________________________________
-
-//noinspection GoUnusedParameter
-func (app *SimApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
-) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-
-	// as if they could withdraw from the start of the next block
-	ctx := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
-
-	genState := app.mm.ExportGenesis(ctx)
-	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	validators = staking.WriteValidators(ctx, app.StakingKeeper)
-
-	return appState, validators, nil
+// SimulationManager implements the SimulationApp interface
+func (app *SimApp) SimulationManager() *module.SimulationManager {
+	return app.sm
 }

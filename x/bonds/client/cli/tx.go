@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	client2 "github.com/ixoworld/bonds/x/bonds/client"
@@ -25,13 +27,13 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	bondsTxCmd.AddCommand(client.PostCommands(
+	bondsTxCmd.AddCommand(flags.PostCommands(
 		GetCmdCreateBond(cdc),
 		GetCmdEditBond(cdc),
 		GetCmdBuy(cdc),
 		GetCmdSell(cdc),
 		GetCmdSwap(cdc),
-		GetCmdOutcomePayment(cdc),
+		GetCmdMakeOutcomePayment(cdc),
 		GetCmdWithdrawShare(cdc),
 	)...)
 
@@ -77,13 +79,13 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			// Parse tx fee percentage
 			txFeePercentage, err := sdk.NewDecFromStr(_txFeePercentage)
 			if err != nil {
-				return fmt.Errorf(types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "tx fee percentage").Error())
+				return sdkerrors.Wrap(types.ErrArgumentMissingOrNonFloat, "tx fee percentage")
 			}
 
 			// Parse exit fee percentage
 			exitFeePercentage, err := sdk.NewDecFromStr(_exitFeePercentage)
 			if err != nil {
-				return fmt.Errorf(types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "exit fee percentage").Error())
+				return sdkerrors.Wrap(types.ErrArgumentMissingOrNonFloat, "exit fee percentage")
 			}
 
 			// Parse fee address
@@ -125,7 +127,7 @@ func GetCmdCreateBond(cdc *codec.Codec) *cobra.Command {
 			// Parse batch blocks
 			batchBlocks, err := sdk.ParseUint(_batchBlocks)
 			if err != nil {
-				return types.ErrArgumentMissingOrNonUInteger(types.DefaultCodespace, "max batch blocks")
+				return sdkerrors.Wrap(types.ErrArgumentMissingOrNonUInteger, "max batch blocks")
 			}
 
 			// Parse order quantity limits
@@ -199,7 +201,7 @@ func GetCmdEditBond(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().AddFlagSet(fsBondGeneral)
 	cmd.Flags().AddFlagSet(fsBondEdit)
 
-	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 	_ = cmd.MarkFlagRequired(FlagToken)
 	_ = cmd.MarkFlagRequired(FlagSigners)
 
@@ -235,7 +237,7 @@ func GetCmdBuy(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 	return cmd
 }
 
@@ -260,7 +262,7 @@ func GetCmdSell(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 	return cmd
 }
 
@@ -288,11 +290,11 @@ func GetCmdSwap(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 	return cmd
 }
 
-func GetCmdOutcomePayment(cdc *codec.Codec) *cobra.Command {
+func GetCmdMakeOutcomePayment(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "make-outcome-payment [bond-token]",
 		Example: "make-outcome-payment abc",
@@ -308,7 +310,7 @@ func GetCmdOutcomePayment(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 	return cmd
 }
 
@@ -328,6 +330,6 @@ func GetCmdWithdrawShare(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	_ = cmd.MarkFlagRequired(client.FlagFrom)
+	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 	return cmd
 }

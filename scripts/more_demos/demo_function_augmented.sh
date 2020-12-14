@@ -17,19 +17,19 @@ wait() {
 tx_from_m() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 tx_from_f() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 tx_from_s() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from shaun -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from shaun --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 RET=$(bondscli status 2>&1)
@@ -39,10 +39,10 @@ fi
 
 PASSWORD="12345678"
 GAS_PRICES="0.025stake"
-MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
-FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
-SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
-FEE=$(yes $PASSWORD | bondscli keys show fee -a)
+MIGUEL=$(yes $PASSWORD | bondscli keys show miguel --keyring-backend=test -a)
+FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco --keyring-backend=test -a)
+SHAUN=$(yes $PASSWORD | bondscli keys show shaun --keyring-backend=test -a)
+FEE=$(yes $PASSWORD | bondscli keys show fee --keyring-backend=test -a)
 
 # d0 := 500.0   // initial raise (reserve)
 # p0 := 0.01    // initial price (reserve per token)
@@ -70,19 +70,20 @@ tx_from_m create-bond \
   --sanity-margin-percentage="0" \
   --allow-sells \
   --signers="$MIGUEL" \
-  --batch-blocks=1
+  --batch-blocks=1 \
+  --outcome-payment="100000res"
 echo "Created bond..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Miguel buys 20000abc..."
 tx_from_m buy 20000abc 100000res
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco buys 20000abc..."
 tx_from_f buy 20000abc 100000res
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"
 
 echo "Shaun cannot buy 10001abc..."
 tx_from_s buy 10001abc 100000res
@@ -91,27 +92,27 @@ tx_from_s sell 10000abc
 echo "Shaun can buy 10000abc..."
 tx_from_s buy 10000abc 100000res
 echo "Shaun's account..."
-bondscli query auth account "$SHAUN"
+bondscli q auth account "$SHAUN"
 
 echo "Bond state is now open..."  # since 50000 (S0) reached
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Miguel sells 20000abc..."
 tx_from_m sell 20000abc
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco makes outcome payment..."
 tx_from_f make-outcome-payment abc
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"
 
 echo "Francesco withdraws share..."
 tx_from_f withdraw-share abc
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"
 
 echo "Shaun withdraws share..."
 tx_from_s withdraw-share abc
 echo "Shaun's account..."
-bondscli query auth account "$SHAUN"
+bondscli q auth account "$SHAUN"

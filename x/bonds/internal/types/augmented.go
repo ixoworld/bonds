@@ -9,14 +9,14 @@ import (
 
 // value function for a given state (R,S)
 func Invariant(R, S sdk.Dec, kappa int64) sdk.Dec {
-	return Power(S, uint64(kappa)).Quo(R)
+	return S.Power(uint64(kappa)).Quo(R)
 }
 
 // given a value function (parameterized by kappa)
 // and an invariant coeficient V0
 // return Supply S as a function of reserve R
 func Supply(R sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
-	result, err := ApproxRoot(V0.Mul(R), uint64(kappa))
+	result, err := (V0.Mul(R)).ApproxRoot(uint64(kappa))
 	if err != nil {
 		panic(err)
 	}
@@ -25,7 +25,7 @@ func Supply(R sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
 
 // This is the reverse of Supply(...) function
 func Reserve(S sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
-	return Power(S, uint64(kappa)).Quo(V0)
+	return S.Power(uint64(kappa)).Quo(V0)
 }
 
 // given a value function (parameterized by kappa)
@@ -34,11 +34,11 @@ func Reserve(S sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
 func SpotPrice(R sdk.Dec, kappa int64, V0 sdk.Dec) sdk.Dec {
 	kappaDec := sdk.NewInt(kappa).ToDec()
 
-	temp1, err := ApproxRoot(V0, uint64(kappa))
+	temp1, err := V0.ApproxRoot(uint64(kappa))
 	if err != nil {
 		panic(err)
 	}
-	temp2, err := ApproxRoot(Power(R, uint64(kappa)-1), uint64(kappa))
+	temp2, err := R.Power(uint64(kappa) - 1).ApproxRoot(uint64(kappa))
 	if err != nil {
 		panic(err)
 	}

@@ -6,26 +6,26 @@ In this section we describe the processing of the bonds messages and the corresp
 
 Bonds can be created by any address using `MsgCreateBond`.
 
-| **Field**              | **Type**         | **Description**                                                                                               |
-|:-----------------------|:-----------------|:--------------------------------------------------------------------------------------------------------------|
-| Token                  | `string`           | The denomination of the bond's tokens (e.g. `abc`, `mytoken1`) |
-| Name                   | `string`           | A friendly name as a title for the bond (e.g. `A B C`, `My Token`) |
-| Description            | `string`           | A description of what the bond represents or its purpose |
-| FunctionType           | `string`           | The type of function that will define the bonding curve (`power_function`, `sigmoid_function`, or `swapper_function`)|
-| FunctionParameters     | `FunctionParams`   | The parameters of the function defining the bonding curve (e.g. `m:12,n:2,c:100`) |
-| Creator                | `sdk.AccAddress`   | The address of the account creating the bond |
-| ReserveTokens          | `[]string`         | The token denominations that will be used as reserve (e.g. `res,rez`) |
-| TxFeePercentage        | `sdk.Dec`          | The percentage fee charged for buys/sells/swaps (e.g. `0.3`) |
-| ExitFeePercentage      | `sdk.Dec`          | The percentage fee charged for sells on top of the tx fee (e.g. `0.2`) |
-| FeeAddress             | `sdk.AccAddress`   | The address of the account that will store charged fees |
-| MaxSupply              | `sdk.Coin`         | The maximum number of bond tokens that can be minted |
-| OrderQuantityLimits    | `sdk.Coins`        | The maximum number of tokens that one can buy/sell/swap in a single order (e.g. `100abc,200res,300rez`) |
-| SanityRate             | `sdk.Dec`          | For a swapper function bond, restricts the conversion rate (`r1/r2`) to the specified value plus or minus the sanity margin percentage. `0` for no sanity checks. |
-| SanityMarginPercentage | `sdk.Dec`          | Used as described above. `0` for no sanity checks. |
-| AllowSells             | `bool`             | Whether or not selling is allowed |
-| Signers                | `[]sdk.AccAddress` | The addresses of the accounts that must sign this message and any future message that edits the bond's parameters. |
-| BatchBlocks            | `sdk.Uint`         | The lifespan of each orders batch in blocks. |
-| OutcomePayment         | `sdk.Coins`        | The payment required to be made in order to transition a bond from OPEN to SETTLE. |
+| **Field**              | **Type**           | **Description** |
+|:-----------------------|:-------------------|:----------------|
+| Token                  | `string`           | The denomination of the bond's tokens (e.g. `abc`, `mytoken1`)
+| Name                   | `string`           | A friendly name as a title for the bond (e.g. `A B C`, `My Token`)
+| Description            | `string`           | A description of what the bond represents or its purpose
+| FunctionType           | `string`           | The type of function that will define the bonding curve (`power_function`, `sigmoid_function`, or `swapper_function`)
+| FunctionParameters     | `FunctionParams`   | The parameters of the function defining the bonding curve (e.g. `m:12,n:2,c:100`)
+| Creator                | `sdk.AccAddress`   | The address of the account creating the bond
+| ReserveTokens          | `[]string`         | The token denominations that will be used as reserve (e.g. `res,rez`)
+| TxFeePercentage        | `sdk.Dec`          | The percentage fee charged for buys/sells/swaps (e.g. `0.3`)
+| ExitFeePercentage      | `sdk.Dec`          | The percentage fee charged for sells on top of the tx fee (e.g. `0.2`)
+| FeeAddress             | `sdk.AccAddress`   | The address of the account that will store charged fees
+| MaxSupply              | `sdk.Coin`         | The maximum number of bond tokens that can be minted
+| OrderQuantityLimits    | `sdk.Coins`        | The maximum number of tokens that one can buy/sell/swap in a single order (e.g. `100abc,200res,300rez`)
+| SanityRate             | `sdk.Dec`          | For a swapper, restricts conversion rate (`r1/r2`) to `sanity rate ± sanity margin percentage`. `0` for no sanity checks.
+| SanityMarginPercentage | `sdk.Dec`          | Used as described above. `0` for no sanity checks
+| AllowSells             | `bool`             | Whether or not selling is allowed
+| Signers                | `[]sdk.AccAddress` | The addresses of the accounts that must sign this message and any future message that edits the bond's parameters.
+| BatchBlocks            | `sdk.Uint`         | The lifespan of each orders batch in blocks
+| OutcomePayment         | `sdk.Coins`        | The payment required to be made in order to transition a bond from OPEN to SETTLE
 
 ```go
 type MsgCreateBond struct {
@@ -51,7 +51,6 @@ type MsgCreateBond struct {
 ```
 
 This message is expected to fail if:
-
 - another bond with this token is already registered, the token is the staking token, or the token is not a valid denomination
 - name or description is an empty string
 - function type is not one of the defined function types (`power_function`, `sigmoid_function`, `swapper_function`, `augmented_function`)
@@ -91,17 +90,17 @@ This message creates and stores the `Bond` object at appropriate indexes. Note t
 
 The owner of a bond can edit some of the bond's parameters using `MsgEditBond`.
 
-| **Field**              | **Type**           | **Description**                                                                                               |
-|:-----------------------|:-------------------|:--------------------------------------------------------------------------------------------------------------|
-| Token                  | `string`           | The bond to be edited |
-| Name                   | `string`           | Refer to MsgCreateBond |
-| Description            | `string`           | Refer to MsgCreateBond |
-| FunctionType           | `string`           | Refer to MsgCreateBond |
-| OrderQuantityLimits    | `sdk.Coins`        | Refer to MsgCreateBond |
-| SanityRate             | `sdk.Dec`          | Refer to MsgCreateBond |
-| SanityMarginPercentage | `sdk.Dec`          | Refer to MsgCreateBond |
-| Editor                 | `sdk.AccAddress`   | The account address of the user editing the bond |
-| Signers                | `[]sdk.AccAddress` | Refer to MsgCreateBond |
+| **Field**              | **Type**           | **Description** |
+|:-----------------------|:-------------------|:----------------|
+| Token                  | `string`           | The bond to be edited
+| Name                   | `string`           | Refer to MsgCreateBond
+| Description            | `string`           | Refer to MsgCreateBond
+| FunctionType           | `string`           | Refer to MsgCreateBond
+| OrderQuantityLimits    | `sdk.Coins`        | Refer to MsgCreateBond
+| SanityRate             | `sdk.Dec`          | Refer to MsgCreateBond
+| SanityMarginPercentage | `sdk.Dec`          | Refer to MsgCreateBond
+| Editor                 | `sdk.AccAddress`   | The account address of the user editing the bond
+| Signers                | `[]sdk.AccAddress` | Refer to MsgCreateBond
 
 This message is expected to fail if:
 - any editable field violates the restrictions set for the same field in `MsgCreateBond`
@@ -131,11 +130,11 @@ A buy order is cancelled if the max prices are exceeded at any point during the 
 
 In the case of `augmented_function` bonds, if the bond state is `HATCH`, a fixed price-per-token `p0` is used. This value (`p0`) is one of the function parameters required for this function type.
 
-| **Field** | **Type**         | **Description**                                   |
-|:----------|:-----------------|:--------------------------------------------------|
-| Buyer     | `sdk.AccAddress` | The account address of the user buying the tokens |
-| Amount    | `sdk.Coin`       | The amount of bond tokens to be bought            |
-| MaxPrices | `sdk.Coins`      | The max price to pay in reserve tokens            |
+| **Field** | **Type**         | **Description** |
+|:----------|:-----------------|:----------------|
+| Buyer     | `sdk.AccAddress` | The account address of the user buying the tokens
+| Amount    | `sdk.Coin`       | The amount of bond tokens to be bought
+| MaxPrices | `sdk.Coins`      | The max price to pay in reserve tokens
 
 This message is expected to fail if:
 - amount is not an amount of an existing bond
@@ -175,10 +174,10 @@ Once the sell order is fulfilled, the number of tokens to be sold are burned on 
 
 In general, but especially in the case of swapper function bonds, buying tokens from a bond can be seen as adding liquidity for that bond. To add liquidity to a swapper function, the current exchange rate is used to determine how much of each reserve token makes up the price. Otherwise, the price is an equal number of each of the reserve tokens according to the function type.
 
-| **Field** | **Type**         | **Description**                                    |
-|:----------|:-----------------|:---------------------------------------------------|
-| Seller    | `sdk.AccAddress` | The account address of the user selling the tokens |
-| Amount    | `sdk.Coin`       | The amount of bond tokens to be sold               |
+| **Field** | **Type**         | **Description** |
+|:----------|:-----------------|:----------------|
+| Seller    | `sdk.AccAddress` | The account address of the user selling the tokens
+| Amount    | `sdk.Coin`       | The amount of bond tokens to be sold
 
 This message is expected to fail if:
 - amount is not an amount of an existing bond
@@ -206,12 +205,12 @@ Any address that holds tokens (_t1_) that a swapper function bond uses as one of
 
 Once the swap order is fulfilled, 
 
-| **Field** | **Type**         | **Description**                                                                                               |
-|:----------|:-----------------|:--------------------------------------------------------------------------------------------------------------|
-| Swapper   | `sdk.AccAddress` | The account address of the user swapping the tokens  |
-| BondToken | `string`         | The swapper function bond to use to perform the swap |
-| From      | `sdk.Coin`       | The amount of reserve tokens to be swapped           |
-| ToToken   | `string`         | The token denomination that will be given in return  |
+| **Field** | **Type**         | **Description** |
+|:----------|:-----------------|:----------------|
+| Swapper   | `sdk.AccAddress` | The account address of the user swapping the tokens
+| BondToken | `string`         | The swapper function bond to use to perform the swap
+| From      | `sdk.Coin`       | The amount of reserve tokens to be swapped
+| ToToken   | `string`         | The token denomination that will be given in return
 
 This message is expected to fail if:
 - bond does not exist, is not swapper function, or bond state is not OPEN

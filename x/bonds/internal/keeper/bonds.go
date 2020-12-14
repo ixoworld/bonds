@@ -52,9 +52,7 @@ func (k Keeper) SetBond(ctx sdk.Context, token string, bond types.Bond) {
 	store.Set(types.GetBondKey(token), k.cdc.MustMarshalBinaryBare(bond))
 }
 
-func (k Keeper) DepositReserve(ctx sdk.Context, token string,
-	from sdk.AccAddress, amount sdk.Coins) sdk.Error {
-
+func (k Keeper) DepositReserve(ctx sdk.Context, token string, from sdk.AccAddress, amount sdk.Coins) error {
 	// Send tokens to bonds reserve account
 	err := k.SupplyKeeper.SendCoinsFromAccountToModule(
 		ctx, from, types.BondsReserveAccount, amount)
@@ -64,12 +62,12 @@ func (k Keeper) DepositReserve(ctx sdk.Context, token string,
 
 	// Update bond reserve
 	k.setReserveBalances(ctx, token,
-		k.MustGetBond(ctx, token).CurrentReserve.Add(amount))
+		k.MustGetBond(ctx, token).CurrentReserve.Add(amount...))
 	return nil
 }
 
 func (k Keeper) DepositReserveFromModule(ctx sdk.Context, token string,
-	fromModule string, amount sdk.Coins) sdk.Error {
+	fromModule string, amount sdk.Coins) error {
 
 	// Send tokens to bonds reserve account
 	err := k.SupplyKeeper.SendCoinsFromModuleToModule(
@@ -80,12 +78,12 @@ func (k Keeper) DepositReserveFromModule(ctx sdk.Context, token string,
 
 	// Update bond reserve
 	k.setReserveBalances(ctx, token,
-		k.MustGetBond(ctx, token).CurrentReserve.Add(amount))
+		k.MustGetBond(ctx, token).CurrentReserve.Add(amount...))
 	return nil
 }
 
 func (k Keeper) WithdrawReserve(ctx sdk.Context, token string,
-	to sdk.AccAddress, amount sdk.Coins) sdk.Error {
+	to sdk.AccAddress, amount sdk.Coins) error {
 
 	// Send tokens from bonds reserve account
 	err := k.SupplyKeeper.SendCoinsFromModuleToAccount(
@@ -148,4 +146,14 @@ func (k Keeper) SetBondState(ctx sdk.Context, token string, newState string) {
 		sdk.NewAttribute(types.AttributeKeyOldState, previousState),
 		sdk.NewAttribute(types.AttributeKeyNewState, newState),
 	))
+}
+
+func (k Keeper) ReservedBondToken(ctx sdk.Context, bondToken string) bool {
+	reservedBondTokens := k.GetParams(ctx).ReservedBondTokens
+	for _, rbt := range reservedBondTokens {
+		if bondToken == rbt {
+			return true
+		}
+	}
+	return false
 }

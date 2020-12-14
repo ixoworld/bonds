@@ -3,9 +3,12 @@ package cli
 import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/ixoworld/bonds/x/bonds/internal/keeper"
 	"github.com/ixoworld/bonds/x/bonds/internal/types"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
@@ -20,7 +23,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	bondsQueryCmd.AddCommand(client.GetCommands(
+	bondsQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdBonds(storeKey, cdc),
 		GetCmdBond(storeKey, cdc),
 		GetCmdBatch(storeKey, cdc),
@@ -31,6 +34,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdBuyPrice(storeKey, cdc),
 		GetCmdSellReturn(storeKey, cdc),
 		GetCmdSwapReturn(storeKey, cdc),
+		GetCmdQueryParams(cdc),
 	)...)
 
 	return bondsQueryCmd
@@ -306,6 +310,33 @@ func GetCmdSwapReturn(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			var out types.QuerySwapReturn
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
+		},
+	}
+}
+
+// GetCmdQueryParams implements a command to fetch bonds parameters.
+func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "params",
+		Short: "Query the current bonds parameters",
+		Args:  cobra.NoArgs,
+		Long: strings.TrimSpace(`Query genesis parameters for the bonds module:
+
+$ <appcli> query bonds params
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s",
+				types.QuerierRoute, keeper.QueryParams)
+			res, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			cdc.MustUnmarshalJSON(res, &params)
+			return cliCtx.PrintOutput(params)
 		},
 	}
 }

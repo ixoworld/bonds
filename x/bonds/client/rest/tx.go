@@ -3,6 +3,7 @@ package rest
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/gorilla/mux"
@@ -13,13 +14,13 @@ import (
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/bonds/create_bond", createBondHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/bonds/edit_bond", editBondHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/bonds/buy", buyHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/bonds/sell", sellHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/bonds/swap", swapHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/bonds/make_outcome_payment", makeOutcomePaymentHandler(cliCtx)).Methods("POST")
-	r.HandleFunc("/bonds/withdraw_share", withdrawShareHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/create_bond", createBondRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/edit_bond", editBondRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/buy", buyRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/sell", sellRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/swap", swapRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/make_outcome_payment", makeOutcomePaymentRequestHandler(cliCtx)).Methods("POST")
+	r.HandleFunc("/bonds/withdraw_share", withdrawShareRequestHandler(cliCtx)).Methods("POST")
 }
 
 type createBondReq struct {
@@ -43,7 +44,7 @@ type createBondReq struct {
 	OutcomePayment         string       `json:"outcome_payment" yaml:"outcome_payment"`
 }
 
-func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func createBondRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req createBondReq
 
@@ -76,7 +77,7 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// Parse tx fee percentage
 		txFeePercentageDec, err := sdk.NewDecFromStr(req.TxFeePercentage)
 		if err != nil {
-			err = types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "tx fee percentage")
+			err = sdkerrors.Wrap(types.ErrArgumentMissingOrNonFloat, "tx fee percentage")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -84,7 +85,7 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// Parse exit fee percentage
 		exitFeePercentageDec, err := sdk.NewDecFromStr(req.ExitFeePercentage)
 		if err != nil {
-			err = types.ErrArgumentMissingOrNonFloat(types.DefaultCodespace, "exit fee percentage")
+			err = sdkerrors.Wrap(types.ErrArgumentMissingOrNonFloat, "exit fee percentage")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -132,7 +133,7 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		} else if allowSellsStrLower == "false" {
 			allowSells = false
 		} else {
-			err := types.ErrArgumentMissingOrNonBoolean(types.DefaultCodespace, "allow_sells")
+			err := sdkerrors.Wrap(types.ErrArgumentMissingOrNonBoolean, "allow_sells")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -147,7 +148,7 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// Parse batch blocks
 		batchBlocks, err2 := sdk.ParseUint(req.BatchBlocks)
 		if err2 != nil {
-			err := types.ErrArgumentMissingOrNonUInteger(types.DefaultCodespace, "max batch blocks")
+			err := sdkerrors.Wrap(types.ErrArgumentMissingOrNonUInteger, "max batch blocks")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -169,7 +170,7 @@ func createBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-type editBondReq struct {
+type editBondRequestReq struct {
 	BaseReq                rest.BaseReq `json:"base_req" yaml:"base_req"`
 	Token                  string       `json:"token" yaml:"token"`
 	Name                   string       `json:"name" yaml:"name"`
@@ -180,9 +181,9 @@ type editBondReq struct {
 	Signers                string       `json:"signers" yaml:"signers"`
 }
 
-func editBondHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func editBondRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req editBondReq
+		var req editBondRequestReq
 
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
@@ -222,7 +223,7 @@ type buyReq struct {
 	MaxPrices  string       `json:"max_prices" yaml:"max_prices"`
 }
 
-func buyHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func buyRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req buyReq
 
@@ -265,7 +266,7 @@ type sellReq struct {
 	BondAmount string       `json:"bond_amount" yaml:"bond_amount"`
 }
 
-func sellHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func sellRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req sellReq
 
@@ -304,7 +305,7 @@ type swapReq struct {
 	ToToken    string       `json:"to_token" yaml:"to_token"`
 }
 
-func swapHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func swapRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req swapReq
 
@@ -341,7 +342,7 @@ type makeOutcomePaymentReq struct {
 	BondToken string       `json:"bond_token" yaml:"bond_token"`
 }
 
-func makeOutcomePaymentHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func makeOutcomePaymentRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req makeOutcomePaymentReq
 
@@ -371,7 +372,7 @@ type withdrawShareReq struct {
 	BondToken string       `json:"bond_token" yaml:"bond_token"`
 }
 
-func withdrawShareHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func withdrawShareRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req withdrawShareReq
 

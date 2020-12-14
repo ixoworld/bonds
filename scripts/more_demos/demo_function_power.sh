@@ -17,13 +17,13 @@ wait() {
 tx_from_m() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from miguel --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 tx_from_f() {
   cmd=$1
   shift
-  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
+  yes $PASSWORD | bondscli tx bonds "$cmd" --from francesco --keyring-backend=test -y --broadcast-mode block --gas-prices="$GAS_PRICES" "$@"
 }
 
 RET=$(bondscli status 2>&1)
@@ -33,10 +33,10 @@ fi
 
 PASSWORD="12345678"
 GAS_PRICES="0.025stake"
-MIGUEL=$(yes $PASSWORD | bondscli keys show miguel -a)
-FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco -a)
-SHAUN=$(yes $PASSWORD | bondscli keys show shaun -a)
-FEE=$(yes $PASSWORD | bondscli keys show fee -a)
+MIGUEL=$(yes $PASSWORD | bondscli keys show miguel --keyring-backend=test -a)
+FRANCESCO=$(yes $PASSWORD | bondscli keys show francesco --keyring-backend=test -a)
+SHAUN=$(yes $PASSWORD | bondscli keys show shaun --keyring-backend=test -a)
+FEE=$(yes $PASSWORD | bondscli keys show fee --keyring-backend=test -a)
 
 echo "Creating bond..."
 tx_from_m create-bond \
@@ -57,24 +57,24 @@ tx_from_m create-bond \
   --signers="$MIGUEL" \
   --batch-blocks=1
 echo "Created bond..."
-bondscli query bonds bond abc
+bondscli q bonds bond abc
 
 echo "Miguel buys 10abc..."
 tx_from_m buy 10abc 1000000res
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco buys 10abc..."
 tx_from_f buy 10abc 1000000res
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"
 
 echo "Miguel sells 10abc..."
 tx_from_m sell 10abc
 echo "Miguel's account..."
-bondscli query auth account "$MIGUEL"
+bondscli q auth account "$MIGUEL"
 
 echo "Francesco sells 10abc..."
 tx_from_f sell 10abc
 echo "Francesco's account..."
-bondscli query auth account "$FRANCESCO"
+bondscli q auth account "$FRANCESCO"

@@ -53,7 +53,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	batch := types.NewBatch(bond.Token, bond.BatchBlocks)
 
 	genesisState = bonds.NewGenesisState(
-		[]types.Bond{bond}, []types.Batch{batch})
+		[]types.Bond{bond}, []types.Batch{batch}, types.DefaultParams())
 
 	bonds.InitGenesis(ctx, app.BondsKeeper, genesisState)
 
