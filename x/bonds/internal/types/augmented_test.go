@@ -117,9 +117,9 @@ func TestRationalPower(t *testing.T) {
 		expectedYStr := fmt.Sprintf("%.5f",
 			math.Pow(tc.xFloat, float64(tc.a)/float64(tc.b)))
 
-		temp, err := ApproxRoot(tc.x, tc.b)
+		temp, err := tc.x.ApproxRoot(tc.b)
 		require.Nil(t, err)
-		y := Power(temp, tc.a)
+		y := temp.Power(tc.a)
 
 		y = sdk.NewDecFromInt(
 			y.MulInt64(100000).RoundInt()).QuoInt64(100000)
