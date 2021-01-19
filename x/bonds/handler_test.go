@@ -64,7 +64,7 @@ func TestCreateValidAugmentedBondHatchState(t *testing.T) {
 
 	R0 := d0.Mul(sdk.OneDec().Sub(theta))
 	S0 := d0.Quo(p0)
-	V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
+	V0 := types.Invariant(R0, S0, kappa)
 
 	require.Equal(t, R0, paramsMap["R0"])
 	require.Equal(t, S0, paramsMap["S0"])

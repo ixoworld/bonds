@@ -42,7 +42,7 @@ func TestExample1(t *testing.T) {
 	R0 := d0.Mul(sdk.OneDec().Sub(theta)) // initial reserve (raise minus funding)
 	S0 := d0.Quo(p0)                      // initial supply
 
-	kappa := int64(3)              // price exponent
+	kappa := sdk.NewDec(3)         // price exponent
 	V0 := Invariant(R0, S0, kappa) // invariant
 
 	expectedR0 := sdk.MustNewDecFromStr("300.0")
@@ -78,15 +78,15 @@ func TestReserve(t *testing.T) {
 	decimals := sdk.NewDec(100000) // 10^5
 	testCases := []struct {
 		reserve sdk.Dec
-		kappa   int64
+		kappa   sdk.Dec
 		V0      sdk.Dec
 	}{
-		{sdk.MustNewDecFromStr("0.05"), 1, sdk.MustNewDecFromStr("12345678.12345678")},
-		{sdk.MustNewDecFromStr("5"), 2, sdk.MustNewDecFromStr("123456.123456")},
-		{sdk.MustNewDecFromStr("500.500"), 3, sdk.MustNewDecFromStr("50000.50000")},
-		{sdk.MustNewDecFromStr("50000.50000"), 4, sdk.MustNewDecFromStr("500.500")},
-		{sdk.MustNewDecFromStr("123456.123456"), 5, sdk.MustNewDecFromStr("5")},
-		{sdk.MustNewDecFromStr("12345678.12345678"), 6, sdk.MustNewDecFromStr("0.05")},
+		{sdk.MustNewDecFromStr("0.05"), sdk.NewDec(1), sdk.MustNewDecFromStr("12345678.12345678")},
+		{sdk.MustNewDecFromStr("5"), sdk.NewDec(2), sdk.MustNewDecFromStr("123456.123456")},
+		{sdk.MustNewDecFromStr("500.500"), sdk.NewDec(3), sdk.MustNewDecFromStr("50000.50000")},
+		{sdk.MustNewDecFromStr("50000.50000"), sdk.NewDec(4), sdk.MustNewDecFromStr("500.500")},
+		{sdk.MustNewDecFromStr("123456.123456"), sdk.NewDec(5), sdk.MustNewDecFromStr("5")},
+		{sdk.MustNewDecFromStr("12345678.12345678"), sdk.NewDec(6), sdk.MustNewDecFromStr("0.05")},
 	}
 	for _, tc := range testCases {
 		calculatedSupply := Supply(tc.reserve, tc.kappa, tc.V0)

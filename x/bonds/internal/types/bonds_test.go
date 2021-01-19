@@ -204,7 +204,7 @@ func TestGetPricesAtSupply(t *testing.T) {
 	baseMap := functionParametersAugmented().AsMap()
 	//R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
 	S0 := baseMap["d0"].Quo(baseMap["p0"])
-	//V0 := Invariant(R0, S0, baseMap["kappa"].TruncateInt64())
+	//V0 := Invariant(R0, S0, baseMap["kappa"])
 
 	testCases := []struct {
 		functionType      string
@@ -403,7 +403,7 @@ func TestGetPricesToMint(t *testing.T) {
 	baseMap := functionParametersAugmented().AsMap()
 	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
 	S0 := baseMap["d0"].Quo(baseMap["p0"])
-	kappa := baseMap["kappa"].TruncateInt64()
+	kappa := baseMap["kappa"]
 	V0 := Invariant(R0, S0, kappa)
 	augmentedSupplyForReserve10000 :=
 		Supply(sdk.NewDec(tenK), kappa, V0).Ceil().TruncateInt()
@@ -489,7 +489,7 @@ func TestGetReturnsForBurn(t *testing.T) {
 	baseMap := functionParametersAugmented().AsMap()
 	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
 	S0 := baseMap["d0"].Quo(baseMap["p0"])
-	kappa := baseMap["kappa"].TruncateInt64()
+	kappa := baseMap["kappa"]
 	V0 := Invariant(R0, S0, kappa)
 	augmentedSupplyForReserve10000 :=
 		Supply(sdk.NewDec(tenK), kappa, V0).Ceil().TruncateInt()

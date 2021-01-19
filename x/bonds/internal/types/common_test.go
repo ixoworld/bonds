@@ -63,7 +63,7 @@ func functionParametersAugmentedFull() FunctionParams {
 
 	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
 	S0 := baseMap["d0"].Quo(baseMap["p0"])
-	V0 := Invariant(R0, S0, baseMap["kappa"].TruncateInt64())
+	V0 := Invariant(R0, S0, baseMap["kappa"])
 	extras := FunctionParams{
 		NewFunctionParam("R0", R0),
 		NewFunctionParam("S0", S0),
