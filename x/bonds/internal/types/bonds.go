@@ -260,8 +260,7 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err err
 		m := args["m"]
 		n := args["n"]
 		c := args["c"]
-		result = bond.GetNewReserveDecCoins(
-			ApproxPower(x, n).Mul(m).Add(c))
+		result = bond.GetNewReserveDecCoins(ApproxPower(x, n).Mul(m).Add(c))
 	case SigmoidFunction:
 		a := args["a"]
 		b := args["b"]
