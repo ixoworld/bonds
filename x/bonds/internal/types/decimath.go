@@ -429,10 +429,17 @@ func ln(x sdk.Uint, accuracy uint) sdk.Uint {
     Thus, we avoid passing argument y < 1 to ln(y), and z < 0 to exp(z).   */
 func pow(base sdk.Uint, x sdk.Uint) (power sdk.Uint) {
 	if base.IsZero() {
-		return ZeroUint
-	} else if base.GTE(TEN[18]) {
+		if x.IsZero() {
+			panic("Zero raised to zero is undefined")
+		}
+		return ZeroUint // 0^p = 0 (for p > 0)
+	} else if x.IsZero() {
+		return TEN[18] // b^0 = 1
+	} else if base.Equal(TEN[18]) {
+		return TEN[18] // 1^x = 1
+	} else if base.GT(TEN[18]) {
 		return exp(decMul18(x, ln(base, 70)))
-	} else {
+	} else { // base.LT(TEN[18])
 		exponent := decMul18(x, ln(decDiv18(TEN[18], base), 70))
 		return decDiv18(TEN[18], exp(exponent))
 	}
