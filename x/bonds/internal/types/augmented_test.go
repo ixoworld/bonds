@@ -47,7 +47,7 @@ func TestExample1(t *testing.T) {
 
 	expectedR0 := sdk.MustNewDecFromStr("300.0")
 	expectedS0 := sdk.MustNewDecFromStr("50000.0")
-	expectedV0 := sdk.MustNewDecFromStr("416666666666.666666666666666667")
+	expectedV0 := sdk.MustNewDecFromStr("416666666666.666667491283234022")
 
 	require.Equal(t, expectedR0, R0)
 	require.Equal(t, expectedS0, S0)
@@ -75,7 +75,7 @@ func TestExample1(t *testing.T) {
 }
 
 func TestReserve(t *testing.T) {
-	decimals := sdk.NewDec(100000) // 10^5
+	decimals := sdk.NewDec(1000000000) // 1e9
 	testCases := []struct {
 		reserve sdk.Dec
 		kappa   sdk.Dec
@@ -92,10 +92,11 @@ func TestReserve(t *testing.T) {
 		calculatedSupply := Supply(tc.reserve, tc.kappa, tc.V0)
 		calculatedReserve := Reserve(calculatedSupply, tc.kappa, tc.V0)
 
-		tc.reserve = tc.reserve.Mul(decimals).TruncateDec()
-		calculatedReserve = calculatedReserve.Mul(decimals).TruncateDec()
+		// Keep 9DP (multiply by 1e9) and round, to ignore any errors beyond 9DP
+		expectedReserveInt := tc.reserve.Mul(decimals).RoundInt64()
+		calculatedReserveInt := calculatedReserve.Mul(decimals).RoundInt64()
 
-		require.Equal(t, tc.reserve, calculatedReserve)
+		require.Equal(t, expectedReserveInt, calculatedReserveInt)
 	}
 }
 

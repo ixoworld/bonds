@@ -42,6 +42,13 @@ func functionParametersPower() FunctionParams {
 		NewFunctionParam("c", sdk.NewDec(100))}
 }
 
+func functionParametersPower2() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("m", sdk.NewDec(12)),
+		NewFunctionParam("n", sdk.NewDecWithPrec(25, 1)),
+		NewFunctionParam("c", sdk.NewDec(100))}
+}
+
 func functionParametersSigmoid() FunctionParams {
 	return FunctionParams{
 		NewFunctionParam("a", sdk.NewDec(3)),
