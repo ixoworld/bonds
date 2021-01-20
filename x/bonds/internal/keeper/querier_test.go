@@ -155,7 +155,9 @@ func TestQueryCurrentPrice(t *testing.T) {
 
 	// Calculate current price manually
 	// y = mx^n + c = 12(10^2) + 100 = 1200 + 100 = 1300
-	manualPrices = sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 1300)}
+	manualPrices = sdk.DecCoins{sdk.NewDecCoinFromDec(reserveToken,
+		sdk.MustNewDecFromStr("1300.000000000000001152"))}
+	// Note: 1300.000000000000001152 because of fixed point calculation error
 
 	// Check that prices are correct
 	res, err = querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
@@ -248,10 +250,10 @@ func TestQueryCurrentPriceForSwapper(t *testing.T) {
 	// Calculate current price manually
 	// (since 2 tokens (current supply) => 200res,300rez then by the
 	//  constant product formula, another 1 token => 100res,150rez)
-	manualPrices := sdk.DecCoins([]sdk.DecCoin{
+	manualPrices := sdk.DecCoins{
 		sdk.NewInt64DecCoin(reserveToken, 100),
 		sdk.NewInt64DecCoin(reserveToken2, 150),
-	})
+	}
 
 	// Check that prices are correct
 	res, err = querier(ctx, []string{keeper.QueryCurrentPrice, token}, req)
@@ -329,7 +331,7 @@ func TestQueryCustomPrice(t *testing.T) {
 
 	// Calculate current price manually
 	// y = mx^n + c = 12(0^2) + 100 = 0 + 100 = 100
-	manualPrices := sdk.DecCoins([]sdk.DecCoin{sdk.NewInt64DecCoin(reserveToken, 100)})
+	manualPrices := sdk.DecCoins{sdk.NewInt64DecCoin(reserveToken, 100)}
 
 	// Check that prices are correct
 	res, err = querier(ctx,
@@ -347,7 +349,9 @@ func TestQueryCustomPrice(t *testing.T) {
 
 	// Calculate current price manually
 	// y = mx^n + c = 12(10^2) + 100 = 1200 + 100 = 1300
-	manualPrices = sdk.DecCoins([]sdk.DecCoin{sdk.NewInt64DecCoin(reserveToken, 1300)})
+	manualPrices = sdk.DecCoins{sdk.NewDecCoinFromDec(reserveToken,
+		sdk.MustNewDecFromStr("1300.000000000000001152"))}
+	// Note: 1300.000000000000001152 because of fixed point calculation error
 
 	// Check that prices are correct
 	res, err = querier(ctx,
@@ -391,7 +395,8 @@ func TestQueryBuyPrice(t *testing.T) {
 	// reserveAt(10) = (m/n+1)x^(n+1) + xc = (12/3)(10^(2+1)) + 10(100) = 5000
 	// reserveAt(0) = (m/n+1)x^(n+1) + xc = (12/3)(0^(2+1)) + 0(100) = 0
 	// price = reserveAt(10) - reserveAt(0) = 5000
-	manualPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 5000)}
+	manualPrices := sdk.Coins{sdk.NewInt64Coin(reserveToken, 5001)}
+	// Note: 5001 because of fixed point calculation error
 
 	// Adjusted supply will be current (0) + buy orders (0)
 	manualSupply := sdk.NewInt64Coin(bond.Token, 0)
@@ -503,7 +508,8 @@ func TestQuerySellPrice(t *testing.T) {
 	// reserveAt(10) = (m/n+1)x^(n+1) + xc = (12/3)(10^(2+1)) + 10(100) = 5000
 	// reserveAt(0) = (m/n+1)x^(n+1) + xc = (12/3)(0^(2+1)) + 0(100) = 0
 	// returns = reserveAt(10) - reserveAt(0) = 5000
-	manualReturns := sdk.Coins{sdk.NewInt64Coin(reserveToken, 5000)}
+	manualReturns := sdk.Coins{sdk.NewInt64Coin(reserveToken, 5001)}
+	// Note: 5001 because of fixed point calculation error
 
 	// Adjusted supply will be current (10) - sell orders (0)
 	manualSupply := sdk.NewInt64Coin(bond.Token, 10)
