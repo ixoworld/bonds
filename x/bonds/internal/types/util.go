@@ -24,7 +24,7 @@ func ApproxPower(d sdk.Dec, power sdk.Dec) sdk.Dec {
 	ansUint := pow(dUint, powerUint)
 
 	// Convert back to Dec
-	return sdk.MustNewDecFromStr(ansUint.String()).Quo(TEN18DEC)
+	return sdk.NewDecFromBigInt(ansUint.BigInt()).Quo(TEN18DEC)
 }
 
 func RoundReservePrice(p sdk.DecCoin) sdk.Coin {

@@ -338,9 +338,9 @@ func TestReserveAtSupply(t *testing.T) {
 		{SigmoidFunction, functionParametersSigmoid(), maxInt64,
 			"55340232221128654821.839361642422012277"},
 		{SigmoidFunction, functionParametersSigmoidHuge(), sdk.NewInt(1),
-			"13043817825332782203.541084882741903736"},
+			"13043817825332782212.764456919596679543"},
 		{SigmoidFunction, functionParametersSigmoidHuge(), maxInt64,
-			"170141183460469231755529249599034675743.085388962154856462"},
+			"170141183460469231755529249599034675752.308760999009632269"},
 		// Augmented
 		{AugmentedFunction, functionParametersAugmentedFull(), sdk.NewInt(1),
 			"0.0000000000024"},
@@ -507,7 +507,7 @@ func TestGetReturnsForBurn(t *testing.T) {
 	}{
 		// Power
 		{PowerFunction, functionParametersPower(), multitokenReserve(),
-			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "127.999999999999999996"},
+			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "128"},
 		// Sigmoid
 		{SigmoidFunction, functionParametersSigmoid(), multitokenReserve(),
 			reserveBalances232, sdk.NewInt(2), sdk.OneInt(), "231.927741663925372834"},
