@@ -193,7 +193,7 @@ func chopAndRound(num sdk.Uint, digit sdk.Uint, TENpositionOfChop sdk.Uint) (cho
 
 // return the floor of a fixed-point 20DP number
 func floor(x sdk.Uint) (num sdk.Uint) {
-	num = x.Sub((x.Mod(TEN[20])))
+	num = x.Sub(x.Mod(TEN[20]))
 	return num
 }
 
