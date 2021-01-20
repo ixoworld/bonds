@@ -49,19 +49,6 @@ var (
 		sdk.NewUintFromString("1000000000000000000000000000000000000000"), // 1e39
 	}
 
-	TEN38 = sdk.NewUintFromString("100000000000000000000000000000000000000")
-	TEN30 = sdk.NewUintFromString("1000000000000000000000000000000")
-	TEN20 = sdk.NewUintFromString("100000000000000000000")
-	TEN19 = sdk.NewUintFromString("10000000000000000000")
-	TEN18 = TEN[18]
-	TEN17 = TEN[17]
-	TEN12 = TEN[12]
-	TEN11 = TEN[11]
-	TEN10 = TEN[10]
-	TEN9  = TEN[9]
-	TEN8  = TEN[8]
-	TEN7  = TEN[7]
-
 	// Abbreviation: DP stands for 'Decimal Places'
 
 	// ln(2) - used in ln(x). 30 DP.
@@ -148,12 +135,12 @@ func add(a sdk.Uint, b sdk.Uint) sdk.Uint {
 // 18 Decimal places
 func decMul18(x sdk.Uint, y sdk.Uint) (decProd sdk.Uint) {
 	prod_xy := mul(x, y)
-	decProd = add(prod_xy, TEN18).Quo(TEN18)
+	decProd = add(prod_xy, TEN[18]).Quo(TEN[18])
 	return
 }
 
 func decDiv18(x sdk.Uint, y sdk.Uint) (decQuotient sdk.Uint) {
-	prod_xTEN18 := mul(x, TEN18)
+	prod_xTEN18 := mul(x, TEN[18])
 	decQuotient = add(prod_xTEN18, y.Quo(TwoUint)).Quo(y)
 	return
 }
@@ -161,37 +148,37 @@ func decDiv18(x sdk.Uint, y sdk.Uint) (decQuotient sdk.Uint) {
 // 30 Decimal places
 func decMul30(x sdk.Uint, y sdk.Uint) (decProd sdk.Uint) {
 	prod_xy := mul(x, y)
-	decProd = add(prod_xy, TEN30.Quo(TwoUint)).Quo(TEN30)
+	decProd = add(prod_xy, TEN[30].Quo(TwoUint)).Quo(TEN[30])
 	return
 }
 
 // 38 Decimal places
 func decMul38(x sdk.Uint, y sdk.Uint) (decProd sdk.Uint) {
 	prod_xy := mul(x, y)
-	decProd = add(prod_xy, TEN38.Quo(TwoUint)).Quo(TEN38)
+	decProd = add(prod_xy, TEN[38].Quo(TwoUint)).Quo(TEN[38])
 	return
 }
 
 /****** HELPER FUNCTIONS ******/
 
 func convert38To18DP(x sdk.Uint) (y sdk.Uint) {
-	digit := (x.Mod(TEN20)).Quo(TEN19) // grab 20th digit from-right
-	return chopAndRound(x, digit, TEN20)
+	digit := (x.Mod(TEN[20])).Quo(TEN[19]) // grab 20th digit from-right
+	return chopAndRound(x, digit, TEN[20])
 }
 
 func convert38To30DP(x sdk.Uint) (y sdk.Uint) {
-	digit := (x.Mod(TEN8)).Quo(TEN7) // grab 8th digit from-right
-	return chopAndRound(x, digit, TEN8)
+	digit := (x.Mod(TEN[8])).Quo(TEN[7]) // grab 8th digit from-right
+	return chopAndRound(x, digit, TEN[8])
 }
 
 func convert30To20DP(x sdk.Uint) (y sdk.Uint) {
-	digit := (x.Mod(TEN10)).Quo(TEN9) // grab 10th digit from-right
-	return chopAndRound(x, digit, TEN10)
+	digit := (x.Mod(TEN[10])).Quo(TEN[9]) // grab 10th digit from-right
+	return chopAndRound(x, digit, TEN[10])
 }
 
 func convert30To18DP(x sdk.Uint) (y sdk.Uint) {
-	digit := (x.Mod(TEN12)).Quo(TEN11) // grab 12th digit from-right
-	return chopAndRound(x, digit, TEN12)
+	digit := (x.Mod(TEN[12])).Quo(TEN[11]) // grab 12th digit from-right
+	return chopAndRound(x, digit, TEN[12])
 }
 
 // Chop the last digits, and round the resulting number
@@ -206,7 +193,7 @@ func chopAndRound(num sdk.Uint, digit sdk.Uint, TENpositionOfChop sdk.Uint) (cho
 
 // return the floor of a fixed-point 20DP number
 func floor(x sdk.Uint) (num sdk.Uint) {
-	num = x.Sub((x.Mod(TEN20)))
+	num = x.Sub((x.Mod(TEN[20])))
 	return num
 }
 
@@ -248,10 +235,10 @@ func powBySquare(x sdk.Uint, n sdk.Uint) sdk.Uint {
 // b^x - fixed-point 18 DP base, integer exponent
 func powBySquare18(base sdk.Uint, n sdk.Uint) sdk.Uint {
 	if n.IsZero() {
-		return TEN18
+		return TEN[18]
 	}
 
-	y := TEN18
+	y := TEN[18]
 
 	for n.GT(OneUint) {
 		if n.Mod(TwoUint).IsZero() {
@@ -269,10 +256,10 @@ func powBySquare18(base sdk.Uint, n sdk.Uint) sdk.Uint {
 // b^x - fixed-point 38 DP base, integer exponent n
 func powBySquare38(base sdk.Uint, n sdk.Uint) sdk.Uint {
 	if n.IsZero() {
-		return TEN38
+		return TEN[38]
 	}
 
-	y := TEN38
+	y := TEN[38]
 
 	for n.GT(OneUint) {
 		if n.Mod(TwoUint).IsZero() {
@@ -301,20 +288,20 @@ func exp(x sdk.Uint) (num sdk.Uint) {
 	var decExponent sdk.Uint // 20 DP
 	var coefficient sdk.Uint // 38 DP
 
-	x = mul(x, TEN12) // make x 30DP
+	x = mul(x, TEN[12]) // make x 30DP
 	x = decMul30(ONE_OVER_LN2, x)
 	x = convert30To20DP(x)
 
-	if x.LT(TEN20) && x.GTE(TwoUint) {
+	if x.LT(TEN[20]) && x.GTE(TwoUint) {
 		// if x < 1, do: (2^-1) * 2^(1 + x)
-		decExponent = add(TEN20, x)
-		coefficient = TEN38.Quo(TwoUint)
+		decExponent = add(TEN[20], x)
+		coefficient = TEN[38].Quo(TwoUint)
 		num = decMul38(coefficient, pow2(decExponent))
 	} else {
 		// Use identity B)
-		intExponent = floor(x).Sub(TEN20)
+		intExponent = floor(x).Sub(TEN[20])
 		decExponent = x.Sub(intExponent) // decimal exponent in range [1,2[
-		coefficient = powBySquare(TwoUint, div(intExponent, TEN20))
+		coefficient = powBySquare(TwoUint, div(intExponent, TEN[20]))
 		num = mul(coefficient, pow2(decExponent)) //  use normal mul to avoid overflow, as coeff. is an int
 	}
 
@@ -324,15 +311,15 @@ func exp(x sdk.Uint) (num sdk.Uint) {
 // Base-2 logarithm function, for x in range [1,2[. For use in ln(x). Input 18 DP, output 30 DP.
 func log_2(x sdk.Uint, accuracy uint) sdk.Uint {
 	_onlyLUT1andLUT2AreSet()
-	requireThat(x.GTE(TEN18) && x.LT(TEN18.Mul(TwoUint)), "input x must be within range [1,2[")
-	prod := mul(x, TEN20) // make x 38 DP
-	newProd := TEN38
+	requireThat(x.GTE(TEN[18]) && x.LT(TEN[18].Mul(TwoUint)), "input x must be within range [1,2[")
+	prod := mul(x, TEN[20]) // make x 38 DP
+	newProd := TEN[38]
 	output := ZeroUint
 
 	for i := uint(1); i <= accuracy; i++ {
 		newProd = decMul38(table_log_2[i], prod)
 
-		if newProd.GTE(TEN38) {
+		if newProd.GTE(TEN[38]) {
 			prod = newProd
 			output = output.Add(table2_log_2[i])
 		}
@@ -344,10 +331,10 @@ func log_2(x sdk.Uint, accuracy uint) sdk.Uint {
 func pow2(x sdk.Uint) sdk.Uint {
 	_onlyLUT3isSet()
 
-	requireThat(x.GTE(TEN20) && x.LT(TEN20.Mul(TwoUint)), "input x must be within range [1,2[")
-	x_38dp := x.Mul(TEN18)
-	prod := TwoUint.Mul(TEN38)
-	fractPart := x_38dp.Mod(TEN38)
+	requireThat(x.GTE(TEN[20]) && x.LT(TEN[20].Mul(TwoUint)), "input x must be within range [1,2[")
+	x_38dp := x.Mul(TEN[18])
+	prod := TwoUint.Mul(TEN[38])
+	fractPart := x_38dp.Mod(TEN[38])
 	digitsLength := countDigits(fractPart)
 
 	// loop backwards through mantissa digits - multiply each by the Lookup-table value
@@ -377,56 +364,56 @@ func pow2(x sdk.Uint) sdk.Uint {
    The algorithm finds q and y by repeated division by powers-of-two.
 */
 func ln(x sdk.Uint, accuracy uint) sdk.Uint {
-	requireThat(x.GTE(TEN18), "input must be >= 1")
+	requireThat(x.GTE(TEN[18]), "input must be >= 1")
 	count := ZeroUint // track
-	TWO := mul(TEN18, TwoUint)
+	TWO := mul(TEN[18], TwoUint)
 
 	/* Calculate q. Use branches to divide by powers-of-two, until output is in range [1,2[. Branch approach is more performant
 	   than simple successive division by 2. As max input of ln(x) is ~= 2^132, starting division at 2^30 yields sufficiently few operations for large x. */
 	for x.GTE(TWO) {
-		if x.GTE(sdk.NewUint(1073741824).Mul(TEN18)) { // start at 2^30
-			x = decDiv18(x, sdk.NewUint(1073741824).Mul(TEN18))
+		if x.GTE(sdk.NewUint(1073741824).Mul(TEN[18])) { // start at 2^30
+			x = decDiv18(x, sdk.NewUint(1073741824).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(30))
-		} else if x.GTE(sdk.NewUint(1048576).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(1048576).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(1048576).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(1048576).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(20))
-		} else if x.GTE(sdk.NewUint(32768).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(32768).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(32768).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(32768).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(15))
-		} else if x.GTE(sdk.NewUint(1024).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(1024).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(1024).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(1024).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(10))
-		} else if x.GTE(sdk.NewUint(512).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(512).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(512).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(512).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(9))
-		} else if x.GTE(sdk.NewUint(256).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(256).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(256).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(256).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(8))
-		} else if x.GTE(sdk.NewUint(128).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(128).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(128).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(128).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(7))
-		} else if x.GTE(sdk.NewUint(64).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(64).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(64).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(64).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(6))
-		} else if x.GTE(sdk.NewUint(32).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(32).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(32).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(32).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(5))
-		} else if x.GTE(sdk.NewUint(16).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(16).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(16).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(16).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(4))
-		} else if x.GTE(sdk.NewUint(8).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(8).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(8).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(8).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(3))
-		} else if x.GTE(sdk.NewUint(4).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(4).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(4).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(4).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(2))
-		} else if x.GTE(sdk.NewUint(2).Mul(TEN18)) {
-			x = decDiv18(x, sdk.NewUint(2).Mul(TEN18))
+		} else if x.GTE(sdk.NewUint(2).Mul(TEN[18])) {
+			x = decDiv18(x, sdk.NewUint(2).Mul(TEN[18]))
 			count = count.Add(sdk.NewUint(1))
 		}
 	}
 
-	q := count.Mul(TEN30)
+	q := count.Mul(TEN[30])
 	output := decMul30(LN2, add(q, log_2(x, accuracy)))
 
 	return convert30To18DP(output)
@@ -443,23 +430,23 @@ func ln(x sdk.Uint, accuracy uint) sdk.Uint {
 func pow(base sdk.Uint, x sdk.Uint) (power sdk.Uint) {
 	if base.IsZero() {
 		return ZeroUint
-	} else if base.GTE(TEN18) {
+	} else if base.GTE(TEN[18]) {
 		return exp(decMul18(x, ln(base, 70)))
 	} else {
-		exponent := decMul18(x, ln(decDiv18(TEN18, base), 70))
-		return decDiv18(TEN18, exp(exponent))
+		exponent := decMul18(x, ln(decDiv18(TEN[18], base), 70))
+		return decDiv18(TEN[18], exp(exponent))
 	}
 }
 
 // Taylor series implementation of exp(x) - lower accuracy and higher gas cost than exp(x). 18 DP input and output.
 func exp_taylor(x sdk.Uint) sdk.Uint {
 	tolerance := OneUint
-	term := TEN18
-	sum := TEN18
+	term := TEN[18]
+	sum := TEN[18]
 	i := ZeroUint
 
 	for term.GT(tolerance) {
-		i = i.Add(TEN18)
+		i = i.Add(TEN[18])
 		term = decDiv18(decMul18(term, x), i)
 		sum = sum.Add(term)
 	}
