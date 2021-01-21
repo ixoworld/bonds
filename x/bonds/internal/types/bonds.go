@@ -258,19 +258,18 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err err
 	switch bond.FunctionType {
 	case PowerFunction:
 		m := args["m"]
-		n64 := args["n"].TruncateInt64() // enforced by powerParameterRestrictions
+		n := args["n"]
 		c := args["c"]
-		result = bond.GetNewReserveDecCoins(
-			x.Power(uint64(n64)).Mul(m).Add(c))
+		result = bond.GetNewReserveDecCoins(ApproxPower(x, n).Mul(m).Add(c))
 	case SigmoidFunction:
 		a := args["a"]
 		b := args["b"]
 		c := args["c"]
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
-		temp3, err := temp2.ApproxSqrt()
+		temp3, err := ApproxRoot(temp2, sdk.NewDec(2))
 		if err != nil {
-			panic(err) // TODO: consider error handling
+			return nil, err
 		}
 		result = bond.GetNewReserveDecCoins(
 			a.Mul(temp1.Quo(temp3).Add(sdk.OneDec())))
@@ -281,7 +280,7 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err err
 		case HatchState:
 			result = bond.GetNewReserveDecCoins(args["p0"])
 		case OpenState:
-			kappa := args["kappa"].TruncateInt64()
+			kappa := args["kappa"]
 			res := Reserve(x, kappa, args["V0"])
 			// If reserve < 1, default to zero price to avoid calculation issues
 			if res.LT(sdk.OneDec()) {
@@ -294,7 +293,7 @@ func (bond Bond) GetPricesAtSupply(supply sdk.Int) (result sdk.DecCoins, err err
 			panic("unrecognized bond state")
 		}
 	case SwapperFunction:
-		return nil, sdkerrors.Wrap(ErrFunctionNotAvailableForFunctionType, bond.FunctionType)
+		return nil, ErrFunctionNotAvailableForFunctionType
 	default:
 		panic("unrecognized function type")
 	}
@@ -332,9 +331,9 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 	switch bond.FunctionType {
 	case PowerFunction:
 		m := args["m"]
-		n, n64 := args["n"], args["n"].TruncateInt64() // enforced by powerParameterRestrictions
+		n := args["n"]
 		c := args["c"]
-		temp1 := x.Power(uint64(n64 + 1))
+		temp1 := ApproxPower(x, n.Add(sdk.OneDec()))
 		temp2 := temp1.Mul(m).Quo(n.Add(sdk.OneDec()))
 		temp3 := x.Mul(c)
 		result = temp2.Add(temp3)
@@ -344,20 +343,19 @@ func (bond Bond) ReserveAtSupply(supply sdk.Int) (result sdk.Dec) {
 		c := args["c"]
 		temp1 := x.Sub(b)
 		temp2 := temp1.Mul(temp1).Add(c)
-		temp3, err := temp2.ApproxSqrt()
+		temp3, err := ApproxRoot(temp2, sdk.NewDec(2))
 		if err != nil {
-			panic(err) // TODO: consider error handling
+			panic(err) // mathematical problem // TODO: consider returning err
 		}
 		temp5 := a.Mul(temp3.Add(x))
-		approx, err := (b.Mul(b).Add(c)).ApproxSqrt()
+		temp6, err := ApproxRoot(b.Mul(b).Add(c), sdk.NewDec(2))
 		if err != nil {
-			panic(err) // TODO: consider error handling
+			panic(err) // mathematical problem // TODO: consider returning err
 		}
-		constant := a.Mul(approx)
-
+		constant := a.Mul(temp6)
 		result = temp5.Sub(constant)
 	case AugmentedFunction:
-		kappa := args["kappa"].TruncateInt64()
+		kappa := args["kappa"]
 		V0 := args["V0"]
 		result = Reserve(x, kappa, V0)
 	case SwapperFunction:

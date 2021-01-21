@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -41,12 +42,12 @@ func TestExample1(t *testing.T) {
 	R0 := d0.Mul(sdk.OneDec().Sub(theta)) // initial reserve (raise minus funding)
 	S0 := d0.Quo(p0)                      // initial supply
 
-	kappa := int64(3)              // price exponent
+	kappa := sdk.NewDec(3)         // price exponent
 	V0 := Invariant(R0, S0, kappa) // invariant
 
 	expectedR0 := sdk.MustNewDecFromStr("300.0")
 	expectedS0 := sdk.MustNewDecFromStr("50000.0")
-	expectedV0 := sdk.MustNewDecFromStr("416666666666.666666666666666667")
+	expectedV0 := sdk.MustNewDecFromStr("416666666666.666667491283234022")
 
 	require.Equal(t, expectedR0, R0)
 	require.Equal(t, expectedS0, S0)
@@ -74,26 +75,59 @@ func TestExample1(t *testing.T) {
 }
 
 func TestReserve(t *testing.T) {
-	decimals := sdk.NewDec(100000) // 10^5
+	decimals := sdk.NewDec(1000000000) // 1e9
 	testCases := []struct {
 		reserve sdk.Dec
-		kappa   int64
+		kappa   sdk.Dec
 		V0      sdk.Dec
 	}{
-		{sdk.MustNewDecFromStr("0.05"), 1, sdk.MustNewDecFromStr("12345678.12345678")},
-		{sdk.MustNewDecFromStr("5"), 2, sdk.MustNewDecFromStr("123456.123456")},
-		{sdk.MustNewDecFromStr("500.500"), 3, sdk.MustNewDecFromStr("50000.50000")},
-		{sdk.MustNewDecFromStr("50000.50000"), 4, sdk.MustNewDecFromStr("500.500")},
-		{sdk.MustNewDecFromStr("123456.123456"), 5, sdk.MustNewDecFromStr("5")},
-		{sdk.MustNewDecFromStr("12345678.12345678"), 6, sdk.MustNewDecFromStr("0.05")},
+		{sdk.MustNewDecFromStr("0.05"), sdk.NewDec(1), sdk.MustNewDecFromStr("12345678.12345678")},
+		{sdk.MustNewDecFromStr("5"), sdk.NewDec(2), sdk.MustNewDecFromStr("123456.123456")},
+		{sdk.MustNewDecFromStr("500.500"), sdk.NewDec(3), sdk.MustNewDecFromStr("50000.50000")},
+		{sdk.MustNewDecFromStr("50000.50000"), sdk.NewDec(4), sdk.MustNewDecFromStr("500.500")},
+		{sdk.MustNewDecFromStr("123456.123456"), sdk.NewDec(5), sdk.MustNewDecFromStr("5")},
+		{sdk.MustNewDecFromStr("12345678.12345678"), sdk.NewDec(6), sdk.MustNewDecFromStr("0.05")},
 	}
 	for _, tc := range testCases {
 		calculatedSupply := Supply(tc.reserve, tc.kappa, tc.V0)
 		calculatedReserve := Reserve(calculatedSupply, tc.kappa, tc.V0)
 
-		tc.reserve = tc.reserve.Mul(decimals).TruncateDec()
-		calculatedReserve = calculatedReserve.Mul(decimals).TruncateDec()
+		// Keep 9DP (multiply by 1e9) and round, to ignore any errors beyond 9DP
+		expectedReserveInt := tc.reserve.Mul(decimals).RoundInt64()
+		calculatedReserveInt := calculatedReserve.Mul(decimals).RoundInt64()
 
-		require.Equal(t, tc.reserve, calculatedReserve)
+		require.Equal(t, expectedReserveInt, calculatedReserveInt)
+	}
+}
+
+func TestRationalPower(t *testing.T) {
+	testCases := []struct {
+		x      sdk.Dec
+		xFloat float64
+		a      uint64
+		b      uint64
+	}{
+		{sdk.MustNewDecFromStr("5"), 5, 3, 2},
+		{sdk.MustNewDecFromStr("500"), 500, 3, 2},
+		{sdk.MustNewDecFromStr("50000"), 50000, 3, 2},
+		{sdk.MustNewDecFromStr("5000000"), 5000000, 3, 2},
+		{sdk.MustNewDecFromStr("5"), 5, 30, 2},
+		//{sdk.MustNewDecFromStr("500"), 500, 300, 2}, // Int overflow
+	}
+	for _, tc := range testCases {
+		expectedYStr := fmt.Sprintf("%.5f",
+			math.Pow(tc.xFloat, float64(tc.a)/float64(tc.b)))
+
+		temp, err := tc.x.ApproxRoot(tc.b)
+		require.Nil(t, err)
+		y := temp.Power(tc.a)
+
+		y = sdk.NewDecFromInt(
+			y.MulInt64(100000).RoundInt()).QuoInt64(100000)
+		yFlt, err := strconv.ParseFloat(y.String(), 64)
+		require.Nil(t, err)
+		yStr := fmt.Sprintf("%.5f", yFlt)
+
+		require.Equal(t, expectedYStr, yStr)
 	}
 }

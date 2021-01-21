@@ -270,3 +270,29 @@ func TestAccAddressesToString(t *testing.T) {
 		require.Equal(t, tc.out, AccAddressesToString(tc.in))
 	}
 }
+
+func TestApproxPower(t *testing.T) {
+
+	testCases := []struct {
+		in1            string
+		in2            string
+		expectedResult string
+	}{
+		{"0", "5", "0"},
+		{"1", "5", "1"},
+		{"5", "0", "1"},
+		{"1", "0", "1"},
+		{"2", "2", "4.000000000000000001"},
+		{"2", "4", "15.999999999999999989"},
+		{"2.5", "4.6", "67.689926089369764941"},
+		{"4.6", "2.5", "45.383144007439590368"},
+	}
+	for _, tc := range testCases {
+		in1 := sdk.MustNewDecFromStr(tc.in1)
+		in2 := sdk.MustNewDecFromStr(tc.in2)
+		expectedResult := sdk.MustNewDecFromStr(tc.expectedResult)
+
+		actualResult := ApproxPower(in1, in2)
+		require.Equal(t, expectedResult, actualResult)
+	}
+}

@@ -42,6 +42,13 @@ func functionParametersPower() FunctionParams {
 		NewFunctionParam("c", sdk.NewDec(100))}
 }
 
+func functionParametersPower2() FunctionParams {
+	return FunctionParams{
+		NewFunctionParam("m", sdk.NewDec(12)),
+		NewFunctionParam("n", sdk.NewDecWithPrec(25, 1)),
+		NewFunctionParam("c", sdk.NewDec(100))}
+}
+
 func functionParametersSigmoid() FunctionParams {
 	return FunctionParams{
 		NewFunctionParam("a", sdk.NewDec(3)),
@@ -63,7 +70,7 @@ func functionParametersAugmentedFull() FunctionParams {
 
 	R0 := baseMap["d0"].Mul(sdk.OneDec().Sub(baseMap["theta"]))
 	S0 := baseMap["d0"].Quo(baseMap["p0"])
-	V0 := Invariant(R0, S0, baseMap["kappa"].TruncateInt64())
+	V0 := Invariant(R0, S0, baseMap["kappa"])
 	extras := FunctionParams{
 		NewFunctionParam("R0", R0),
 		NewFunctionParam("S0", S0),

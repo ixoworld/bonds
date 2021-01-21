@@ -101,7 +101,7 @@ func getRandomFunctionParameters(r *rand.Rand, functionType string, genesis bool
 		if genesis {
 			R0 := d0.Mul(sdk.OneDec().Sub(theta))
 			S0 := d0.Quo(p0)
-			V0 := types.Invariant(R0, S0, kappa.TruncateInt64())
+			V0 := types.Invariant(R0, S0, kappa)
 
 			functionParams = append(functionParams,
 				types.FunctionParams{

@@ -5,6 +5,28 @@ import (
 	"strings"
 )
 
+var (
+	TEN18DEC = sdk.MustNewDecFromStr("1000000000000000000") // 1e18
+)
+
+// ApproxRoot returns an approximation of a Dec's nth root
+func ApproxRoot(d sdk.Dec, root sdk.Dec) (guess sdk.Dec, err error) {
+	return ApproxPower(d, sdk.OneDec().Quo(root)), nil
+}
+
+// ApproxPower returns an approximation of raising a Dec to a positive power
+func ApproxPower(d sdk.Dec, power sdk.Dec) sdk.Dec {
+	// Convert Dec's to Uint's
+	dUint := sdk.NewUintFromBigInt(d.Int)
+	powerUint := sdk.NewUintFromBigInt(power.Int)
+
+	// Find answer using the Uint's
+	ansUint := pow(dUint, powerUint)
+
+	// Convert back to Dec
+	return sdk.NewDecFromBigInt(ansUint.BigInt()).Quo(TEN18DEC)
+}
+
 func RoundReservePrice(p sdk.DecCoin) sdk.Coin {
 	// ReservePrices are rounded up so that the account gets charged more
 	roundedAmount := p.Amount.Ceil().TruncateInt()
